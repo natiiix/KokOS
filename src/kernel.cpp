@@ -103,7 +103,7 @@ void terminal_putchar(char c)
 				for (size_t x = 0; x < VGA_WIDTH; x++)
 				{
 					const size_t index = y * VGA_WIDTH + x;
-					const size_t source = (y + 1) * VGA_WIDTH + x;
+					const size_t source = index + VGA_WIDTH;
 					terminal_buffer[index] = terminal_buffer[source];
 				}
 			}
