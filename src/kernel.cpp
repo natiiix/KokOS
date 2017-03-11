@@ -1,31 +1,20 @@
-/* Surely you will remove the processor conditionals and this comment
-   appropriately depending on whether or not you use C++. */
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
 #include <stddef.h>
 #include <stdint.h>
 
 #include "terminal.hpp"
 #include "keyboard.hpp"
+#include "memory.hpp"
+#include "string.hpp"
 
-/* Check if the compiler thinks we are targeting the wrong operating system. */
+// Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
 #endif
  
-/* This tutorial will only work for the 32-bit ix86 targets. */
+// This tutorial will only work for the 32-bit ix86 targets
 #if !defined(__i386__)
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
-
-size_t strlen(const char* str)
-{
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
-}
 
 void updateInputRow(const char* inbuff)
 {
@@ -50,12 +39,13 @@ void flushInput(char* const inbuff, size_t* const inbuffptr)
 }
  
 #if defined(__cplusplus)
-extern "C" /* Use C linkage for kernel_main. */
+extern "C" // Use C linkage for kernel_main
 #endif
 void kernel_main(void)
 {
-	/* Initialize terminal interface */
+	// Initialize terminal interface
 	term::initialize();
+	mem::init();
 	
 	bool keypressed[128];
 	for (size_t i = 0; i < 128; i++)
@@ -64,7 +54,11 @@ void kernel_main(void)
 	char inputbuffer[term::VGA_WIDTH];
 	size_t inputbufferptr = 0;
 	inputbuffer[0] = '\0';
-	
+
+	char* strptr = str::convert(12345);
+	term::writeline(strptr);
+	term::writeline(str::convert((size_t)strptr));
+
 	while (true)
 	{		
 		uint8_t c = keybd::getScancode();
