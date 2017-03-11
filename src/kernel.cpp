@@ -30,21 +30,21 @@ size_t strlen(const char* str)
 void updateInputRow(const char* inbuff)
 {
 	bool endReached = false;
-	for (size_t i = 0; i < VGA_WIDTH; i++)
+	for (size_t i = 0; i < term::VGA_WIDTH; i++)
 	{
 		if (inbuff[i] == '\0')
 			endReached = true;
 		
 		if (endReached)
-			terminal_putentryat(' ', terminal_color, i, VGA_HEIGHT - 1);
+			term::putentryat(' ', term::color, i, term::VGA_HEIGHT - 1);
 		else
-			terminal_putentryat(inbuff[i], terminal_color, i, VGA_HEIGHT - 1);
+			term::putentryat(inbuff[i], term::color, i, term::VGA_HEIGHT - 1);
 	}
 }
 
 void flushInput(char* const inbuff, size_t* const inbuffptr)
 {
-	terminal_writeline(&inbuff[0]); // flush the buffer	
+	term::writeline(&inbuff[0]); // flush the buffer	
 	*inbuffptr = 0; // reset the buffer pointer
 	inbuff[0] = '\0'; // clear the buffer
 }
@@ -55,19 +55,19 @@ extern "C" /* Use C linkage for kernel_main. */
 void kernel_main(void)
 {
 	/* Initialize terminal interface */
-	terminal_initialize();
+	term::initialize();
 	
 	bool keypressed[128];
 	for (size_t i = 0; i < 128; i++)
 		keypressed[i] = false;
 	
-	char inputbuffer[VGA_WIDTH];
+	char inputbuffer[term::VGA_WIDTH];
 	size_t inputbufferptr = 0;
 	inputbuffer[0] = '\0';
 	
 	while (true)
 	{		
-		uint8_t c = getScancode();
+		uint8_t c = keybd::getScancode();
 		uint8_t keycode = c & 0b01111111;
 		bool keystate = (c == keycode);
 		if (keypressed[keycode] != keystate)
@@ -76,22 +76,22 @@ void kernel_main(void)
 			
 			if (keystate)
 			{
-				char inchar = scancodeToChar(keycode, keypressed[KEY_SHIFT_LEFT] || keypressed[KEY_SHIFT_RIGHT]);
+				char inchar = keybd::scancodeToChar(keycode, keypressed[keybd::KEY_SHIFT_LEFT] || keypressed[keybd::KEY_SHIFT_RIGHT]);
 				
 				if (inchar > 0)
 				{
-					if (inputbufferptr == VGA_WIDTH)
+					if (inputbufferptr == term::VGA_WIDTH)
 						flushInput(&inputbuffer[0], &inputbufferptr);
 
 					inputbuffer[inputbufferptr++] = inchar;
 					
-					if (inputbufferptr < VGA_WIDTH)
+					if (inputbufferptr < term::VGA_WIDTH)
 						inputbuffer[inputbufferptr] = '\0';
 				}
 				
-				if (keycode == KEY_ENTER)
+				if (keycode == keybd::KEY_ENTER)
 					flushInput(&inputbuffer[0], &inputbufferptr);
-				else if (keycode == KEY_BACKSPACE)
+				else if (keycode == keybd::KEY_BACKSPACE)
 					// Make sure the cursor doesn't get past the beginning of the input row
 					if (inputbufferptr > 0)
 						inputbuffer[--inputbufferptr] = '\0';
@@ -99,6 +99,6 @@ void kernel_main(void)
 		}
 		
 		updateInputRow(&inputbuffer[0]);
-		terminal_setcursor(VGA_HEIGHT - 1, inputbufferptr);
+		term::setcursor(term::VGA_HEIGHT - 1, inputbufferptr);
 	}
 }

@@ -1,27 +1,30 @@
 #include "keyboard.hpp"
 
-uint8_t getScancode(void)
+namespace keybd
 {
-	uint8_t c = 0;
-	
-	do
+	uint8_t getScancode(void)
 	{
-		if(inb(0x60) != c)
+		uint8_t c = 0;
+		
+		do
 		{
-			c = inb(0x60);
-			if(c > 0)
-				return c;
+			if(inb(0x60) != c)
+			{
+				c = inb(0x60);
+				if(c > 0)
+					return c;
+			}
 		}
+		while (true);
 	}
-	while (true);
-}
 
-char scancodeToChar(uint8_t sc, bool shiftPressed)
-{
-    // Scan code 57 is the last character key
-    // Key with scan code above 57 is guaranteed to be non-character
-    if (sc > 57)
-        return 0;
+	char scancodeToChar(uint8_t sc, bool shiftPressed)
+	{
+		// Scan code 57 is the last character key
+		// Key with scan code above 57 is guaranteed to be non-character
+		if (sc > 57)
+			return 0;
 
-    return (shiftPressed ? asciiShift[sc] : asciiDefault[sc]);
+		return (shiftPressed ? asciiShift[sc] : asciiDefault[sc]);
+	}
 }
