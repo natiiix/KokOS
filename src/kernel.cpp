@@ -1,5 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
+#include "stdtypes.hpp"
 
 #include "terminal.hpp"
 #include "keyboard.hpp"

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include "stdtypes.hpp"
 #include "memory.hpp"
 
 namespace str
