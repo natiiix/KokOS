@@ -6,7 +6,6 @@ namespace mem
     uint8_t memory[memsize];
     bool bitmap[memsize];
     void* memstart = (void*) &memory[0];
-    void* invalidptr = (void*) &memory[memsize];
 
     void init(void)
     {
@@ -21,7 +20,7 @@ namespace mem
     void* alloc(const size_t bytes)
     {
         if (bytes <= 0)
-            return invalidptr;
+            return nullptr;
 
         // Find first unallocated byte
         for (size_t i = 0; i < (memsize - (bytes - 1)); i++)
@@ -56,13 +55,12 @@ namespace mem
             }
         }
 
-        return invalidptr;
+        return nullptr;
     }
 
     void free(void* const ptr)
     {
-        size_t firstbyte = (uint8_t*)ptr - (uint8_t*)memstart;
-        //size_t firstbyte = (size_t)ptr - (size_t)memstart;
+        size_t firstbyte = (size_t)ptr - (size_t)memstart;
 
         for (size_t i = 0; memory[i] != '\0'; i++)
         {
@@ -72,8 +70,7 @@ namespace mem
 
     void free(void* const ptr, const size_t bytes)
     {
-        size_t firstbyte = (uint8_t*)ptr - (uint8_t*)memstart;
-        //size_t firstbyte = (size_t)ptr - (size_t)memstart;
+        size_t firstbyte = (size_t)ptr - (size_t)memstart;
 
         for (size_t i = 0; i < bytes; i++)
         {
