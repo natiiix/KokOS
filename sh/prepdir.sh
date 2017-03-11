@@ -3,9 +3,9 @@
 set -e
 
 echo preparing directory tree
-mkdir ../obj/
-mkdir ../bin/
-mkdir ../isodir/
-mkdir ../isodir/boot/
-mkdir ../isodir/boot/grub/
-mkdir ../iso/
+mkdir ${BASH_SOURCE%/*}/../obj/
+mkdir ${BASH_SOURCE%/*}/../bin/
+mkdir ${BASH_SOURCE%/*}/../isodir/
+mkdir ${BASH_SOURCE%/*}/../isodir/boot/
+mkdir ${BASH_SOURCE%/*}/../isodir/boot/grub/
+mkdir ${BASH_SOURCE%/*}/../iso/

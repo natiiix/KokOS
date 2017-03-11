@@ -3,10 +3,10 @@
 set -e
 
 echo cleaning old files
-rm -rfv ../*.o
-rm -rfv ../*.bin
-rm -rfv ../*.iso
-rm -rfv ../obj/
-rm -rfv ../bin/
-rm -rfv ../isodir/
-rm -rfv ../iso/
+rm -rfv ${BASH_SOURCE%/*}/../*.o
+rm -rfv ${BASH_SOURCE%/*}/../*.bin
+rm -rfv ${BASH_SOURCE%/*}/../*.iso
+rm -rfv ${BASH_SOURCE%/*}/../obj/
+rm -rfv ${BASH_SOURCE%/*}/../bin/
+rm -rfv ${BASH_SOURCE%/*}/../isodir/
+rm -rfv ${BASH_SOURCE%/*}/../iso/
