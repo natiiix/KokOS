@@ -2,6 +2,10 @@
 
 #include "stdtypes.hpp"
 #include "asm.hpp"
+#include "input.hpp"
+#include "string.hpp"
+#include "keyboard.hpp"
+#include "memory.hpp"
 
 namespace term
 {
@@ -9,11 +13,6 @@ namespace term
 	static const size_t VGA_WIDTH = 80;
 	// Screen height in text mode in characters
 	static const size_t VGA_HEIGHT = 25;
-
-	extern size_t row;
-	extern size_t column;
-	extern uint8_t color;
-	extern uint16_t* buffer;
 
 	// Hardware text mode color constants
 	enum vga_color
@@ -37,25 +36,25 @@ namespace term
 	};
 	
 	// Converts foreground and background colors into a single VGA color used by VGA entries
-	static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
+	static inline uint8_t vga_entry_color(const enum vga_color fg, const enum vga_color bg)
 	{ return fg | bg << 4; }
 	// Converts a character and VGA color into a VGA entry
-	static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
+	static inline uint16_t vga_entry(const unsigned char uc, const uint8_t color)
 	{ return (uint16_t) uc | (uint16_t) color << 8; }
 	// Initializes terminal
-	void initialize(void); 
+	void init(void);
 	// Sets the terminal color
-	void setcolor(uint8_t color); 
-	// Writes a character in specified color at specified coordinates in the buffer
-	void putentryat(char c, uint8_t color, size_t x, size_t y);
-	// Writes a character into the terminal buffer
-	void putchar(char c);
-	// Creates a new line 
-	void newline(void);
+	void setcolor(const uint8_t color);
+	// Breaks the line
+	void breakline(void);
 	// Writes a string into the terminal buffer
-	void write(const char* data);
-	// Writes a string into the terminal buffer and ends the line
-	void writeline(const char* data);
+	void write(const char* const str);
+	// Writes a string into the terminal buffer and breaks the line
+	void writeline(const char* const str);
+	// Writes a string from memory, breaks the line unless requested otherwise and frees the memory
+	void memdump(const void* const memstr, const bool linebreak = true);
 	// Moves the terminal cursor to a specified position
-	void setcursor(int currow, int curcol);
+	void setcursor(const int row, const int col);
+	// Reads a string from the input buffer into memory and returns a pointer to it
+	char* readline(void);
 }

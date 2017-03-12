@@ -2,7 +2,7 @@
 
 namespace str
 {
-    size_t len(const char* strinput)
+    size_t len(const char* const strinput)
     {
         size_t length = 0;
         while (strinput[length])
@@ -66,5 +66,27 @@ namespace str
 
         strptr[length] = '\0';
         return strptr;
+    }
+
+    size_t parse(const char* const str, const size_t base)
+    {
+        if (base < 2 || base > 16)
+            return 0;
+
+        size_t value = 0;
+
+        for (size_t i = 0; str[i]; i++)
+        {
+            value *= base;
+            
+            if (str[i] >= '0' && str[i] <= '9')
+                value += str[i] - '0';
+            else if (str[i] >= 'a' && str[i] <= 'f')
+                value += str[i] - 'a' + 10;
+            else if (str[i] >= 'A' && str[i] <= 'F')
+                value += str[i] - 'A' + 10;
+        }
+
+        return value;
     }
 }

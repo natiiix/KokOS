@@ -2,7 +2,17 @@
 
 namespace keybd
 {
-	uint8_t getScancode(void)
+	bool keypressed[128];
+	
+	void init(void)
+	{
+		for (size_t i = 0; i < 128; i++)
+        {
+            keypressed[i] = false;
+        }
+	}
+
+	uint8_t readkey(void)
 	{
 		uint8_t c = 0;
 		
@@ -16,15 +26,5 @@ namespace keybd
 			}
 		}
 		while (true);
-	}
-
-	char scancodeToChar(uint8_t sc, bool shiftPressed)
-	{
-		// Scan code 57 is the last character key
-		// Key with scan code above 57 is guaranteed to be non-character
-		if (sc > 57)
-			return 0;
-
-		return (shiftPressed ? asciiShift[sc] : asciiDefault[sc]);
 	}
 }
