@@ -4,12 +4,17 @@
 Features
 ====
 - text mode screen output
-- basic keyboard input
+- standard keyboard input (now with shift support)
+- very basic memory management
+- very basic conversion to string (base 2 - 16 support, base 10 by default)
 
 TODO
 ====
 - <b>FAT support</b>
 - commands
+- conversion from string to some integral type (size_t will probably suffice)
+- string operation functions
+- memory operation functions
 
 Links
 ====
