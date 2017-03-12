@@ -50,11 +50,19 @@ namespace input
                     bufferpush(inchar);
                 }
                 else if (keycode == keybd::KEY_ENTER)
+                {
                     return false;
+                }
                 else if (keycode == keybd::KEY_BACKSPACE)
+                {
                     // Make sure the cursor doesn't get past the beginning of the input row
                     if (bufferptr > 0)
                         buffer[--bufferptr] = '\0';
+                }    
+                else if (keycode == keybd::KEY_ESCAPE)
+                {
+                    buffer[bufferptr = 0] = '\0';
+                }
             }
         }
         

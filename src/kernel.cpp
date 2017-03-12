@@ -1,3 +1,4 @@
+#include "stdtypes.hpp"
 #include "memory.hpp"
 #include "terminal.hpp"
 #include "string.hpp"
@@ -23,8 +24,10 @@ void kernel_main(void)
 	while (true)
 	{		
 		char* cptr = term::readline();
-		size_t inp = str::parse(cptr, 10);
-		mem::free(cptr);
+		uint8_t incol = (uint8_t)str::parse(cptr, 16);
+		term::setcolor(incol);
+		term::memdump(cptr);
+		/*mem::free(cptr);
 		
 		term::write("Base  2: 0b");
 		term::memdump(str::convert(inp, 2));
@@ -38,6 +41,6 @@ void kernel_main(void)
 		term::write(" | empty 0x");
 		term::memdump(str::convert(mem::empty(), 16));
 
-		term::breakline();
+		term::breakline();*/
 	}
 }

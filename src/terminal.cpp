@@ -186,6 +186,6 @@ namespace term
 			updateinputrow(inputbuffer);
 		}
 
-		return (char*)mem::copy((void*)inputbuffer);
+		return (char*)mem::copy(inputbuffer);
 	}
 }
