@@ -1,7 +1,7 @@
 #include "stdtypes.hpp"
 #include "memory.hpp"
 #include "terminal.hpp"
-#include "string.hpp"
+#include "debug.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -12,7 +12,7 @@
 #if !defined(__i386__)
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
- 
+
 #if defined(__cplusplus)
 extern "C" // Use C linkage for kernel_main
 #endif
@@ -23,10 +23,10 @@ void kernel_main(void)
 
 	while (true)
 	{		
-		char* cptr = term::readline();
+		/*char* cptr = term::readline();
 		uint8_t incol = (uint8_t)str::parse(cptr, 16);
 		term::setcolor(incol);
-		term::memdump(cptr);
+		term::memdump(cptr);*/
 		/*mem::free(cptr);
 		
 		term::write("Base  2: 0b");
@@ -42,5 +42,20 @@ void kernel_main(void)
 		term::memdump(str::convert(mem::empty(), 16));
 
 		term::breakline();*/
+
+		debug::memusage();
+		void* ptr = mem::dynalloc(0);
+		debug::memusage();
+		ptr = mem::dynresize(ptr, 7);
+		debug::memusage();
+		ptr = mem::dynresize(ptr, 2000);
+		debug::memusage();
+		mem::free(ptr);
+		debug::memusage();
+		
+		void* cptr = term::readline();
+		mem::free(cptr);
+
+		term::breakline();
 	}
 }
