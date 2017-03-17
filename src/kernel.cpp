@@ -1,7 +1,11 @@
-#include "stdtypes.hpp"
+#include <stddef.h>
+#include <stdint.h>
+
 #include "memory.hpp"
 #include "terminal.hpp"
 #include "debug.hpp"
+#include "class_vector.hpp"
+#include "class_string.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -23,39 +27,25 @@ void kernel_main(void)
 
 	while (true)
 	{		
-		/*char* cptr = term::readline();
-		uint8_t incol = (uint8_t)str::parse(cptr, 16);
-		term::setcolor(incol);
-		term::memdump(cptr);*/
-		/*mem::free(cptr);
-		
-		term::write("Base  2: 0b");
-		term::memdump(str::convert(inp, 2));
-		term::write("Base 10:   ");
-		term::memdump(str::convert(inp, 10));
-		term::write("Base 16: 0x");
-		term::memdump(str::convert(inp, 16));
+		debug::memusage();
+		vector<size_t> vct;
+		debug::memusage();
+		vector<vector<size_t>> vct2;
+		debug::memusage();
+		vct2.push_back(vct);
+		debug::memusage();
+		vct2.front().resize(200);
+		debug::memusage();
+		vct2.back().dispose();
+		debug::memusage();
+		vct2.pop_back();
+		debug::memusage();
+		vct2.dispose();
+		debug::memusage();
+		vct.dispose();
+		debug::memusage();
 
-		term::write("Memory: used 0x");
-		term::memdump(str::convert(mem::used(), 16), false);
-		term::write(" | empty 0x");
-		term::memdump(str::convert(mem::empty(), 16));
-
-		term::breakline();*/
-
-		debug::memusage();
-		void* ptr = mem::dynalloc(0);
-		debug::memusage();
-		ptr = mem::dynresize(ptr, 7);
-		debug::memusage();
-		ptr = mem::dynresize(ptr, 2000);
-		debug::memusage();
-		mem::free(ptr);
-		debug::memusage();
-		
-		void* cptr = term::readline();
-		mem::free(cptr);
-
+		term::pause();
 		term::breakline();
 	}
 }

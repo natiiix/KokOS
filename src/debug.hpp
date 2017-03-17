@@ -1,7 +1,7 @@
 #pragma once
 
 #include "terminal.hpp"
-#include "string.hpp"
+#include "cstring.hpp"
 #include "memory.hpp"
 
 namespace debug

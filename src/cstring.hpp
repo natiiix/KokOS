@@ -1,9 +1,11 @@
 #pragma once
 
-#include "stdtypes.hpp"
+#include <stddef.h>
+#include <stdint.h>
+
 #include "memory.hpp"
 
-namespace str
+namespace cstr
 {
     size_t len(const char* const str);
     bool cmp(const char* const str1, const char* const str2);

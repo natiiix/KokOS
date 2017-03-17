@@ -35,14 +35,14 @@ namespace term
 	}
 	
 	// Writes a character in specified color at specified coordinates in the buffer
-	void putentryat(const char c, const uint8_t color, const size_t x, const size_t y)
+	void _putentryat(const char c, const uint8_t color, const size_t x, const size_t y)
 	{
 		const size_t index = y * VGA_WIDTH + x;
 		m_buffer[index] = vga_entry(c, color);
 	}
 
 	// Creates a new line
-	void newline(void)
+	void _newline(void)
 	{
 		// scroll screen on screen overflow
 		if (++m_row == VGA_HEIGHT - 1)
@@ -75,17 +75,17 @@ namespace term
 	void breakline(void)
 	{
 		if (m_linebroken)
-			newline();
+			_newline();
 
 		m_linebroken = true;
 	}
 	
 	// Writes a character into the terminal buffer
-	void putchar(const char c)
+	void _putchar(const char c)
 	{
 		if (m_linebroken)
 		{
-			newline();
+			_newline();
 		}
 
 		if (c == '\n')
@@ -94,7 +94,7 @@ namespace term
 			return;
 		}
 
-		putentryat(c, m_color, m_column, m_row);
+		_putentryat(c, m_color, m_column, m_row);
 		
 		if (++m_column == VGA_WIDTH)
 		{
@@ -103,32 +103,52 @@ namespace term
 		}
 	}
 	
-	void write(const char* const str)
+	void write(const char* const str, const bool dispose)
 	{
 		for (size_t i = 0; str[i]; i++)
 		{
-			putchar(str[i]);
+			_putchar(str[i]);
+		}
+		
+		setcursor(m_row, m_column);
+
+		if (dispose)
+		{
+			delete str;
 		}
 	}
 
-	void writeline(const char* const str)
+	void write(const size_t input, const size_t base)
 	{
-		write(str);
+		char* str = cstr::convert(input, base);
+		write(str, true);
+	}
 
-		// Prevent empty line after an input that fills the whole row
-		// Empty input string (first character is '\0') implies the intent to create an empty line
-		if (m_column > 0 || !str[0])
+	// Local extension of breakline() used by writeline() to avoid undesired empty lines
+	void _breakline_writeline(void)
+	{
+		// Prevent empty line after an input that fills the whole row (and naturally breaks line by itself)
+		if (m_column > 0)
 			breakline();
 	}
 
-	void memdump(const void* const memstr, const bool linebreak)
+	void writeline(const char* const str, const bool dispose)
 	{
-		if (linebreak)
-			writeline((char*)memstr);
-		else
-			write((char*)memstr);
+		// Empty input string (first character is '\0') implies the intent to create an empty line
+		if (str[0] == '\0')
+		{
+			breakline();
+			return;
+		}
 
-		mem::free(memstr);
+		write(str, dispose);
+		_breakline_writeline();
+	}
+
+	void writeline(const size_t input, const size_t base)
+	{
+		write(input, base);
+		_breakline_writeline();
 	}
 
 	void setcursor(const int row, const int col)
@@ -143,9 +163,9 @@ namespace term
 		outb(0x3D5, (unsigned char)((position >> 8) & 0xFF));
 	}
 
-	void updateinputrow(const char* const inbuff)
+	void _updateinputrow(const char* const inbuff)
     {
-        size_t length = str::len(inbuff);
+        size_t length = cstr::len(inbuff);
 
 		const size_t prefixlen = 1;
 		const char prefix[prefixlen] = { '>' };
@@ -169,7 +189,7 @@ namespace term
 			else
 				c = ' ';
 
-			putentryat(c, term::m_color, i, VGA_HEIGHT - 1);
+			_putentryat(c, term::m_color, i, VGA_HEIGHT - 1);
         }
 
 		term::setcursor(term::VGA_HEIGHT - 1, prefixlen + renderlen);
@@ -183,9 +203,33 @@ namespace term
 
 		while (input::handlekey())
 		{
-			updateinputrow(inputbuffer);
+			_updateinputrow(inputbuffer);
 		}
 
 		return (char*)mem::copy(inputbuffer);
+	}
+
+	void pause(void)
+	{
+		write("Press ENTER to continue...", false);
+
+		while (true)
+		{
+			uint8_t scancode = keybd::readkey();
+			uint8_t keycode = scancode & 0b01111111;
+			bool keystate = (scancode == keycode);
+
+			if (keybd::keypressed[keycode] != keystate)
+			{
+				keybd::keypressed[keycode] = keystate;
+				
+				if (keycode == keybd::KEY_ENTER && keystate)
+				{
+					break;
+				}
+			}
+		}
+
+		breakline();
 	}
 }

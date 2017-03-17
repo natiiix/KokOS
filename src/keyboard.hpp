@@ -1,6 +1,8 @@
 #pragma once
 
-#include "stdtypes.hpp"
+#include <stddef.h>
+#include <stdint.h>
+
 #include "asm.hpp"
 
 namespace keybd

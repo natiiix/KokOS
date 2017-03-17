@@ -1,7 +1,9 @@
 #pragma once
 
-#include "stdtypes.hpp"
-#include "string.hpp"
+#include <stddef.h>
+#include <stdint.h>
+
+#include "cstring.hpp"
 
 namespace mem
 {
@@ -16,3 +18,5 @@ namespace mem
     void* dynalloc(const size_t initsize);
     void* dynresize(void* const ptr, const size_t newsize);
 }
+
+void operator delete(void* ptr);

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
+
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t ret;

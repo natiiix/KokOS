@@ -1,9 +1,11 @@
 #pragma once
 
-#include "stdtypes.hpp"
+#include <stddef.h>
+#include <stdint.h>
+
 #include "asm.hpp"
 #include "input.hpp"
-#include "string.hpp"
+#include "cstring.hpp"
 #include "keyboard.hpp"
 #include "memory.hpp"
 
@@ -48,13 +50,16 @@ namespace term
 	// Breaks the line
 	void breakline(void);
 	// Writes a string into the terminal buffer
-	void write(const char* const str);
-	// Writes a string into the terminal buffer and breaks the line
-	void writeline(const char* const str);
-	// Writes a string from memory, breaks the line unless requested otherwise and frees the memory
-	void memdump(const void* const memstr, const bool linebreak = true);
+	// dipose - should the memory used by str be freed after writing
+	void write(const char* const str, const bool dispose = false);
+	void write(const size_t input, const size_t base = 10);
+	// Extension of write() which breaks the line after writing
+	void writeline(const char* const str, const bool dispose = false);
+	void writeline(const size_t input, const size_t base = 10);
 	// Moves the terminal cursor to a specified position
 	void setcursor(const int row, const int col);
 	// Reads a string from the input buffer into memory and returns a pointer to it
 	char* readline(void);
+	// Writes "Press ENTER to continue..." and waits for ENTER to be pressed
+	void pause(void);
 }

@@ -9,15 +9,15 @@ namespace mem
 
     // Used for non-string memory allocations
     // Makes it possible to perform operations without specifying length of the segment
-    const size_t STATIC_SEGMENT_MAX = 1024;
-    size_t statsegbegin[STATIC_SEGMENT_MAX];
-    size_t statseglen[STATIC_SEGMENT_MAX];
+    const size_t STATIC_SEGMENT_LIMIT = 1024;
+    size_t statsegbegin[STATIC_SEGMENT_LIMIT];
+    size_t statseglen[STATIC_SEGMENT_LIMIT];
 
     // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
     const size_t DYNAMIC_SEGMENT_SIZE = 256;
-    const size_t DYNAMIC_SEGMENT_MAX = 1024;
-    size_t dynsegbegin[STATIC_SEGMENT_MAX];
-    size_t dynseglen[STATIC_SEGMENT_MAX];
+    const size_t DYNAMIC_SEGMENT_LIMIT = MEMORY_SIZE / DYNAMIC_SEGMENT_SIZE;
+    size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
+    size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
 
     void init(void)
     {
@@ -29,14 +29,14 @@ namespace mem
         }
 
         // Clear the static segment storage
-        for (size_t i = 0; i < STATIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
         {
             statsegbegin[i] = 0;
             statseglen[i] = 0;
         }
 
         // Clear the dynamic segment storage
-        for (size_t i = 0; i < DYNAMIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
         {
             dynsegbegin[i] = 0;
             dynseglen[i] = 0;
@@ -72,27 +72,27 @@ namespace mem
     }
 
     // Returns true if ptrbyte is within memory boundaries
-    bool inmemory(const size_t ptrbyte)
+    bool _inmemory(const size_t ptrbyte)
     {
         // Determines whether the pointer ptr is within memory boundaries
         return (ptrbyte >= memstartbyte && ptrbyte < memstartbyte + MEMORY_SIZE);
     }
 
     // Returns true if ptr is within memory boundaries
-    bool inmemory(const void* const ptr)
+    bool _inmemory(const void* const ptr)
     {
         // Convert from pointer to size_t to make mathematical operations possible
-        return inmemory((size_t)ptr);
+        return _inmemory((size_t)ptr);
     }
 
     // Converts absolute byte address to a relative one
-    size_t toreladdress(const size_t ptrbyte)
+    size_t _toreladdress(const size_t ptrbyte)
     {
         return ptrbyte - memstartbyte;
     }
 
     // Converts poiter to a relative memory address
-    size_t toreladdress(const void* const ptr)
+    size_t _toreladdress(const void* const ptr)
     {
         return (size_t)ptr - memstartbyte;
     }
@@ -100,9 +100,9 @@ namespace mem
     // Stores information about a new static memory segment
     // beginrel - relative address of the first byte of the segment
     // length - length of the segment
-    bool statsegstore(const size_t beginrel, const size_t length)
+    bool _statsegstore(const size_t beginrel, const size_t length)
     {
-        for (size_t i = 0; i < STATIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
         {
             // Find empty spot in the static segment storage
             if (!statseglen[i])
@@ -119,10 +119,10 @@ namespace mem
         return false;
     }
 
-    // Same as statsegstore() except for dynamic memory segment
-    bool dynsegstore(const size_t beginrel, const size_t length)
+    // Same as _statsegstore() except for dynamic memory segment
+    bool _dynsegstore(const size_t beginrel, const size_t length)
     {
-        for (size_t i = 0; i < DYNAMIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
         {
             // Find empty spot in the static segment storage
             if (!dynseglen[i])
@@ -140,10 +140,10 @@ namespace mem
     }
 
     // Finds a segments by its relative beginning address and returns its length
-    size_t seglen(const size_t beginrel)
+    size_t _seglen(const size_t beginrel)
     {
         // Scan through static memory segments
-        for (size_t i = 0; i < STATIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
         {
             // Find the segment with specified beginning address in segment storage
             if (statsegbegin[i] == beginrel && statseglen[i] > 0)
@@ -154,7 +154,7 @@ namespace mem
         }
 
         // Scan through dynamic memory segments
-        for (size_t i = 0; i < DYNAMIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
         {
             // Find the segment with specified beginning address in segment storage
             if (dynsegbegin[i] == beginrel && dynseglen[i] > 0)
@@ -222,8 +222,8 @@ namespace mem
     void* alloc(const size_t length)
     {
         void* allocptr = _alloc(length);
-        size_t allocbyte = toreladdress(allocptr);
-        statsegstore(allocbyte, length);
+        size_t allocbyte = _toreladdress(allocptr);
+        _statsegstore(allocbyte, length);
         return allocptr;
     }
 
@@ -245,14 +245,14 @@ namespace mem
         size_t ptrbyte = (size_t)ptr;
 
         // If the pointer points outside the memory boundaries it should be ignored
-        if (!inmemory(ptrbyte))
+        if (!_inmemory(ptrbyte))
             return;
 
         // Calculate the relative address of the beginning of the segment
-        size_t beginrel = toreladdress(ptrbyte);
+        size_t beginrel = _toreladdress(ptrbyte);
 
         // First the program assumes the memory to be freed is a static non-string segment
-        for (size_t i = 0; i < STATIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
         {
             // Find the segment with specified beginning address in segment storage
             if (statsegbegin[i] == beginrel && statseglen[i] > 0)
@@ -268,7 +268,7 @@ namespace mem
         }
 
         // If there is no such static segment it will now assume it may be a dynamic segment
-        for (size_t i = 0; i < DYNAMIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
         {
             // Find the segment with specified beginning address in segment storage
             if (dynsegbegin[i] == beginrel && dynseglen[i] > 0)
@@ -285,7 +285,7 @@ namespace mem
 
         // No static / dynamic segment was found, the program will assume it must be a string
         // The '\0' must be freed too for proper functionality, hence the + 1
-        _free(beginrel, str::len((char*)ptr) + 1);
+        _free(beginrel, cstr::len((char*)ptr) + 1);
     }
 
     // Unsafe local extension of copy() that allows copying bytes from outside of the memory boundaries
@@ -309,18 +309,18 @@ namespace mem
         // Copy the data
         void* dstptr = _copy(ptrsrc, length);
         // Get relative address of the copied data
-        size_t dstbyte = toreladdress(dstptr);
+        size_t dstbyte = _toreladdress(dstptr);
         // Store the static segment information
-        statsegstore(dstbyte, length);
+        _statsegstore(dstbyte, length);
         return dstptr;
     }
 
     // This overload of copy() can only be used for copying previously stored memory segments
     void* copy(const void* const ptrsrc)
     {
-        if (inmemory(ptrsrc))
+        if (_inmemory(ptrsrc))
         {
-            return copy(ptrsrc, seglen(toreladdress(ptrsrc)));
+            return copy(ptrsrc, _seglen(_toreladdress(ptrsrc)));
         }
         else
         {
@@ -334,11 +334,11 @@ namespace mem
         // The '\0' must be copied too for proper functionality
         // There is no need to store this segment in the static segment storage
         // because it's a string and therefore it's guaranteed to end with the '\0' character
-        return _copy((void*)str, str::len(str) + 1);
+        return _copy((void*)str, cstr::len(str) + 1);
     }
 
     // Finds the smallest dynamic segment size with at least segsize bytes
-    size_t dynfindsize(const size_t segsize)
+    size_t _dynfindsize(const size_t segsize)
     {
         size_t allocsize = DYNAMIC_SEGMENT_SIZE;
         
@@ -351,15 +351,15 @@ namespace mem
     // Allocates dynamic memory segment
     void* dynalloc(const size_t initsize)
     {
-        size_t allocsize = dynfindsize(initsize);
+        size_t allocsize = _dynfindsize(initsize);
         void* allocptr = _alloc(allocsize);
-        dynsegstore(toreladdress(allocptr), allocsize);
+        _dynsegstore(_toreladdress(allocptr), allocsize);
         return allocptr;
     }
 
     // Used when resizing dynamic memory segment
     // Returns true if all the bytes within specified range are unallocated
-    bool unallocated(const size_t beginrel, const size_t length)
+    bool _unallocated(const size_t beginrel, const size_t length)
     {
         // Can't tell whether the memory is allocated or not if the
         // requested range is outside availible memory's boundaries
@@ -382,14 +382,14 @@ namespace mem
     // Resizes a dynamically allocated memory segment
     void* dynresize(void* const ptr, const size_t newsize)
     {
-        if (!inmemory(ptr))
+        if (!_inmemory(ptr))
             return nullptr;
 
-        size_t beginrel = toreladdress(ptr);
-        size_t newallocsize = dynfindsize(newsize);
+        size_t beginrel = _toreladdress(ptr);
+        size_t newallocsize = _dynfindsize(newsize);
 
         // Find the segment in dynamic segment storage
-        for (size_t i = 0; i < DYNAMIC_SEGMENT_MAX; i++)
+        for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
         {
             // Segment found
             if (dynsegbegin[i] == beginrel)
@@ -418,7 +418,7 @@ namespace mem
                     size_t lendiff = newallocsize - dynseglen[i];
 
                     // If there are enough unallocated bytes after the already allocated segment
-                    if (unallocated(beginrel + dynseglen[i], lendiff))
+                    if (_unallocated(beginrel + dynseglen[i], lendiff))
                     {
                         // The segment will simply be prolonged and additional bytes will be allocated
                         for (size_t j = 0; j < lendiff; j++)
@@ -441,7 +441,7 @@ namespace mem
                         _free(beginrel, dynseglen[i]);
 
                         // Get the new relative memory address
-                        size_t newbeginrel = toreladdress(newptr);
+                        size_t newbeginrel = _toreladdress(newptr);
 
                         // Store the new information about the segment
                         dynsegbegin[i] = newbeginrel;
@@ -456,4 +456,9 @@ namespace mem
 
         return nullptr;
     }
+}
+
+void operator delete(void* ptr)
+{
+    mem::free(ptr);
 }

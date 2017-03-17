@@ -1,6 +1,6 @@
-#include "string.hpp"
+#include "cstring.hpp"
 
-namespace str
+namespace cstr
 {
     size_t len(const char* const strinput)
     {

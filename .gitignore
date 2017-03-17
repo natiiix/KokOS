@@ -1,4 +1,5 @@
 .vscode/
+crosscompiler/
 obj/
 bin/
 isodir/
