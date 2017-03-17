@@ -45,6 +45,8 @@ namespace term
 	{ return (uint16_t) uc | (uint16_t) color << 8; }
 	// Initializes terminal
 	void init(void);
+	// Clears the terminal
+	void clear(void);
 	// Sets the terminal color
 	void setcolor(const uint8_t color);
 	// Breaks the line

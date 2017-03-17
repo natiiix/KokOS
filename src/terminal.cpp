@@ -15,6 +15,13 @@ namespace term
 		m_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 		m_buffer = (uint16_t*) 0xB8000;
 
+		clear();
+
+        keybd::init();
+	}
+
+	void clear(void)
+	{
 		for (size_t y = 0; y < VGA_HEIGHT; y++)
 		{
 			for (size_t x = 0; x < VGA_WIDTH; x++)
@@ -25,8 +32,6 @@ namespace term
 		}
 
 		m_linebroken = false;
-
-        keybd::init();
 	}
 	
 	void setcolor(const uint8_t color)

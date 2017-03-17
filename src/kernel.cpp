@@ -22,11 +22,13 @@ extern "C" // Use C linkage for kernel_main
 #endif
 void kernel_main(void)
 {	
-	mem::init();
 	term::init();
+	mem::init();
+
+	size_t tmpvar = 0;
 
 	while (true)
-	{		
+	{
 		debug::memusage();
 		vector<size_t> vct;
 		debug::memusage();
@@ -44,6 +46,8 @@ void kernel_main(void)
 		debug::memusage();
 		vct.dispose();
 		debug::memusage();
+
+		term::writeline(++tmpvar);
 
 		term::pause();
 		term::breakline();

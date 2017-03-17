@@ -2,9 +2,13 @@
 
 namespace mem
 {
-    const size_t MEMORY_SIZE = 1024*1024;
-    uint8_t memory[MEMORY_SIZE];
-    bool memused[MEMORY_SIZE];
+    const size_t MEMORY_SIZE_BYTES = 1024*1024;
+    const size_t MEMORY_SIZE_IN_SIZE_T = MEMORY_SIZE_BYTES / sizeof(size_t);
+    const size_t MEMORY_USED_BYTES_PER_ELEMENT = sizeof(size_t) * 8;
+    const size_t MEMORY_USED_SIZE = MEMORY_SIZE_BYTES / MEMORY_USED_BYTES_PER_ELEMENT;
+
+    size_t memory[MEMORY_SIZE_IN_SIZE_T];
+    size_t memused[MEMORY_USED_SIZE];
     size_t memstartbyte = (size_t)&memory[0];
 
     // Used for non-string memory allocations
@@ -15,17 +19,22 @@ namespace mem
 
     // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
     const size_t DYNAMIC_SEGMENT_SIZE = 256;
-    const size_t DYNAMIC_SEGMENT_LIMIT = MEMORY_SIZE / DYNAMIC_SEGMENT_SIZE;
+    const size_t DYNAMIC_SEGMENT_LIMIT = MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE;
     size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
     size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
 
     void init(void)
     {
-        // Clear and unallocate the whole memory
-        for (size_t i = 0; i < MEMORY_SIZE; i++)
+        // Clear the memory
+        for (size_t i = 0; i < MEMORY_SIZE_IN_SIZE_T; i++)
         {
             memory[i] = 0;
-            memused[i] = false;
+        }
+
+        // Unallocate the memory
+        for (size_t i = 0; i < MEMORY_USED_SIZE; i++)
+        {
+            memused[i] = 0;
         }
 
         // Clear the static segment storage
@@ -43,15 +52,54 @@ namespace mem
         }
     }
 
+    bool _getused(const size_t relbyte)
+    {
+        if (relbyte > MEMORY_SIZE_BYTES)
+            return false;
+
+        size_t usedbyte = relbyte / MEMORY_USED_BYTES_PER_ELEMENT;
+        size_t usedbit = relbyte % MEMORY_USED_BYTES_PER_ELEMENT;
+
+        return (memused[usedbyte] & (1 << usedbit));
+    }
+
+    void _setused(const size_t relbyte, const bool isused)
+    {
+        if (relbyte > MEMORY_SIZE_BYTES)
+            return;
+
+        size_t usedbyte = relbyte / MEMORY_USED_BYTES_PER_ELEMENT;
+        size_t usedbit = relbyte % MEMORY_USED_BYTES_PER_ELEMENT;
+
+        if (isused)
+        {
+            memused[usedbyte] |= (1 << usedbit);
+        }
+        else
+        {
+            memused[usedbyte] &= ~(1 << usedbit);
+        }
+    }
+
     // Counts allocated bytes in memory
     size_t used(void)
     {
         size_t count = 0;
+        size_t tmpused = 0;
 
-        for (size_t i = 0; i < MEMORY_SIZE; i++)
+        for (size_t i = 0; i < MEMORY_USED_SIZE; i++)
         {
             if (memused[i])
-                count++;
+            {
+                tmpused = memused[i];
+                
+                while (tmpused > 0)
+                {
+                    // Get the last bit
+                    count += (tmpused & 0b1);
+                    tmpused = tmpused >> 1;
+                }
+            }
         }
 
         return count;
@@ -60,12 +108,22 @@ namespace mem
     // Counts unallocated bytes in memory
     size_t empty(void)
     {
-        size_t count = 0;
+        size_t count = MEMORY_SIZE_BYTES;
+        size_t tmpused = 0;
 
-        for (size_t i = 0; i < MEMORY_SIZE; i++)
+        for (size_t i = 0; i < MEMORY_USED_SIZE; i++)
         {
-            if (!memused[i])
-                count++;
+            if (memused[i])
+            {
+                tmpused = memused[i];
+                
+                while (tmpused > 0)
+                {
+                    // Get the last bit
+                    count -= (tmpused & 0b1);
+                    tmpused = tmpused >> 1;
+                }
+            }
         }
 
         return count;
@@ -75,7 +133,7 @@ namespace mem
     bool _inmemory(const size_t ptrbyte)
     {
         // Determines whether the pointer ptr is within memory boundaries
-        return (ptrbyte >= memstartbyte && ptrbyte < memstartbyte + MEMORY_SIZE);
+        return (ptrbyte >= memstartbyte && ptrbyte < memstartbyte + MEMORY_SIZE_BYTES);
     }
 
     // Returns true if ptr is within memory boundaries
@@ -181,17 +239,17 @@ namespace mem
         }
 
         // Find first unallocated byte
-        for (size_t i = 0; i < (MEMORY_SIZE - (length - 1)); i++)
+        for (size_t i = 0; i < (MEMORY_SIZE_BYTES - (length - 1)); i++)
         {
             // If byte is not allocated
-            if (!memused[i])
+            if (!_getused(i))
             {
                 bool spacefound = true;
 
                 // Check is there are enough unallocated bytes
                 for (size_t j = 0; j < length; j++)
                 {
-                    if (memused[i + j])
+                    if (_getused(i + j))
                     {
                         spacefound = false;
                         break;
@@ -204,7 +262,7 @@ namespace mem
                     // Allocate those bytes
                     for (size_t j = 0; j < length; j++)
                     {
-                        memused[i + j] = true;
+                        _setused(i + j, true);
                     }
 
                     // Return pointer to the first recently allocated byte
@@ -234,7 +292,7 @@ namespace mem
     {
         for (size_t i = 0; i < length; i++)
         {
-            memused[beginrel + i] = false;
+            _setused(beginrel + i, false);
         }
     }
 
@@ -363,7 +421,7 @@ namespace mem
     {
         // Can't tell whether the memory is allocated or not if the
         // requested range is outside availible memory's boundaries
-        if (beginrel + length >= MEMORY_SIZE)
+        if (beginrel + length >= MEMORY_SIZE_BYTES)
         {
             return false;
         }
@@ -371,7 +429,7 @@ namespace mem
         for (size_t i = 0; i < length; i++)
         {
             // One of the bytes is already allocated
-            if (memused[beginrel + i])
+            if (_getused(beginrel + i))
                 return false;
         }
 
@@ -423,7 +481,7 @@ namespace mem
                         // The segment will simply be prolonged and additional bytes will be allocated
                         for (size_t j = 0; j < lendiff; j++)
                         {
-                            memused[beginrel + dynseglen[i] + j] = true;
+                            _setused(beginrel + dynseglen[i] + j, true);
                         }
 
                         // Store the new segment length
