@@ -2,24 +2,13 @@
 
 namespace mem
 {
-    const size_t MEMORY_SIZE_BYTES = 1024*1024;
-    const size_t MEMORY_SIZE_IN_SIZE_T = MEMORY_SIZE_BYTES / sizeof(size_t);
-    const size_t MEMORY_USED_BYTES_PER_ELEMENT = sizeof(size_t) * 8;
-    const size_t MEMORY_USED_SIZE = MEMORY_SIZE_BYTES / MEMORY_USED_BYTES_PER_ELEMENT;
-
     size_t memory[MEMORY_SIZE_IN_SIZE_T];
     size_t memused[MEMORY_USED_SIZE];
     size_t memstartbyte = (size_t)&memory[0];
-
-    // Used for non-string memory allocations
-    // Makes it possible to perform operations without specifying length of the segment
-    const size_t STATIC_SEGMENT_LIMIT = 1024;
+    
     size_t statsegbegin[STATIC_SEGMENT_LIMIT];
     size_t statseglen[STATIC_SEGMENT_LIMIT];
-
-    // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
-    const size_t DYNAMIC_SEGMENT_SIZE = 256;
-    const size_t DYNAMIC_SEGMENT_LIMIT = MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE;
+    
     size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
     size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
 

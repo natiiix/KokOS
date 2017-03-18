@@ -25,14 +25,16 @@ void kernel_main(void)
 	term::init();
 	mem::init();
 
-	size_t tmpvar = 0;
-
 	while (true)
-	{
+	{		
 		debug::memusage();
 		vector<size_t> vct;
+		term::writeline((size_t)vct.getPtr(), 16);
+		term::writeline((size_t)vct.getPtrT(), 16);
 		debug::memusage();
 		vector<vector<size_t>> vct2;
+		term::writeline((size_t)vct2.getPtr(), 16);
+		term::writeline((size_t)vct2.getPtrT(), 16);
 		debug::memusage();
 		vct2.push_back(vct);
 		debug::memusage();
@@ -46,8 +48,6 @@ void kernel_main(void)
 		debug::memusage();
 		vct.dispose();
 		debug::memusage();
-
-		term::writeline(++tmpvar);
 
 		term::pause();
 		term::breakline();

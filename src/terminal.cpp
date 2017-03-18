@@ -13,7 +13,8 @@ namespace term
 		m_row = 0;
 		m_column = 0;
 		m_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-		m_buffer = (uint16_t*) 0xB8000;
+		//m_buffer = (uint16_t*) 0xB8000;
+		m_buffer = (uint16_t*) 0xC03FF000;
 
 		clear();
 
