@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "memory.hpp"
+#include "terminal.hpp"
 
 namespace cstr
 {
@@ -11,4 +12,5 @@ namespace cstr
     bool cmp(const char* const str1, const char* const str2);
     char* convert(const size_t input, const size_t base = 10);
     size_t parse(const char* const str, const size_t base = 10);
+    char* center(const char* const str);
 }

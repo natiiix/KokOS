@@ -1,13 +1,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-uint8_t tmp = 0;
-
 #include "terminal.hpp"
 #include "memory.hpp"
 #include "debug.hpp"
-#include "class_vector.hpp"
-#include "class_string.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -29,34 +25,6 @@ void kernel_main(void)
 
 	while (true)
 	{
-		debug::memusage();
-		term::writeline((size_t)&tmp, 16);
-		term::write("Memory start: ");
-		term::writeline(mem::memstartbyte, 16);
-		term::write("  Memory end: ");
-		term::writeline(mem::memstartbyte + mem::MEMORY_SIZE_BYTES - 1, 16);
-		vector<size_t> vct;
-		term::writeline((size_t)vct.getPtr(), 16);
-		term::writeline((size_t)vct.getPtrT(), 16);
-		debug::memusage();
-		vector<vector<size_t>> vct2;
-		term::writeline((size_t)vct2.getPtr(), 16);
-		term::writeline((size_t)vct2.getPtrT(), 16);
-		debug::memusage();
-		vct2.push_back(vct);
-		debug::memusage();
-		vct2.front().resize(200);
-		debug::memusage();
-		vct2.back().dispose();
-		debug::memusage();
-		vct2.pop_back();
-		debug::memusage();
-		vct2.dispose();
-		debug::memusage();
-		vct.dispose();
-		debug::memusage();
-
-		term::pause();
-		term::breakline();
+		debug::panic();
 	}
 }

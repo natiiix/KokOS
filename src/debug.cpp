@@ -9,4 +9,17 @@ namespace debug
         term::write(" | empty: 0x", false);
         term::writeline(cstr::convert(mem::empty(), 16), true);
     }
+
+    void panic(const char* const str)
+    {
+        term::setcolor(term::vga_entry_color(term::vga_color::VGA_COLOR_RED, term::vga_color::VGA_COLOR_LIGHT_GREEN));
+        term::clear();
+        term::writeline(str, false);
+        hlt();
+    }
+
+    void panic(void)
+    {
+        panic(cstr::center("Fatal Error: Kernel Panic"));
+    }
 }

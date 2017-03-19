@@ -89,4 +89,41 @@ namespace cstr
 
         return value;
     }
+
+    char* center(const char* const str)
+    {
+        size_t strlength = cstr::len(str);
+
+        size_t strwidth = (strlength > term::VGA_WIDTH ? term::VGA_WIDTH : strlength);
+        size_t strheight = (strwidth / term::VGA_WIDTH) + !!(strwidth % term::VGA_WIDTH);
+
+        size_t xoffset = (term::VGA_WIDTH - strwidth) / 2;
+        size_t yoffset = (term::VGA_HEIGHT > strheight ? (term::VGA_HEIGHT - strheight) / 2 : 0);
+
+        char* strout = (char*)mem::alloc(yoffset + xoffset + strlength + 1);
+        size_t istr = 0;
+
+        for (size_t i = 0; i < yoffset; i++)
+        {
+            strout[istr++] = '\n';
+        }
+
+        for (size_t i = 0; i < xoffset; i++)
+        {
+            strout[istr++] = ' ';
+        }
+
+        // I was too lazy to figure out input with line breaks so I just replace them with spaces
+        for (size_t i = 0; i < strlength; i++)
+        {
+            if (str[i] == '\n')
+                strout[istr++] = ' ';
+            else
+                strout[istr++] = str[i];
+        }
+
+        strout[istr] = '\0';
+
+        return strout;
+    }
 }
