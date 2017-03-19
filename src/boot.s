@@ -6,6 +6,7 @@
 .set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
 .set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
+.set PAGES,	   0x2
 
 # Declare a multiboot header that marks the program as a kernel.
 .section .multiboot
@@ -27,8 +28,8 @@ stack_top:
 	.align 4096
 boot_page_directory:
 	.skip 4096
-boot_page_table1:
-	.skip 4096
+boot_page_table:
+	.skip (4096 * PAGES)
 # Further page tables may be required if the kernel grows beyond 3 MiB.
 
 # The kernel entry point.
@@ -36,18 +37,18 @@ boot_page_table1:
 .global _start
 .type _start, @function
 _start:
-	# Physical address of boot_page_table1.
+	# Physical address of boot_page_table.
 	# TODO: I recall seeing some assembly that used a macro to do the
 	#       conversions to and from physical. Maybe this should be done in this
 	#       code as well?
-	movl $(boot_page_table1 - 0xC0000000), %edi
+	movl $(boot_page_table - 0xC0000000), %edi
 	# First address to map is address 0.
 	# TODO: Start at the first kernel page instead. Alternatively map the first
 	#       1 MiB as it can be generally useful, and there's no need to
 	#       specially map the VGA buffer.
 	movl $0, %esi
 	# Map 1023 pages. The 1024th will be the VGA text buffer.
-	movl $1023, %ecx
+	movl $(1024 * PAGES), %ecx
 
 1:
 	# Only map the kernel.
@@ -65,14 +66,14 @@ _start:
 2:
 	# Size of page is 4096 bytes.
 	addl $4096, %esi
-	# Size of entries in boot_page_table1 is 4 bytes.
+	# Size of entries in boot_page_table is 4 bytes.
 	addl $4, %edi
 	# Loop to the next entry if we haven't finished.
 	loop 1b
 
 3:
 	# Map VGA video memory to 0xC03FF000 as "present, writable".
-	movl $(0x000B8000 | 0x003), boot_page_table1 - 0xC0000000 + 1023 * 4
+	movl $(0x000B8000 | 0x003), boot_page_table - 0xC0000000 + (1024 * PAGES - 1) * 4
 
 	# The page table is used at both page directory entry 0 (virtually from 0x0
 	# to 0x3FFFFF) (thus identity mapping the kernel) and page directory entry
@@ -82,8 +83,27 @@ _start:
 	# would instead page fault if there was no identity mapping.
 
 	# Map the page table to both virtual addresses 0x00000000 and 0xC0000000.
-	movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 0
-	movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 768 * 4
+	movl $(boot_page_table - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000
+
+	# Map the rest of the pages
+	movl $0, %esi
+1:	
+	movl $(boot_page_table - 0xC0000000 + 0x003), %edi
+	movl %esi, %ecx
+	shll $12, %ecx
+	addl %ecx, %edi
+
+	movl $(boot_page_directory - 0xC0000000), %edx
+	movl %esi, %ecx
+	addl $768, %ecx
+	shll $2, %ecx
+	addl %ecx, %edx
+
+	movl %edi, (%edx)
+
+	incl %esi
+	cmpl $PAGES, %esi
+	jl 1b
 
 	# Set cr3 to the address of the boot_page_directory.
 	movl $(boot_page_directory - 0xC0000000), %ecx

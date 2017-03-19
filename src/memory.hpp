@@ -19,7 +19,7 @@ namespace mem
     void* dynresize(void* const ptr, const size_t newsize);
 
     // Memory size constants
-    static const size_t MEMORY_SIZE_BYTES = 3 << 20;
+    static const size_t MEMORY_SIZE_BYTES = 4 << 20;
     static const size_t MEMORY_SIZE_IN_SIZE_T = MEMORY_SIZE_BYTES / sizeof(size_t);
     static const size_t MEMORY_USED_BYTES_PER_ELEMENT = sizeof(size_t) * 8;
     static const size_t MEMORY_USED_SIZE = MEMORY_SIZE_BYTES / MEMORY_USED_BYTES_PER_ELEMENT;
@@ -31,6 +31,8 @@ namespace mem
     // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
     static const size_t DYNAMIC_SEGMENT_SIZE = 256;
     static const size_t DYNAMIC_SEGMENT_LIMIT = MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE;
+
+    extern size_t memstartbyte;
 }
 
 void operator delete(void* ptr);

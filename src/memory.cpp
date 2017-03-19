@@ -1,9 +1,11 @@
 #include "memory.hpp"
 
+#define MEMORY_UNSAFE
+
 namespace mem
 {
-    size_t memory[MEMORY_SIZE_IN_SIZE_T];
-    size_t memused[MEMORY_USED_SIZE];
+    size_t memory[MEMORY_SIZE_IN_SIZE_T]    __attribute__((aligned(0x1000)));
+    size_t memused[MEMORY_USED_SIZE]        __attribute__((aligned(0x1000)));
     size_t memstartbyte = (size_t)&memory[0];
     
     size_t statsegbegin[STATIC_SEGMENT_LIMIT];

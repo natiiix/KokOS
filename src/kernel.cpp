@@ -1,8 +1,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "memory.hpp"
+uint8_t tmp = 0;
+
 #include "terminal.hpp"
+#include "memory.hpp"
 #include "debug.hpp"
 #include "class_vector.hpp"
 #include "class_string.hpp"
@@ -21,13 +23,18 @@
 extern "C" // Use C linkage for kernel_main
 #endif
 void kernel_main(void)
-{	
+{
 	term::init();
 	mem::init();
 
 	while (true)
-	{		
+	{
 		debug::memusage();
+		term::writeline((size_t)&tmp, 16);
+		term::write("Memory start: ");
+		term::writeline(mem::memstartbyte, 16);
+		term::write("  Memory end: ");
+		term::writeline(mem::memstartbyte + mem::MEMORY_SIZE_BYTES - 1, 16);
 		vector<size_t> vct;
 		term::writeline((size_t)vct.getPtr(), 16);
 		term::writeline((size_t)vct.getPtrT(), 16);
