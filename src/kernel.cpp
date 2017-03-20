@@ -4,6 +4,9 @@
 #include "terminal.hpp"
 #include "memory.hpp"
 #include "debug.hpp"
+#include "cstring.hpp"
+#include "class_string.hpp"
+#include "class_vector.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -25,6 +28,33 @@ void kernel_main(void)
 
 	while (true)
 	{
-		debug::panic();
+		char* cstrinput = term::readline();
+		string strinput;
+		strinput.push_back(cstrinput);
+		delete cstrinput;
+		vector<string> vecinput = strinput.split(' ', true);
+		
+		if (vecinput[0] == "color" && vecinput.size() == 2)
+		{
+			term::setcolor((uint8_t)cstr::parse(vecinput[1].c_str(), 16));
+		}
+
+		for (size_t i = 0; i < vecinput.size(); i++)
+		{
+			term::write("[", false);
+			term::write(cstr::convert(i), true);
+			term::write("] ", false);
+			term::writeline(vecinput[i], false);
+		}
+
+		term::writeline(strinput);
+
+		//delete &strinput;
+		strinput.dispose();
+		//string::dispose(vecinput);
+		vecinput.dispose();
+
+		debug::memusage();
+		//debug::panic();
 	}
 }

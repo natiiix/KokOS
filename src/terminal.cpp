@@ -1,5 +1,12 @@
 #include "terminal.hpp"
 
+#include "asm.hpp"
+#include "input.hpp"
+#include "cstring.hpp"
+#include "keyboard.hpp"
+#include "memory.hpp"
+#include "class_string.hpp"
+
 namespace term
 {
 	size_t m_row;
@@ -123,6 +130,16 @@ namespace term
 		}
 	}
 
+	void write(string& str, const bool dispose)
+	{
+		write(str.c_str(), false);
+
+		if (dispose)
+		{
+			str.dispose();
+		}
+	}
+
 	void write(const size_t input, const size_t base)
 	{
 		char* str = cstr::convert(input, base);
@@ -148,6 +165,16 @@ namespace term
 
 		write(str, dispose);
 		_breakline_writeline();
+	}
+
+	void writeline(string& str, const bool dispose)
+	{
+		writeline(str.c_str(), false);
+
+		if (dispose)
+		{
+			str.dispose();
+		}
 	}
 
 	void writeline(const size_t input, const size_t base)

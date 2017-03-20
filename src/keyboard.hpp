@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "asm.hpp"
-
 namespace keybd
 {
 	extern bool keypressed[128];

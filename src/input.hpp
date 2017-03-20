@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "keyboard.hpp"
-
 namespace input
 {
     static const size_t INPUT_BUFFER_SIZE = 1024;

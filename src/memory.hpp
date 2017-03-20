@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "cstring.hpp"
-
 namespace mem
 {
     void init(void);

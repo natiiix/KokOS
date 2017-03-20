@@ -3,11 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "asm.hpp"
-#include "input.hpp"
-#include "cstring.hpp"
-#include "keyboard.hpp"
-#include "memory.hpp"
+class string;
 
 namespace term
 {
@@ -54,9 +50,11 @@ namespace term
 	// Writes a string into the terminal buffer
 	// dipose - should the memory used by str be freed after writing
 	void write(const char* const str, const bool dispose = false);
+	void write(string& str, const bool dispose = false);
 	void write(const size_t input, const size_t base = 10);
 	// Extension of write() which breaks the line after writing
 	void writeline(const char* const str, const bool dispose = false);
+	void writeline(string& str, const bool dispose = false);
 	void writeline(const size_t input, const size_t base = 10);
 	// Moves the terminal cursor to a specified position
 	void setcursor(const int row, const int col);

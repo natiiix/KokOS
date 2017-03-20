@@ -1,5 +1,7 @@
 #include "keyboard.hpp"
 
+#include "asm.hpp"
+
 namespace keybd
 {
 	bool keypressed[128];

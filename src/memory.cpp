@@ -1,5 +1,7 @@
 #include "memory.hpp"
 
+#include "cstring.hpp"
+
 namespace mem
 {
     size_t memory[MEMORY_SIZE_IN_SIZE_T]    __attribute__((aligned(0x1000)));

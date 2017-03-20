@@ -1,5 +1,7 @@
 #include "input.hpp"
 
+#include "keyboard.hpp"
+
 namespace input
 {
     char buffer[INPUT_BUFFER_SIZE];

@@ -1,5 +1,10 @@
 #include "debug.hpp"
 
+#include "asm.hpp"
+#include "terminal.hpp"
+#include "cstring.hpp"
+#include "memory.hpp"
+
 namespace debug
 {
     void memusage(void)
@@ -20,6 +25,6 @@ namespace debug
 
     void panic(void)
     {
-        panic(cstr::center("Fatal Error: Kernel Panic"));
+        panic(cstr::center("Fatal Error: Kernel Panic", term::VGA_WIDTH, term::VGA_HEIGHT));
     }
 }
