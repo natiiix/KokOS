@@ -34,3 +34,4 @@ namespace mem
 }
 
 void operator delete(void* ptr);
+void * memset ( void * ptr, int value, size_t num );

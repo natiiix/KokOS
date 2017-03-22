@@ -5,7 +5,7 @@ set -e
 ${BASH_SOURCE%/*}/build.sh
 
 if grub-file --is-x86-multiboot ${BASH_SOURCE%/*}/../bin/kokos.bin; then
-	echo multiboot confirmed	
+	echo multiboot confirmed
 	echo copying OS binary and GRUB config
 	cp ${BASH_SOURCE%/*}/../bin/kokos.bin ${BASH_SOURCE%/*}/../isodir/boot/kokos.bin
 	cp ${BASH_SOURCE%/*}/../src/grub.cfg ${BASH_SOURCE%/*}/../isodir/boot/grub/grub.cfg

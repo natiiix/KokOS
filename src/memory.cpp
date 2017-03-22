@@ -512,3 +512,17 @@ void operator delete(void* ptr)
 {
     mem::free(ptr);
 }
+
+void * memset ( void * ptr, int value, size_t num )
+{
+    unsigned char* dst = (unsigned char*)ptr;
+    unsigned char cval = (unsigned char)value;
+
+    while (num-- > 0)
+    {
+        *dst = cval;
+        dst++;
+    }
+
+    return ptr;
+}

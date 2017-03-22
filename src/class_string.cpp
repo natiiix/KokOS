@@ -285,6 +285,34 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 	
 	return vectout;
 }
+//
+bool string::contains(const char* const str)
+{
+    size_t strlength = cstr::len(str);
+
+    for (size_t i = 0; i < m_size - strlength + 1; i++)
+    {
+        if (m_ptrC[i] == str[0])
+        {
+            bool match = true;
+
+            for (size_t j = 1; j < strlength; j++)
+            {
+                if (m_ptrC[i + j] != str[j])
+                {
+                    match = false;
+                }
+            }
+
+            if (match)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 // Operator overloads
 bool string::operator==(const string& str)

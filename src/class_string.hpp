@@ -70,6 +70,8 @@ public:
 	vector<string> split(const char cDelimiter, const bool removeEmpty = false);
 	// Splits the string, uses string as delimiter
 	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false);
+	// Returns true if the string contains the cstring str, false otherwise
+	bool contains(const char* const str);
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
