@@ -1,5 +1,4 @@
 #include "atapio.hpp"
-// http://www.osdever.net/tutorials/view/lba-hdd-access-via-pio
 
 #include <stddef.h>
 #include <stdint.h>
@@ -7,114 +6,153 @@
 #include "asm.hpp"
 #include "memory.hpp"
 
-bool probeController(const CONTROLLER controller)
+// ATA port I/O register offsets
+const uint16_t REGISTER_DATA         = 0x0;
+const uint16_t REGISTER_ERROR        = 0x1;
+const uint16_t REGISTER_SECTOR_COUNT = 0x2;
+const uint16_t REGISTER_LBA_LOW      = 0x3;
+const uint16_t REGISTER_LBA_MID      = 0x4;
+const uint16_t REGISTER_LBA_HIGH     = 0x5;
+const uint16_t REGISTER_DRIVE_HEAD   = 0x6;
+const uint16_t REGISTER_COMMAND      = 0x7;
+const uint16_t REGISTER_STATUS       = 0x7;
+const uint16_t REGISTER_ALTERNATE_STATUS = 0x106;
+
+const uint8_t COMMAND_READ           = 0x20;
+const uint8_t COMMAND_READ_EXTENDED  = 0x24;
+const uint8_t COMMAND_WRITE          = 0x30;
+const uint8_t COMMAND_WRITE_EXTENDED = 0x34;
+
+const uint8_t STATUS_BSY  = 0x80; // Busy
+const uint8_t STATUS_DRDY = 0x40; // Drive ready
+const uint8_t STATUS_DWF  = 0x20; // Drive write fault
+const uint8_t STATUS_DSC  = 0x10; // Drive seek complete
+const uint8_t STATUS_DRQ  = 0x08; // Data request ready
+const uint8_t STATUS_CORR = 0x04; // Corrected data
+const uint8_t STATUS_IDX  = 0x02; // Index
+const uint8_t STATUS_ERR  = 0x01; // Error
+
+const uint8_t PROBE_BYTE = 0xAB;
+
+//const uint8_t PROBE_DRIVE_FIRST = 0xA0;
+//const uint8_t PROBE_DRIVE_SECOND = 0xB0;
+
+bool probeBus(const BUS bus)
 {
-    const uint8_t probeByte = 0xAB;
+    outb(bus + REGISTER_LBA_LOW, PROBE_BYTE);
+    uint8_t probeResponse = inb(bus + REGISTER_LBA_LOW);
 
-    outb(controller + 3, probeByte);
-    uint8_t probeResponse = inb(controller + 3);
-
-    return (probeResponse == probeByte);
+    return (probeResponse == PROBE_BYTE);
 }
 
-bool probeDrive(const CONTROLLER controller, const DRIVE drive)
+bool probeDrive(const BUS bus, const DRIVE drive)
 {
-    outb(controller + 6, drive);
-    uint8_t probeResponse = inb(controller + 7);
+    // Convert drive from 0/1 to 0xA0/0xB0
+    uint8_t probeDrive = 0xA0 + (drive << 4);
 
-    return (probeResponse & 0x40);
+    outb(bus + REGISTER_DRIVE_HEAD, probeDrive);
+    uint8_t probeResponse = inb(bus + REGISTER_STATUS);
+
+    return (probeResponse & STATUS_DRDY);
 }
 
-void setupLBA28(const uint8_t drive, const uint32_t addr)
+void setupLBA28(const BUS bus, const DRIVE drive, const uint32_t addr)
 {
-    outb(0x1F1, 0x00);
-    outb(0x1F2, 0x01);
+    outb(bus + REGISTER_ERROR, 0x00);
+    outb(bus + REGISTER_SECTOR_COUNT, 0x01);
 
-    outb(0x1F3, (uint8_t)addr);
-    outb(0x1F4, (uint8_t)(addr >> 8));
-    outb(0x1F5, (uint8_t)(addr >> 16));
+    outb(bus + REGISTER_LBA_LOW, (uint8_t)addr);
+    outb(bus + REGISTER_LBA_MID, (uint8_t)(addr >> 8));
+    outb(bus + REGISTER_LBA_HIGH, (uint8_t)(addr >> 16));
 
-    outb(0x1F6, 0xE0 | (drive << 4) | ((addr >> 24) & 0x0F));
+    outb(bus + REGISTER_DRIVE_HEAD, 0xE0 | (drive << 4) | ((addr >> 24) & 0x0F));
 }
 
-void setupLBA48(const uint8_t drive, const uint64_t addr)
+void setupLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
 {
-    outb(0x1F1, 0x00);
-    outb(0x1F1, 0x00);
+    outb(bus + REGISTER_ERROR, 0x00);
+    outb(bus + REGISTER_ERROR, 0x00);
 
-    outb(0x1F2, 0x00);
-    outb(0x1F2, 0x01);
+    outb(bus + REGISTER_SECTOR_COUNT, 0x00);
+    outb(bus + REGISTER_SECTOR_COUNT, 0x01);
 
-    outb(0x1F3, (uint8_t)(addr >> 24));
-    outb(0x1F3, (uint8_t)addr);
-    outb(0x1F4, (uint8_t)(addr >> 32));
-    outb(0x1F4, (uint8_t)(addr >> 8));
-    outb(0x1F5, (uint8_t)(addr >> 40));
-    outb(0x1F5, (uint8_t)(addr >> 16));
+    outb(bus + REGISTER_LBA_LOW, (uint8_t)(addr >> 24));
+    outb(bus + REGISTER_LBA_LOW, (uint8_t)addr);
+    outb(bus + REGISTER_LBA_MID, (uint8_t)(addr >> 32));
+    outb(bus + REGISTER_LBA_MID, (uint8_t)(addr >> 8));
+    outb(bus + REGISTER_LBA_HIGH, (uint8_t)(addr >> 40));
+    outb(bus + REGISTER_LBA_HIGH, (uint8_t)(addr >> 16));
     
-    outb(0x1F6, 0x40 | (drive << 4));
+    outb(bus + REGISTER_DRIVE_HEAD, 0x40 | (drive << 4));
 }
 
-char* readLBA(void)
+void awaitDRQ(const BUS bus)
 {
-    while (!(inb(0x1F7) & 0x08));
+    // Wait until the drive is ready for the data request
+    //while (!(inb(bus + REGISTER_STATUS) & STATUS_DRQ)) { }
+    while (!(inb(bus + REGISTER_ALTERNATE_STATUS) & STATUS_DRQ)) { }
+}
 
+char* readLBA(const BUS bus)
+{
     char* ptrBuff = (char*)mem::alloc(513);
     ptrBuff[512] = '\0';
     uint16_t tmpword = 0;
-    
+
+    awaitDRQ(bus);
+
     for (size_t idx = 0; idx < 256; idx++)
     {
-        tmpword = inw(0x1F0);
-        ptrBuff[(idx << 2)] = (uint8_t)tmpword;
-        ptrBuff[(idx << 2) + 1] = (uint8_t)(tmpword >> 8);
+        tmpword = inw(bus + REGISTER_DATA);
+        ptrBuff[(idx << 1)] = (uint8_t)tmpword;
+        ptrBuff[(idx << 1) + 1] = (uint8_t)(tmpword >> 8);
     }
 
     for (size_t i = 0; i < 512; i++)
     {
         if (ptrBuff[i] == '\0')
         {
-            ptrBuff[i] = ' ';
+            ptrBuff[i] = '.';
         }
     }
 
     return ptrBuff;
 }
 
-char* readLBA28(const uint8_t drive, const uint32_t addr)
+char* readLBA28(const BUS bus, const DRIVE drive, const uint32_t addr)
 {
-    setupLBA28(drive, addr);
-    outb(0x1F7, 0x20);
-    return readLBA();
+    setupLBA28(bus, drive, addr);
+    outb(bus + REGISTER_COMMAND, COMMAND_READ);
+    return readLBA(bus);
 }
 
-char* readLBA48(const uint8_t drive, const uint64_t addr)
+char* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
 {
-    setupLBA48(drive, addr);
-    outb(0x1F7, 0x24);
-    return readLBA();
+    setupLBA48(bus, drive, addr);
+    outb(bus + REGISTER_COMMAND, COMMAND_READ_EXTENDED);
+    return readLBA(bus);
 }
 
-void writeLBA(const char* const buffer)
+void writeLBA(const BUS bus, const char* const buffer)
 {
-    while (!(inb(0x1F7) & 0x08));
+    awaitDRQ(bus);
 
     for (size_t idx = 0; idx < 256; idx++)
     {
-        outw(0x1F0, ((uint16_t)buffer[idx << 1]) | (((uint16_t)buffer[(idx << 1) + 1]) << 8));
+        outw(bus + REGISTER_DATA, ((uint16_t)buffer[idx << 1]) | (((uint16_t)buffer[(idx << 1) + 1]) << 8));
     }
 }
 
-void writeLBA28(const uint8_t drive, const uint32_t addr, const char* const buffer)
+void writeLBA28(const BUS bus, const DRIVE drive, const uint32_t addr, const char* const buffer)
 {
-    setupLBA28(drive, addr);
-    outb(0x1F7, 0x30);
-    writeLBA(buffer);
+    setupLBA28(bus, drive, addr);
+    outb(bus + REGISTER_COMMAND, COMMAND_WRITE);
+    writeLBA(bus, buffer);
 }
 
-void writeLBA48(const uint8_t drive, const uint64_t addr, const char* const buffer)
+void writeLBA48(const BUS bus, const DRIVE drive, const uint64_t addr, const char* const buffer)
 {
-    setupLBA48(drive, addr);
-    outb(0x1F7, 0x34);
-    writeLBA(buffer);
+    setupLBA48(bus, drive, addr);
+    outb(bus + REGISTER_COMMAND, COMMAND_WRITE_EXTENDED);
+    writeLBA(bus, buffer);
 }

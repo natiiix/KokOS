@@ -1,26 +1,28 @@
 #pragma once
 // http://www.osdever.net/tutorials/view/lba-hdd-access-via-pio
+// http://wiki.osdev.org/ATA_PIO_Mode
+// http://wiki.osdev.org/PCI_IDE_Controller
 
 #include <stddef.h>
 #include <stdint.h>
 
-enum CONTROLLER : uint16_t
+enum BUS : uint16_t
 {
     PRIMARY = 0x1F0,
     SECONDARY = 0x170,
 };
 
-enum DRIVE : uint16_t
+enum DRIVE : uint8_t
 {
-    FIRST = 0xA0,
-    SECOND = 0xB0,
+    FIRST = 0x0,
+    SECOND = 0x1,
 };
 
-bool probeController(const CONTROLLER controller);
-bool probeDrive(const CONTROLLER controller, const DRIVE drive);
+bool probeBus(const BUS bus);
+bool probeDrive(const BUS bus, const DRIVE drive);
 
-char* readLBA28(const uint8_t drive, const uint32_t addr);
-char* readLBA48(const uint8_t drive, const uint64_t addr);
+char* readLBA28(const BUS bus, const DRIVE drive, const uint32_t addr);
+char* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr);
 
-void writeLBA28(const uint8_t drive, const uint32_t addr, const char* const buffer);
-void writeLBA48(const uint8_t drive, const uint64_t addr, const char* const buffer);
+void writeLBA28(const BUS bus, const DRIVE drive, const uint32_t addr, const char* const buffer);
+void writeLBA48(const BUS bus, const DRIVE drive, const uint64_t addr, const char* const buffer);
