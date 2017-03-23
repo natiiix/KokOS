@@ -16,7 +16,7 @@ const uint16_t REGISTER_LBA_HIGH     = 0x5;
 const uint16_t REGISTER_DRIVE_HEAD   = 0x6;
 const uint16_t REGISTER_COMMAND      = 0x7;
 const uint16_t REGISTER_STATUS       = 0x7;
-const uint16_t REGISTER_ALTERNATE_STATUS = 0x106;
+//const uint16_t REGISTER_ALTERNATE_STATUS = 0x106;
 
 const uint8_t COMMAND_READ           = 0x20;
 const uint8_t COMMAND_READ_EXTENDED  = 0x24;
@@ -36,6 +36,16 @@ const uint8_t PROBE_BYTE = 0xAB;
 
 //const uint8_t PROBE_DRIVE_MASTER = 0xA0;
 //const uint8_t PROBE_DRIVE_SLAVE = 0xB0;
+
+void awaitStatus(const BUS bus, const uint8_t status)
+{
+    while (!(inb(bus + REGISTER_STATUS) & status)) { }
+}
+
+void awaitStatusFalse(const BUS bus, const uint8_t status)
+{
+    while (inb(bus + REGISTER_STATUS) & status) { }
+}
 
 bool probeBus(const BUS bus)
 {
@@ -86,20 +96,13 @@ void setupLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
     outb(bus + REGISTER_DRIVE_HEAD, 0x40 | (drive << 4));
 }
 
-void awaitDRQ(const BUS bus)
-{
-    // Wait until the drive is ready for the data request
-    //while (!(inb(bus + REGISTER_STATUS) & STATUS_DRQ)) { }
-    while (!(inb(bus + REGISTER_ALTERNATE_STATUS) & STATUS_DRQ)) { }
-}
-
 char* readLBA(const BUS bus)
 {
     char* ptrBuff = (char*)mem::alloc(513);
     ptrBuff[512] = '\0';
     uint16_t tmpword = 0;
 
-    awaitDRQ(bus);
+    awaitStatus(bus, STATUS_DRQ);
 
     for (size_t idx = 0; idx < 256; idx++)
     {
@@ -135,7 +138,7 @@ char* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
 
 void writeLBA(const BUS bus, const char* const buffer)
 {
-    awaitDRQ(bus);
+    awaitStatus(bus, STATUS_DRQ);
 
     for (size_t idx = 0; idx < 256; idx++)
     {
