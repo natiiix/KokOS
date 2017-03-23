@@ -14,8 +14,8 @@ enum BUS : uint16_t
 
 enum DRIVE : uint8_t
 {
-    FIRST = 0x0,
-    SECOND = 0x1,
+    MASTER = 0x0,
+    SLAVE = 0x1,
 };
 
 bool probeBus(const BUS bus);

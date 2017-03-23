@@ -32,24 +32,43 @@ void kernel_main(void)
 	term::init();
 	mem::init();
 
+	term::pause();
+
 	term::write("Primary: ");
 	putbool(probeBus(BUS::PRIMARY));
-	term::write("First: ");
-	putbool(probeDrive(BUS::PRIMARY, DRIVE::FIRST));
-	term::write("Second: ");
-	putbool(probeDrive(BUS::PRIMARY, DRIVE::SECOND));
+	term::write("Master: ");
+	putbool(probeDrive(BUS::PRIMARY, DRIVE::MASTER));
+	term::write("Slave: ");
+	putbool(probeDrive(BUS::PRIMARY, DRIVE::SLAVE));
 
 	term::breakline();
 
 	term::write("Secondary: ");
 	putbool(probeBus(BUS::SECONDARY));
-	term::write("First: ");
-	putbool(probeDrive(BUS::SECONDARY, DRIVE::FIRST));
-	term::write("Second: ");
-	putbool(probeDrive(BUS::SECONDARY, DRIVE::SECOND));
+	term::write("Master: ");
+	putbool(probeDrive(BUS::SECONDARY, DRIVE::MASTER));
+	term::write("Slave: ");
+	putbool(probeDrive(BUS::SECONDARY, DRIVE::SLAVE));
 
-	while (true)
+	term::pause();
+
+	term::writeline(readLBA28(BUS::PRIMARY, DRIVE::MASTER, 0), true);
+	term::pause();
+	term::writeline(readLBA28(BUS::PRIMARY, DRIVE::SLAVE, 0), true);
+	term::pause();
+	term::writeline(readLBA28(BUS::SECONDARY, DRIVE::MASTER, 0), true);
+	term::pause();
+	term::writeline(readLBA28(BUS::SECONDARY, DRIVE::SLAVE, 0), true);
+	term::pause();
+
+	for (uint32_t i = 0; i < 32; i++)
 	{
-		term::pause();
+		term::writeline(readLBA28(BUS::PRIMARY, DRIVE::MASTER, i), true);
 	}
+
+	term::pause();
+
+	debug::panic();
+
+	while (true);
 }

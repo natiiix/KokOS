@@ -34,8 +34,8 @@ const uint8_t STATUS_ERR  = 0x01; // Error
 
 const uint8_t PROBE_BYTE = 0xAB;
 
-//const uint8_t PROBE_DRIVE_FIRST = 0xA0;
-//const uint8_t PROBE_DRIVE_SECOND = 0xB0;
+//const uint8_t PROBE_DRIVE_MASTER = 0xA0;
+//const uint8_t PROBE_DRIVE_SLAVE = 0xB0;
 
 bool probeBus(const BUS bus)
 {
