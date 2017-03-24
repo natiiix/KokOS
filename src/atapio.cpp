@@ -96,9 +96,9 @@ void setupLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
     outb(bus + REGISTER_DRIVE_HEAD, 0x40 | (drive << 4));
 }
 
-char* readLBA(const BUS bus)
+uint8_t* readLBA(const BUS bus)
 {
-    char* ptrBuff = (char*)mem::alloc(513);
+    uint8_t* ptrBuff = (uint8_t*)mem::alloc(513);
     ptrBuff[512] = '\0';
     uint16_t tmpword = 0;
 
@@ -111,32 +111,24 @@ char* readLBA(const BUS bus)
         ptrBuff[(idx << 1) + 1] = (uint8_t)(tmpword >> 8);
     }
 
-    for (size_t i = 0; i < 512; i++)
-    {
-        if (ptrBuff[i] == '\0')
-        {
-            ptrBuff[i] = '.';
-        }
-    }
-
     return ptrBuff;
 }
 
-char* readLBA28(const BUS bus, const DRIVE drive, const uint32_t addr)
+uint8_t* readLBA28(const BUS bus, const DRIVE drive, const uint32_t addr)
 {
     setupLBA28(bus, drive, addr);
     outb(bus + REGISTER_COMMAND, COMMAND_READ);
     return readLBA(bus);
 }
 
-char* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
+uint8_t* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr)
 {
     setupLBA48(bus, drive, addr);
     outb(bus + REGISTER_COMMAND, COMMAND_READ_EXTENDED);
     return readLBA(bus);
 }
 
-void writeLBA(const BUS bus, const char* const buffer)
+void writeLBA(const BUS bus, const uint8_t* const buffer)
 {
     awaitStatus(bus, STATUS_DRQ);
 
@@ -146,14 +138,14 @@ void writeLBA(const BUS bus, const char* const buffer)
     }
 }
 
-void writeLBA28(const BUS bus, const DRIVE drive, const uint32_t addr, const char* const buffer)
+void writeLBA28(const BUS bus, const DRIVE drive, const uint32_t addr, const uint8_t* const buffer)
 {
     setupLBA28(bus, drive, addr);
     outb(bus + REGISTER_COMMAND, COMMAND_WRITE);
     writeLBA(bus, buffer);
 }
 
-void writeLBA48(const BUS bus, const DRIVE drive, const uint64_t addr, const char* const buffer)
+void writeLBA48(const BUS bus, const DRIVE drive, const uint64_t addr, const uint8_t* const buffer)
 {
     setupLBA48(bus, drive, addr);
     outb(bus + REGISTER_COMMAND, COMMAND_WRITE_EXTENDED);

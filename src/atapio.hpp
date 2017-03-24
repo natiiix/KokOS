@@ -21,8 +21,8 @@ enum DRIVE : uint8_t
 bool probeBus(const BUS bus);
 bool probeDrive(const BUS bus, const DRIVE drive);
 
-char* readLBA28(const BUS bus, const DRIVE drive, const uint32_t addr);
-char* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr);
+uint8_t* readLBA28(const BUS bus, const DRIVE drive, const uint32_t addr);
+uint8_t* readLBA48(const BUS bus, const DRIVE drive, const uint64_t addr);
 
-void writeLBA28(const BUS bus, const DRIVE drive, const uint32_t addr, const char* const buffer);
-void writeLBA48(const BUS bus, const DRIVE drive, const uint64_t addr, const char* const buffer);
+void writeLBA28(const BUS bus, const DRIVE drive, const uint32_t addr, const uint8_t* const buffer);
+void writeLBA48(const BUS bus, const DRIVE drive, const uint64_t addr, const uint8_t* const buffer);

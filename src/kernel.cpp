@@ -32,7 +32,7 @@ void kernel_main(void)
 	term::init();
 	mem::init();
 
-	term::pause();
+	/*term::pause();
 
 	term::write("Primary: ");
 	putbool(probeBus(BUS::PRIMARY));
@@ -64,10 +64,48 @@ void kernel_main(void)
 	for (uint32_t i = 0; i < 32; i++)
 	{
 		term::writeline(readLBA28(BUS::PRIMARY, DRIVE::MASTER, i), true);
+	}*/
+		
+	uint8_t* secMBR = readLBA48(BUS::PRIMARY, DRIVE::MASTER, 0);
+
+	term::writeline((unsigned char)secMBR[510], 16);
+	term::writeline((unsigned char)secMBR[511], 16);
+
+	if (secMBR[510] == 0x55 && secMBR[511] == 0xAA)
+	{
+		term::writeline("MBR: OK");
+
+		char oemName[9];
+		oemName[8] = '\0';
+
+		for (size_t i = 0; i < 8; i++)
+		{
+			oemName[i] = (char)secMBR[3 + i];
+		}
+
+		term::writeline(oemName);
+
+		size_t bt = 0x1BE;
+
+		for (size_t i = 0; i < 4; i++)
+		{
+			for (size_t j = 0; j < 16; j++)
+			{
+				term::write(secMBR[bt++], 16);
+				term::write(" ");
+			}
+
+			term::breakline();
+		}
 	}
+	else
+	{
+		term::writeline("MBR: ERROR");
+	}	
+
+	delete secMBR;
 
 	term::pause();
-
 	debug::panic();
 
 	while (true);
