@@ -8,6 +8,8 @@
 #include "class_string.hpp"
 #include "class_vector.hpp"
 #include "atapio.hpp"
+#include "pci.hpp"
+#include "ahci.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -66,7 +68,7 @@ void kernel_main(void)
 		term::writeline(readLBA28(BUS::PRIMARY, DRIVE::MASTER, i), true);
 	}*/
 		
-	uint8_t* secMBR = readLBA48(BUS::PRIMARY, DRIVE::MASTER, 0);
+	/*uint8_t* secMBR = readLBA48(BUS::PRIMARY, DRIVE::MASTER, 0);
 
 	term::writeline((unsigned char)secMBR[510], 16);
 	term::writeline((unsigned char)secMBR[511], 16);
@@ -103,7 +105,45 @@ void kernel_main(void)
 		term::writeline("MBR: ERROR");
 	}	
 
-	delete secMBR;
+	delete secMBR;*/
+
+	pcidevice* pcidev = nullptr;
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		for (uint8_t j = 0; j < 64; j++)
+		{
+			pcidev = getDevice(i, j);
+
+			if (pcidev->vendorid != 0xFFFF)
+			{
+				//term::write("[");
+				term::write(i, 16);
+				term::write(":");
+				term::write(j, 16);
+				/*term::write("] Ven: ");
+				term::write(pcidev->vendorid, 16);
+				term::write(" | Dev: ");
+				term::write(pcidev->deviceid, 16);*/
+				term::write(" | Hea: ");
+				term::write(pcidev->headertype, 16);
+				term::write(" | Cla: ");
+				term::write(pcidev->classid, 16);
+				term::write(" | Sub: ");
+				term::write(pcidev->subclass, 16);
+				term::write(" | BAR5: ");
+				term::writeline(pcidev->baseaddr5, 16);
+
+				if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6)
+				{
+					term::write(" SATA");
+					//probe_port((HBA_MEM*)pcidev->baseaddr5);
+				}
+			}
+
+			delete pcidev;
+		}
+	}
 
 	term::pause();
 	debug::panic();
