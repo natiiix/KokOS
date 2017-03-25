@@ -4,12 +4,12 @@
 #include "terminal.hpp"
 #include "memory.hpp"
 #include "debug.hpp"
-#include "cstring.hpp"
+/*#include "cstring.hpp"
 #include "class_string.hpp"
 #include "class_vector.hpp"
-#include "atapio.hpp"
 #include "pci.hpp"
-#include "ahci.hpp"
+#include "ahci.hpp"*/
+#include "devices.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -21,10 +21,10 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
-void putbool(bool b)
+/*void putbool(bool b)
 {
 	term::writeline(b ? "true" : "false");
-}
+}*/
 
 #if defined(__cplusplus)
 extern "C" // Use C linkage for kernel_main
@@ -33,6 +33,7 @@ void kernel_main(void)
 {
 	term::init();
 	mem::init();
+	devices_init();
 
 	/*term::pause();
 
@@ -107,7 +108,7 @@ void kernel_main(void)
 
 	delete secMBR;*/
 
-	pcidevice* pcidev = nullptr;
+	/*pcidevice* pcidev = nullptr;
 
 	for (uint8_t i = 0; i < 64; i++)
 	{
@@ -121,10 +122,6 @@ void kernel_main(void)
 				term::write(i, 16);
 				term::write(":");
 				term::write(j, 16);
-				/*term::write("] Ven: ");
-				term::write(pcidev->vendorid, 16);
-				term::write(" | Dev: ");
-				term::write(pcidev->deviceid, 16);*/
 				term::write(" | Hea: ");
 				term::write(pcidev->headertype, 16);
 				term::write(" | Cla: ");
@@ -178,7 +175,7 @@ void kernel_main(void)
 
 			delete pcidev;
 		}
-	}
+	}*/
 
 	term::pause();
 	debug::panic();

@@ -1,6 +1,6 @@
 #include "fat.hpp"
 
-void init(void)
+void fat_init(void)
 {
-    
+    // TODO
 }
