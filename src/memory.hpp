@@ -35,3 +35,6 @@ namespace mem
 
 void operator delete(void* ptr);
 void * memset ( void * ptr, int value, size_t num );
+
+void* phystovirt(const size_t physAddr);
+void* phystovirt(const void* const physAddr);

@@ -26,3 +26,22 @@
 //  -- 0x5 [0x3] : CHS end
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
+
+struct partition
+{
+    uint8_t bootflag;
+    uint8_t chsbegin[3];
+    uint8_t typecode;
+    uint8_t chsend[3];
+    uint32_t lbabegin;
+    uint32_t sectors;
+};
+
+struct MBR
+{
+    uint8_t jumpinstr[0x3];
+    uint8_t oemname[0x8];
+    uint8_t unknown[0x1B3];
+    partition part[4];
+    uint16_t bootsegsign;
+};

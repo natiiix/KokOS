@@ -109,9 +109,9 @@ void kernel_main(void)
 
 	pcidevice* pcidev = nullptr;
 
-	for (uint8_t i = 0; i < 8; i++)
+	for (uint8_t i = 0; i < 64; i++)
 	{
-		for (uint8_t j = 0; j < 64; j++)
+		for (uint8_t j = 0; j < 32; j++)
 		{
 			pcidev = getDevice(i, j);
 
@@ -136,8 +136,43 @@ void kernel_main(void)
 
 				if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6)
 				{
-					term::write(" SATA");
-					//probe_port((HBA_MEM*)pcidev->baseaddr5);
+					HBA_MEM* hbamem = (HBA_MEM*)phystovirt(pcidev->baseaddr5);
+					probe_port(hbamem);
+					port_rebase(&hbamem->ports[0], 0);
+
+					char* cbuff = (char*)mem::alloc(513);
+
+					for (size_t i = 0; i < 512; i++)
+					{
+						cbuff[i] = '\0';
+					}
+
+					for (size_t j = 0; j < 256; j++)
+					{
+						if (read(&hbamem->ports[0], j, 0, 1, (uint16_t*)cbuff))
+						{
+							//term::writeline("Reading successful!");
+						}
+						else
+						{
+							term::writeline("Reading failed!");
+							break;
+						}
+
+						for (size_t i = 0; i < 512; i++)
+						{
+							if (cbuff[i] == '\0')
+							{
+								cbuff[i] = '.';
+							}
+						}
+
+						cbuff[512] = '\0';
+
+						term::writeline(cbuff, false);
+					}
+
+					delete cbuff;
 				}
 			}
 

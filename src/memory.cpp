@@ -1,6 +1,11 @@
 #include "memory.hpp"
 
 #include "cstring.hpp"
+#include "debug.hpp"
+
+size_t mapPage = 0;
+size_t* pageTable = nullptr;
+size_t pageCount = 0;
 
 namespace mem
 {
@@ -16,7 +21,6 @@ namespace mem
 
     void init(void)
     {
-
         // Clear the memory
         for (size_t i = 0; i < MEMORY_SIZE_IN_SIZE_T; i++)
         {
@@ -41,6 +45,17 @@ namespace mem
         {
             dynsegbegin[i] = 0;
             dynseglen[i] = 0;
+        }
+
+        // The first page is already used by the VGA buffer
+        mapPage = 1;
+        // Load the page table address and the number of mapped pages
+        pageTable = (size_t*)(*((size_t*)0xC07FFFFC));
+        pageCount = *((size_t*)0xC07FFFF8);
+
+        if (pageTable == 0 || pageCount == 0)
+        {
+            debug::panic();
         }
     }
 
@@ -525,4 +540,60 @@ void * memset ( void * ptr, int value, size_t num )
     }
 
     return ptr;
+}
+
+/*void* physmap(const size_t physAddr)
+{
+    // Pages are 0x1000 aligned so the physical address must also be aligned so
+    size_t pageOffset = physAddr & 0xFFF;
+    size_t physAddrAligned = physAddr ^ pageOffset;
+    size_t pageTableEntry = physAddrAligned | 0x3;
+
+    // Load the page table address and the number of mapped pages
+    size_t* pageTable = (size_t*)(*((size_t*)0xC07FFFFC));
+    size_t pageCount = *((size_t*)0xC07FFFF8);
+
+    // Map the physical page to a virtual page
+    size_t pageTableIdx = (1024 * pageCount) - 1 - mapPage++;
+    pageTable[pageTableIdx] = pageTableEntry;
+
+    // Translate the input physical address to a virtual address
+    void* virtAddr = (void*)(0xC0000000 + (pageTableIdx * 0x1000) + pageOffset);
+
+    return virtAddr;
+}*/
+
+void* phystovirt(const size_t physAddr)
+{
+    // Pages are 0x1000 aligned so the physical address must also be aligned so
+    size_t pageOffset = physAddr & (size_t)0xFFF;
+    size_t physAddrAligned = physAddr ^ pageOffset;
+    size_t pageTableEntry = physAddrAligned | 0x3;
+    
+    // The amount of entries which can be possibly stored
+    size_t entryCount = pageCount << 10;
+
+    // Check if the physical address is already mapped
+    for (size_t i = entryCount - 1; i < entryCount; i--)
+    {
+        // The physical address is already mapped
+        if (pageTable[i] == pageTableEntry)
+        {
+            void* virtAddr = (void*)(0xC0000000 + (i << 12) + pageOffset);
+            return virtAddr;
+        }
+    }
+
+    // Map the physical address to a virtual address
+    size_t pageTableIdx = entryCount - 1 - mapPage++;
+    pageTable[pageTableIdx] = pageTableEntry;
+
+    // Translate the input physical address to a virtual address
+    void* virtAddr = (void*)(0xC0000000 + (pageTableIdx << 12) + pageOffset);
+    return virtAddr;    
+}
+
+void* phystovirt(const void* const physAddr)
+{
+    return phystovirt((size_t)physAddr);
 }

@@ -1,5 +1,8 @@
 #include "ahci.hpp"
 
+#include "memory.hpp"
+#include "terminal.hpp"
+
 // Detect attached SATA devices
 // 1) Which port is device attached
 /* As specified in the AHCI specification, firmware (BIOS) should initialize the AHCI controller
@@ -62,36 +65,36 @@ void probe_port(HBA_MEM *abar)
 {
 	// Search disk in impelemented ports
 	DWORD pi = abar->pi;
-	int i = 0;
-	while (i < 32)
+
+	for (size_t i = 0; i < 32; i++)
 	{
 		if (pi & 1)
 		{
 			int dt = check_type(&abar->ports[i]);
+
 			if (dt == AHCI_DEV_SATA)
 			{
-				trace_ahci("SATA drive found at port %d\n", i);
+				trace_ahci("SATA drive found at port ", i);
 			}
 			else if (dt == (int)AHCI_DEV_SATAPI)
 			{
-				trace_ahci("SATAPI drive found at port %d\n", i);
+				trace_ahci("SATAPI drive found at port ", i);
 			}
 			else if (dt == (int)AHCI_DEV_SEMB)
 			{
-				trace_ahci("SEMB drive found at port %d\n", i);
+				trace_ahci("SEMB drive found at port ", i);
 			}
 			else if (dt == (int)AHCI_DEV_PM)
 			{
-				trace_ahci("PM drive found at port %d\n", i);
+				trace_ahci("PM drive found at port ", i);
 			}
 			else
 			{
-				trace_ahci("No drive found at port %d\n", i);
+				//trace_ahci("No drive found at port ", i);
 			}
 		}
  
 		pi >>= 1;
-		i ++;
 	}
 }
 
@@ -127,14 +130,7 @@ void stop_cmd(HBA_PORT *port)
 	port->cmd &= ~HBA_PxCMD_ST;
  
 	// Wait until FR (bit14), CR (bit15) are cleared
-	while(1)
-	{
-		if (port->cmd & HBA_PxCMD_FR)
-			continue;
-		if (port->cmd & HBA_PxCMD_CR)
-			continue;
-		break;
-	}
+	while(port->cmd & HBA_PxCMD_FR || port->cmd & HBA_PxCMD_CR);
  
 	// Clear FRE (bit4)
 	port->cmd &= ~HBA_PxCMD_FRE;
@@ -160,7 +156,7 @@ void port_rebase(HBA_PORT *port, int portno)
 	// Command list entry size = 32
 	// Command list entry maxim count = 32
 	// Command list maxim size = 32*32 = 1K per port
-	port->clb = AHCI_BASE + (portno<<10);
+	port->clb = (size_t)phystovirt(AHCI_BASE + (portno<<10));
 	port->clbu = 0;
 	memset((void*)(port->clb), 0, 1024);
  
@@ -178,7 +174,7 @@ void port_rebase(HBA_PORT *port, int portno)
 		cmdheader[i].prdtl = 8;	// 8 prdt entries per command table
 					// 256 bytes per command table, 64+16+48+16*8
 		// Command table offset: 40K + 8K*portno + cmdheader_index*256
-		cmdheader[i].ctba = AHCI_BASE + (40<<10) + (portno<<13) + (i<<8);
+		cmdheader[i].ctba = (size_t)phystovirt(AHCI_BASE + (40<<10) + (portno<<13) + (i<<8));
 		cmdheader[i].ctbau = 0;
 		memset((void*)cmdheader[i].ctba, 0, 256);
 	}
@@ -215,7 +211,7 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 	if (slot == -1)
 		return FALSE;
  
-	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)port->clb;
+	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)(port->clb);
 	cmdheader += slot;
 	cmdheader->cfl = sizeof(FIS_REG_H2D)/sizeof(DWORD);	// Command FIS size
 	cmdheader->w = 0;		// Read from device
@@ -237,6 +233,7 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 
         i++;
 	}
+
 	// Last entry
 	cmdtbl->prdt_entry[i].dba = (DWORD)buf;
 	cmdtbl->prdt_entry[i].dbc = count<<9;	// 512 bytes per sector

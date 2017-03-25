@@ -131,6 +131,12 @@ _start:
 	# Set up the stack.
 	mov $stack_top, %esp
 
+	# Store the page table address and the number of pages for kernel to use
+	movl $boot_page_table, %esi
+	movl %esi, (0xC07FFFFC)
+	movl $PAGES, %esi
+	movl %esi, (0xC07FFFF8)
+
 	# Enter the high-level kernel.
 	call kernel_main
 
