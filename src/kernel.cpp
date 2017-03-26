@@ -4,11 +4,11 @@
 #include "terminal.hpp"
 #include "memory.hpp"
 #include "debug.hpp"
-/*#include "cstring.hpp"
+#include "cstring.hpp"
 #include "class_string.hpp"
 #include "class_vector.hpp"
 #include "pci.hpp"
-#include "ahci.hpp"*/
+#include "ahci.hpp"
 #include "devices.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
@@ -178,7 +178,6 @@ void kernel_main(void)
 	}*/
 
 	term::pause();
+	term::pause();
 	debug::panic();
-
-	while (true);
 }

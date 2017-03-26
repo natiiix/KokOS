@@ -38,3 +38,5 @@ void * memset ( void * ptr, int value, size_t num );
 
 void* phystovirt(const size_t physAddr);
 void* phystovirt(const void* const physAddr);
+void* virttophys(const size_t virtAddr);
+void* virttophys(const void* const virtAddr);

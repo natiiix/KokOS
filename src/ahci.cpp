@@ -130,7 +130,7 @@ void stop_cmd(HBA_PORT *port)
 	port->cmd &= ~HBA_PxCMD_ST;
  
 	// Wait until FR (bit14), CR (bit15) are cleared
-	while(port->cmd & HBA_PxCMD_FR || port->cmd & HBA_PxCMD_CR);
+	//while(port->cmd & HBA_PxCMD_FR || port->cmd & HBA_PxCMD_CR);
  
 	// Clear FRE (bit4)
 	port->cmd &= ~HBA_PxCMD_FRE;
@@ -150,33 +150,33 @@ void* memset(void* str, char c, size_t n)
  
 void port_rebase(HBA_PORT *port, int portno)
 {
-	stop_cmd(port);	// Stop command engine
- 
+	stop_cmd(port);	// Stop command engine	
+
 	// Command list offset: 1K*portno
 	// Command list entry size = 32
 	// Command list entry maxim count = 32
 	// Command list maxim size = 32*32 = 1K per port
-	port->clb = (size_t)phystovirt(AHCI_BASE + (portno<<10));
+	port->clb = AHCI_BASE + (portno<<10);
 	port->clbu = 0;
-	memset((void*)(port->clb), 0, 1024);
- 
+	memset(phystovirt(port->clb), 0, 1024);
+
 	// FIS offset: 32K+256*portno
 	// FIS entry size = 256 bytes per port
 	port->fb = AHCI_BASE + (32<<10) + (portno<<8);
 	port->fbu = 0;
-	memset((void*)(port->fb), 0, 256);
+	memset(phystovirt(port->fb), 0, 256);
  
 	// Command table offset: 40K + 8K*portno
 	// Command table size = 256*32 = 8K per port
-	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)(port->clb);
+	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)phystovirt(port->clb);
 	for (int i=0; i<32; i++)
 	{
 		cmdheader[i].prdtl = 8;	// 8 prdt entries per command table
 					// 256 bytes per command table, 64+16+48+16*8
 		// Command table offset: 40K + 8K*portno + cmdheader_index*256
-		cmdheader[i].ctba = (size_t)phystovirt(AHCI_BASE + (40<<10) + (portno<<13) + (i<<8));
+		cmdheader[i].ctba = AHCI_BASE + (40<<10) + (portno<<13) + (i<<8);
 		cmdheader[i].ctbau = 0;
-		memset((void*)cmdheader[i].ctba, 0, 256);
+		memset(phystovirt(cmdheader[i].ctba), 0, 256);
 	}
  
 	start_cmd(port);	// Start command engine
@@ -193,13 +193,18 @@ int find_cmdslot(HBA_PORT *port)
 {
 	// If not set in SACT and CI, the slot is free
 	DWORD slots = (port->sact | port->ci);
-	for (int i=0; i<32; i++)
+
+	for (int i = 0; i < 32; i++)
 	{
-		if ((slots&1) == 0)
+		if ((slots & 1) == 0)
+		{
 			return i;
+		}
+
 		slots >>= 1;
 	}
-	trace_ahci("Cannot find free command list entry\n");
+
+	trace_ahci("Cannot find free command list entry");
 	return -1;
 }
  
@@ -208,39 +213,39 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 	port->is = (DWORD)-1;		// Clear pending interrupt bits
 	int spin = 0; // Spin lock timeout counter
 	int slot = find_cmdslot(port);
+	term::writeline((size_t)slot, 16);
 	if (slot == -1)
+	{
 		return FALSE;
+	}
  
-	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)(port->clb);
+	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)phystovirt(port->clb);
+	term::writeline((size_t)cmdheader, 16);
 	cmdheader += slot;
 	cmdheader->cfl = sizeof(FIS_REG_H2D)/sizeof(DWORD);	// Command FIS size
 	cmdheader->w = 0;		// Read from device
 	cmdheader->prdtl = (WORD)((count-1)>>4) + 1;	// PRDT entries count
  
-	HBA_CMD_TBL *cmdtbl = (HBA_CMD_TBL*)(cmdheader->ctba);
-	memset(cmdtbl, 0, sizeof(HBA_CMD_TBL) +
- 		(cmdheader->prdtl-1)*sizeof(HBA_PRDT_ENTRY));
+	HBA_CMD_TBL *cmdtbl = (HBA_CMD_TBL*)phystovirt(cmdheader->ctba);
+	memset(cmdtbl, 0, sizeof(HBA_CMD_TBL) + (cmdheader->prdtl-1)*sizeof(HBA_PRDT_ENTRY));
  
 	// 8K bytes (16 sectors) per PRDT
-    int i=0;
-	while (i<cmdheader->prdtl-1)
+	for (int i = 0; i < cmdheader->prdtl-1; i++)	
 	{
-		cmdtbl->prdt_entry[i].dba = (DWORD)buf;
+		cmdtbl->prdt_entry[i].dba = (DWORD)virttophys(buf);
 		cmdtbl->prdt_entry[i].dbc = 8*1024;	// 8K bytes
 		cmdtbl->prdt_entry[i].i = 1;
 		buf += 4*1024;	// 4K words
 		count -= 16;	// 16 sectors
-
-        i++;
 	}
 
 	// Last entry
-	cmdtbl->prdt_entry[i].dba = (DWORD)buf;
-	cmdtbl->prdt_entry[i].dbc = count<<9;	// 512 bytes per sector
-	cmdtbl->prdt_entry[i].i = 1;
+	cmdtbl->prdt_entry[cmdheader->prdtl-1].dba = (DWORD)virttophys(buf);
+	cmdtbl->prdt_entry[cmdheader->prdtl-1].dbc = count<<9;	// 512 bytes per sector
+	cmdtbl->prdt_entry[cmdheader->prdtl-1].i = 1;
  
 	// Setup command
-	FIS_REG_H2D *cmdfis = (FIS_REG_H2D*)(&cmdtbl->cfis);
+	FIS_REG_H2D *cmdfis = (FIS_REG_H2D*)phystovirt(&cmdtbl->cfis);
  
 	cmdfis->fis_type = FIS_TYPE_REG_H2D;
 	cmdfis->c = 1;	// Command
@@ -265,7 +270,7 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 	}
 	if (spin == 1000000)
 	{
-		trace_ahci("Port is hung\n");
+		trace_ahci("Port is hung");
 		return FALSE;
 	}
  
@@ -280,7 +285,7 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 			break;
 		if (port->is & HBA_PxIS_TFES)	// Task file error
 		{
-			trace_ahci("Read disk error\n");
+			trace_ahci("Read disk error");
 			return FALSE;
 		}
 	}
@@ -288,7 +293,7 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 	// Check again
 	if (port->is & HBA_PxIS_TFES)
 	{
-		trace_ahci("Read disk error\n");
+		trace_ahci("Read disk error");
 		return FALSE;
 	}
  

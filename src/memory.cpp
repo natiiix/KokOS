@@ -597,3 +597,18 @@ void* phystovirt(const void* const physAddr)
 {
     return phystovirt((size_t)physAddr);
 }
+
+void* virttophys(const size_t virtAddr)
+{
+    // Pages are 0x1000 aligned
+    size_t pageOffset = virtAddr & (size_t)0xFFF;
+    size_t virtAddrAligned = virtAddr ^ pageOffset;
+
+    size_t pageIdx = (virtAddrAligned - 0xC0000000) >> 12;
+    return (void*)((pageTable[pageIdx] >> 12 << 12) + pageOffset);
+}
+
+void* virttophys(const void* const virtAddr)
+{
+    return virttophys((size_t)virtAddr);
+}

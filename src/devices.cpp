@@ -4,6 +4,7 @@
 #include "memory.hpp"
 #include "atapio.hpp"
 #include "pci.hpp"
+#include "ahci.hpp"
 
 void devices_init(void)
 {
@@ -52,9 +53,35 @@ void devices_init(void)
                 term::write(" : Slot 0x");
                 term::write(islot, 16);
 
-				if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6)
+				if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6 && pcidev->progif == 1)
 				{
                     term::writeline(" : SATA Mass Storage");
+
+                    HBA_MEM* hbamem = (HBA_MEM*)phystovirt(pcidev->baseaddr5);
+                    probe_port(hbamem);
+                    //port_rebase(&hbamem->ports[0], 0);
+                    
+                    char* cbuff = (char*)mem::alloc(513);
+
+                    for (size_t i = 0; i < 512; i++)
+                    {
+                        cbuff[i] = '\0';
+                    }
+
+                    if (read(&hbamem->ports[0], 0, 0, 4096, (uint16_t*)cbuff))
+                    {
+                        for (size_t i = 0; i < 512; i++)
+                        {
+                            if (cbuff[i] == '\0')
+                                cbuff[i] = '.';
+                        }
+
+                        cbuff[512] = '\0';
+
+                        term::writeline(cbuff);
+                    }
+
+                    delete cbuff;
                 }
                 else
                 {
@@ -65,4 +92,6 @@ void devices_init(void)
 			delete pcidev;
 		}
 	}
+
+    term::writeline("Device initialization completed!");
 }
