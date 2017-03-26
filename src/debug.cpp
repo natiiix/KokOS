@@ -17,9 +17,10 @@ namespace debug
 
     void panic(const char* const str)
     {
-        term::setcolor(term::vga_entry_color(term::vga_color::VGA_COLOR_RED, term::vga_color::VGA_COLOR_LIGHT_GREEN));
+        term::setcolor(term::vga_entry_color(term::vga_color::VGA_COLOR_LIGHT_RED, term::vga_color::VGA_COLOR_BLUE));
         term::clear();
         term::writeline(str, false);
+
         hlt();
     }
 

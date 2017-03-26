@@ -10,6 +10,8 @@
 #include "pci.hpp"
 #include "ahci.hpp"
 #include "devices.hpp"
+#include "fat.hpp"
+#include "atapio.hpp"
 
 // Check if the compiler thinks we are targeting the wrong operating system
 #if defined(__linux__)
@@ -177,7 +179,9 @@ void kernel_main(void)
 		}
 	}*/
 
-	term::pause();
+	//fat_init_ide(BUS::PRIMARY, DRIVE::MASTER);
+
+	debug::memusage();
 	term::pause();
 	debug::panic();
 }

@@ -208,20 +208,18 @@ int find_cmdslot(HBA_PORT *port)
 	return -1;
 }
  
-BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
+BOOL read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 {
-	port->is = (DWORD)-1;		// Clear pending interrupt bits
+	port->is = (DWORD)-1; // Clear pending interrupt bits
 	int spin = 0; // Spin lock timeout counter
-	int slot = find_cmdslot(port);
-	term::writeline((size_t)slot, 16);
-	if (slot == -1)
+	int cmdslot = find_cmdslot(port);
+	if (cmdslot == -1)
 	{
 		return FALSE;
 	}
  
 	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)phystovirt(port->clb);
-	term::writeline((size_t)cmdheader, 16);
-	cmdheader += slot;
+	cmdheader += cmdslot;
 	cmdheader->cfl = sizeof(FIS_REG_H2D)/sizeof(DWORD);	// Command FIS size
 	cmdheader->w = 0;		// Read from device
 	cmdheader->prdtl = (WORD)((count-1)>>4) + 1;	// PRDT entries count
@@ -233,14 +231,16 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 	for (int i = 0; i < cmdheader->prdtl-1; i++)	
 	{
 		cmdtbl->prdt_entry[i].dba = (DWORD)virttophys(buf);
-		cmdtbl->prdt_entry[i].dbc = 8*1024;	// 8K bytes
+		cmdtbl->prdt_entry[i].dbau = 0;
+		cmdtbl->prdt_entry[i].dbc = 1<<13; // 8K bytes
 		cmdtbl->prdt_entry[i].i = 1;
-		buf += 4*1024;	// 4K words
-		count -= 16;	// 16 sectors
+		buf += 1<<13; // 4K words
+		count -= 16; // 16 sectors
 	}
 
 	// Last entry
 	cmdtbl->prdt_entry[cmdheader->prdtl-1].dba = (DWORD)virttophys(buf);
+	cmdtbl->prdt_entry[cmdheader->prdtl-1].dbau = 0;
 	cmdtbl->prdt_entry[cmdheader->prdtl-1].dbc = count<<9;	// 512 bytes per sector
 	cmdtbl->prdt_entry[cmdheader->prdtl-1].i = 1;
  
@@ -248,17 +248,17 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 	FIS_REG_H2D *cmdfis = (FIS_REG_H2D*)phystovirt(&cmdtbl->cfis);
  
 	cmdfis->fis_type = FIS_TYPE_REG_H2D;
-	cmdfis->c = 1;	// Command
+	cmdfis->c = 1; // Command
 	cmdfis->command = ATA_CMD_READ_DMA_EX;
  
-	cmdfis->lba0 = (BYTE)startl;
-	cmdfis->lba1 = (BYTE)(startl>>8);
-	cmdfis->lba2 = (BYTE)(startl>>16);
-	cmdfis->device = 1<<6;	// LBA mode
+	cmdfis->lba0 = (BYTE)start;
+	cmdfis->lba1 = (BYTE)(start>>8);
+	cmdfis->lba2 = (BYTE)(start>>16);
+	cmdfis->device = 1<<6; // LBA mode
  
-	cmdfis->lba3 = (BYTE)(startl>>24);
-	cmdfis->lba4 = (BYTE)starth;
-	cmdfis->lba5 = (BYTE)(starth>>8);
+	cmdfis->lba3 = (BYTE)(start>>24);
+	cmdfis->lba4 = (BYTE)(start>>32);
+	cmdfis->lba5 = (BYTE)(start>>40);
  
     cmdfis->countl = (BYTE)count;
 	cmdfis->counth = (BYTE)(count>>8);
@@ -274,14 +274,14 @@ BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf)
 		return FALSE;
 	}
  
-	port->ci = 1<<slot;	// Issue command
+	port->ci = 1<<cmdslot; // Issue command
  
 	// Wait for completion
 	while (1)
 	{
 		// In some longer duration reads, it may be helpful to spin on the DPS bit 
 		// in the PxIS port field as well (1 << 5)
-		if ((port->ci & (1<<slot)) == 0) 
+		if ((port->ci & (1<<cmdslot)) == 0) 
 			break;
 		if (port->is & HBA_PxIS_TFES)	// Task file error
 		{

@@ -33,4 +33,4 @@ struct pcidevice
 /*uint16_t pciConfigReadWord (uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset);
 uint16_t pciCheckVendor(uint8_t bus, uint8_t slot);
 uint16_t pciCheckDevice(uint8_t bus, uint8_t slot);*/
-pcidevice* getDevice(const uint8_t bus, const uint8_t slot);
+pcidevice* getDevice(const uint8_t bus, const uint8_t slot, const uint8_t func = 0);

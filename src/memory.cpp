@@ -612,3 +612,13 @@ void* virttophys(const void* const virtAddr)
 {
     return virttophys((size_t)virtAddr);
 }
+
+uint32_t low32(const uint64_t value)
+{
+    return (uint32_t)value;
+}
+
+uint32_t high32(const uint64_t value)
+{
+    return (uint32_t)(value >> 32);
+}

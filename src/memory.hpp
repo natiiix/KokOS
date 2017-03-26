@@ -40,3 +40,6 @@ void* phystovirt(const size_t physAddr);
 void* phystovirt(const void* const physAddr);
 void* virttophys(const size_t virtAddr);
 void* virttophys(const void* const virtAddr);
+
+uint32_t low32(const uint64_t value);
+uint32_t high32(const uint64_t value);

@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "atapio.hpp"
+
 // Sector 0 : Master Boot Record
 //  -- 0x000 [0x003] : Jump instruction
 //  -- 0x003 [0x008] : OEM name
@@ -27,7 +29,7 @@
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
 
-struct partition
+struct PARTITION
 {
     uint8_t bootflag;
     uint8_t chsbegin[3];
@@ -42,6 +44,10 @@ struct MBR
     uint8_t jumpinstr[0x3];
     uint8_t oemname[0x8];
     uint8_t unknown[0x1B3];
-    partition part[4];
-    uint16_t bootsegsign;
+    // PARTITION struct uses one extra byte for some reason
+    //PARTITION part[4];
+    uint8_t part[4][16];
+    uint16_t signature;
 };
+
+void fat_init_ide(BUS bus, DRIVE drive);

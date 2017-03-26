@@ -412,4 +412,4 @@ typedef struct tagHBA_CMD_TBL
 
 void probe_port(HBA_MEM *abar);
 void port_rebase(HBA_PORT *port, int portno);
-BOOL read(HBA_PORT *port, DWORD startl, DWORD starth, DWORD count, WORD *buf);
+BOOL read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf);
