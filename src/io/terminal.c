@@ -118,11 +118,11 @@ void term_write(const char* const str, const bool dispose)
 		_putchar(str[i]);
 	}
 	
-	term_setcursor(activeRow, activeColumn);
+	term_setcursor(activeColumn, activeRow);
 
 	if (dispose)
 	{
-		free(str);
+		mem_free(str);
 	}
 }
 
@@ -159,16 +159,16 @@ void term_writeline_convert(const size_t input, const size_t base)
 	_breakline_writeline();
 }
 
-void term_setcursor(const int row, const int col)
+void term_setcursor(const size_t col, const size_t row)
 {
-	unsigned short position = (row * VGA_WIDTH) + col;
+	uint16_t position = (row * VGA_WIDTH) + col;
 
 	// cursor LOW port to vga INDEX register
 	outb(0x3D4, 0x0F);
-	outb(0x3D5, (unsigned char)(position & 0xFF));
+	outb(0x3D5, (uint8_t)(position & 0xFF));
 	// cursor HIGH port to vga INDEX register
 	outb(0x3D4, 0x0E);
-	outb(0x3D5, (unsigned char)((position >> 8) & 0xFF));
+	outb(0x3D5, (uint8_t)((position >> 8) & 0xFF));
 }
 
 void _updateinputrow(const char* const inbuff)
@@ -181,12 +181,17 @@ void _updateinputrow(const char* const inbuff)
 	// prefix, input and terminal cursor
 	size_t totallen = PREFIX_LENGTH + length + 1;
 	size_t startchar = 0;
-	if (totallen > VGA_WIDTH)
-		startchar = totallen - VGA_WIDTH;
+
+	size_t spaceAvailable = VGA_WIDTH - activeColumn;
+
+	if (totallen > spaceAvailable)
+	{
+		startchar = totallen - spaceAvailable;
+	}
 
 	size_t renderlen = length - startchar;
 	
-	for (size_t i = 0; i < VGA_WIDTH; i++)
+	for (size_t i = 0; i < spaceAvailable; i++)
 	{
 		char c = 0;
 
@@ -197,23 +202,28 @@ void _updateinputrow(const char* const inbuff)
 		else
 			c = ' ';
 
-		_putentryat(c, activeColor, i, VGA_HEIGHT - 1);
+		_putentryat(c, activeColor, activeColumn + i, activeRow);
 	}
 
-	term_setcursor(VGA_HEIGHT - 1, PREFIX_LENGTH + renderlen);
+	term_setcursor(activeColumn + PREFIX_LENGTH + renderlen, activeRow);
 }
 
 void _clearinputrow(void)
 {
-	for (size_t i = 0; i < VGA_WIDTH; i++)
+	for (size_t i = activeColumn; i < VGA_WIDTH; i++)
 	{
-		_putentryat(' ', activeColor, i, VGA_HEIGHT - 1);
+		_putentryat(' ', activeColor, i, activeRow);
 	}
 }
 
 char* term_readline(void)
 {
-	char* inputbuffer = (char*)alloc(1024);
+	if (lineBroken)
+	{
+		_breakline_writeline();
+	}
+
+	char* inputbuffer = (char*)mem_alloc(1024);
 	size_t bufferptr = 0;
 	inputbuffer[0] = '\0';
 
@@ -280,4 +290,32 @@ void term_pause(void)
 	}
 
 	term_breakline();
+}
+
+void term_writeat(const char* const str, const size_t col, const size_t row)
+{
+	size_t spaceAvailable = VGA_WIDTH - col;
+
+	for (size_t i = 0; i < spaceAvailable && str[i]; i++)
+	{
+		_putentryat(str[i], activeColor, col + i, row);
+	}
+}
+
+void term_setcolorfg(const enum VGA_COLOR color)
+{
+	activeColor &= 0xF0;
+	activeColor |= color;
+}
+
+void term_setcolorbg(const enum VGA_COLOR color)
+{
+	activeColor &= 0x0F;
+	activeColor |= (color << 4);
+}
+
+void term_setactive(const size_t col, const size_t row)
+{
+	activeRow = row;
+	activeColumn = col;
 }

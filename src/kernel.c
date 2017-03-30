@@ -12,6 +12,8 @@
 #include <kernel/debug.h>
 #include <kernel/panic.h>
 
+extern void shell_init(void);
+
 void kernel_init(void)
 {
 	mem_init();
@@ -23,7 +25,7 @@ void kernel_main(void)
 {
 	kernel_init(); // Initialize basic components
 
-	// TODO: Initialize the shell
+	shell_init(); // Initialize the shell
 
 	debug_memusage(); // Check for memory leaks
 	term_pause(); // Let the user see the memory usage

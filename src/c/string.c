@@ -70,7 +70,7 @@ char* tostr(const size_t input, const size_t base)
         }
     }
 
-    char* strptr = (char*)alloc(length + 1);
+    char* strptr = (char*)mem_alloc(length + 1);
 
     for (size_t i = 0; i < length; i++)
     {
@@ -121,7 +121,7 @@ char* strcenter(const char* const str, const size_t width, const size_t height)
     size_t xoffset = (width - strwidth) / 2;
     size_t yoffset = (height > strheight ? (height - strheight) / 2 : 0);
 
-    char* strout = (char*)alloc(yoffset + xoffset + strlength + 1);
+    char* strout = (char*)mem_alloc(yoffset + xoffset + strlength + 1);
     size_t istr = 0;
 
     for (size_t i = 0; i < yoffset; i++)

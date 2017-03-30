@@ -79,16 +79,6 @@ void mem_init(void)
     pageCount = *((size_t*)0xC07FFFF8);
 }
 
-size_t* getPageTable(void)
-{
-    return pageTable;
-}
-
-size_t getPageCount(void)
-{
-    return pageCount;
-}
-
 bool _getused(const size_t relbyte)
 {
     if (relbyte > MEMORY_SIZE_BYTES)
@@ -314,7 +304,7 @@ void* _alloc(const size_t length)
 
 // Allocates space in memory and returns a pointer to the beginning of recently allocated space
 // length - amount of bytes to allocate
-void* alloc(const size_t length)
+void* mem_alloc(const size_t length)
 {
     void* allocptr = _alloc(length);
     size_t allocbyte = _toreladdressptr(allocptr);
@@ -334,7 +324,7 @@ void _free(const size_t beginrel, const size_t length)
 }
 
 // Unallocates memory segment starting at address stored in ptr
-void free(const void* const ptr)
+void mem_free(const void* const ptr)
 {
     // Convert from pointer to size_t to make mathematical operations possible
     size_t ptrbyte = (size_t)ptr;
@@ -418,7 +408,7 @@ size_t _dynfindsize(const size_t segsize)
 }
 
 // Allocates dynamic memory segment
-void* dynalloc(const size_t initsize)
+void* mem_dynalloc(const size_t initsize)
 {
     size_t allocsize = _dynfindsize(initsize);
     void* allocptr = _alloc(allocsize);
@@ -449,7 +439,7 @@ bool _unallocated(const size_t beginrel, const size_t length)
 }
 
 // Resizes a dynamically allocated memory segment
-void* dynresize(void* const ptr, const size_t newsize)
+void* mem_dynresize(void* const ptr, const size_t newsize)
 {
     if (!_inmemoryptr(ptr))
         return (void*)0;
@@ -526,7 +516,7 @@ void* dynresize(void* const ptr, const size_t newsize)
     return (void*)0;
 }
 
-void* memset(void* ptr, int value, size_t num)
+void* mem_set(void* ptr, int value, size_t num)
 {
     unsigned char* dst = (unsigned char*)ptr;
     unsigned char cval = (unsigned char)value;
@@ -540,7 +530,7 @@ void* memset(void* ptr, int value, size_t num)
     return ptr;
 }
 
-void* phystovirt(const size_t physAddr)
+void* mem_phystovirt(const size_t physAddr)
 {
     // Pages are 0x1000 aligned so the physical address must also be aligned so
     size_t pageOffset = physAddr & (size_t)0xFFF;
@@ -570,12 +560,12 @@ void* phystovirt(const size_t physAddr)
     return virtAddr;    
 }
 
-void* phystovirtptr(const void* const physAddr)
+void* mem_phystovirtptr(const void* const physAddr)
 {
-    return phystovirt((size_t)physAddr);
+    return mem_phystovirt((size_t)physAddr);
 }
 
-void* virttophys(const size_t virtAddr)
+void* mem_virttophys(const size_t virtAddr)
 {
     // Pages are 0x1000 aligned
     size_t pageOffset = virtAddr & (size_t)0xFFF;
@@ -585,9 +575,9 @@ void* virttophys(const size_t virtAddr)
     return (void*)((pageTable[pageIdx] >> 12 << 12) + pageOffset);
 }
 
-void* virttophysptr(const void* const virtAddr)
+void* mem_virttophysptr(const void* const virtAddr)
 {
-    return virttophys((size_t)virtAddr);
+    return mem_virttophys((size_t)virtAddr);
 }
 
 uint32_t low32(const uint64_t value)

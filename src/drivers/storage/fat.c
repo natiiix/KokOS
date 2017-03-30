@@ -12,7 +12,7 @@ bool checkVolumeID(const enum BUS bus, const enum DRIVE drive, uint64_t lba)
     uint16_t* signptr = (uint16_t*)(volumeid + 0x1FE);
     bool volumeidValid =  (*signptr == SIGNATURE);
 
-    free(volumeid);
+    mem_free(volumeid);
     return volumeidValid;
 }
 
@@ -78,5 +78,5 @@ void fat_init_ide(const enum BUS bus, const enum DRIVE drive)
         term_writeline("FAT Error: The Master Boot Record is broken!", false);
     }
 
-    free(mbr);
+    mem_free(mbr);
 }

@@ -1,11 +1,11 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
+#include <c/stdlib.h>
 #include <c/string.h>
-#include <drivers/memory.h>
 
 string::string(void) :
-    m_ptr(dynalloc(1)),
+    m_ptr(malloc(1)),
     m_ptrC((char*)m_ptr),
     m_size(0)
 {    
@@ -37,7 +37,7 @@ size_t string::size(void)
 //
 void string::resize(const size_t newsize)
 {
-    updatePtr(dynresize(m_ptr, (m_size = newsize) + 1));
+    updatePtr(realloc(m_ptr, (m_size = newsize) + 1));
     fixend();
 }
 //

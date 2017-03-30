@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <drivers/memory.h>
+#include <c/stdlib.h>
 
 template<class T>
 class vector
@@ -11,7 +11,7 @@ class vector
 public:
     inline vector(void) :
         m_sizeofT(sizeof(T)),
-        m_ptr(dynalloc(0)),
+        m_ptr(malloc(0)),
         m_ptrT((T*)m_ptr),
         m_size(0) { }
 
@@ -29,10 +29,10 @@ public:
     { return m_size; }
     //
     inline void resize(const size_t newsize)
-    { updatePtr(dynresize(m_ptr, (m_size = newsize) * m_sizeofT)); }
+    { updatePtr(realloc(m_ptr, (m_size = newsize) * m_sizeofT)); }
     //
     inline void clear(void)
-    { updatePtr(dynresize(m_ptr, m_size = 0)); }
+    { updatePtr(realloc(m_ptr, m_size = 0)); }
     //
     inline bool empty(void)
     { return !m_size; }
@@ -53,12 +53,12 @@ public:
     // Modifiers
     inline void push_back(T element)
     {
-        updatePtr(dynresize(m_ptr, ++m_size * m_sizeofT));
+        updatePtr(realloc(m_ptr, ++m_size * m_sizeofT));
         m_ptrT[m_size - 1] = element;
     }
     //
     inline void pop_back(void)
-    { updatePtr(dynresize(m_ptr, --m_size * m_sizeofT)); }
+    { updatePtr(realloc(m_ptr, --m_size * m_sizeofT)); }
 
 private:
     // Size of a single element

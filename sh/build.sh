@@ -42,6 +42,7 @@ mv *.o $DIR_OBJECTS/c/
 
 echo compiling C++ code
 compileCpp cpp
+compileCpp modules
 
 echo moving C++ object files from active directory to obj/cpp/
 mv *.o $DIR_OBJECTS/cpp/

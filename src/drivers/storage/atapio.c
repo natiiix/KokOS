@@ -98,7 +98,7 @@ void setupLBA48(const enum BUS bus, const enum DRIVE drive, const uint64_t addr)
 
 uint8_t* readLBA(const enum BUS bus)
 {
-    uint8_t* ptrBuff = (uint8_t*)alloc(513);
+    uint8_t* ptrBuff = (uint8_t*)mem_alloc(513);
     ptrBuff[512] = '\0';
     uint16_t tmpword = 0;
 

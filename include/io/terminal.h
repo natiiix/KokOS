@@ -53,8 +53,13 @@ void term_write_convert(const size_t input, const size_t base);
 void term_writeline(const char* const str, const bool dispose);
 void term_writeline_convert(const size_t input, const size_t base);
 // Moves the terminal cursor to a specified position
-void term_setcursor(const int row, const int col);
+void term_setcursor(const size_t col, const size_t row);
 // Reads a string from the input buffer into memory and returns a pointer to it
 char* term_readline(void);
 // Writes "Press ENTER to continue..." and waits for ENTER to be pressed
 void term_pause(void);
+
+void term_writeat(const char* const str, const size_t col, const size_t row);
+void term_setcolorfg(const enum VGA_COLOR color);
+void term_setcolorbg(const enum VGA_COLOR color);
+void term_setactive(const size_t col, const size_t row);

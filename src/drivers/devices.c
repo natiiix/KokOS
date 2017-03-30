@@ -80,7 +80,7 @@ void dev_init(void)
                         //term_writeline(" : SATA Mass Storage");
                         term_writeline(" : SATA", false);
 
-                        HBA_MEM* hbamem = (HBA_MEM*)phystovirt(pcidev->baseaddr5);
+                        HBA_MEM* hbamem = (HBA_MEM*)mem_phystovirt(pcidev->baseaddr5);
                         probe_port(hbamem);
                         //port_rebase(&hbamem->ports[0], 0);
                         
@@ -116,7 +116,7 @@ void dev_init(void)
                     }
                 }
 
-                free(pcidev);
+                mem_free(pcidev);
 
                 if (ifunc == 0 && !multifunc)
                 {
