@@ -342,6 +342,20 @@ string string::operator+(const string& str)
     strout.push_back(str.m_ptrC);
     return strout;
 }
+//
+string& string::operator=(const string& str)
+{
+    string::clear();
+    string::push_back(str);
+    return *this;
+}
+//
+string& string::operator=(const char* const str)
+{
+    string::clear();
+    string::push_back(str);
+    return *this;
+}
 
 // Internal methods
 void string::updatePtr(void* ptr)

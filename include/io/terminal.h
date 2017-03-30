@@ -63,3 +63,6 @@ void term_writeat(const char* const str, const size_t col, const size_t row);
 void term_setcolorfg(const enum VGA_COLOR color);
 void term_setcolorbg(const enum VGA_COLOR color);
 void term_setactive(const size_t col, const size_t row);
+size_t term_getcol(void);
+size_t term_getrow(void);
+void term_newline(void);

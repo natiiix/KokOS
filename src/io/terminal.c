@@ -48,29 +48,29 @@ void _putentryat(const char c, const uint8_t color, const size_t x, const size_t
 }
 
 // Creates a new line
-void _newline(void)
+void term_newline(void)
 {
 	// scroll screen on screen overflow
-	if (++activeRow == VGA_HEIGHT - 1)
+	if (++activeRow == VGA_HEIGHT)
 	{	
-		activeRow = VGA_HEIGHT - 2;
+		activeRow = VGA_HEIGHT - 1;
 
 		// scroll rows up
-		for (size_t y = 0; y < VGA_HEIGHT - 2; y++)
+		size_t index = 0;		
+		for (size_t y = 0; y < VGA_HEIGHT - 1; y++)
 		{
 			for (size_t x = 0; x < VGA_WIDTH; x++)
 			{
-				const size_t index = y * VGA_WIDTH + x;
-				const size_t source = index + VGA_WIDTH;
-				vgaBuffer[index] = vgaBuffer[source];
+				vgaBuffer[index] = vgaBuffer[index + VGA_WIDTH];
+				index++;
 			}
 		}
 		
 		// clear the last row
+		const size_t rowBegin = activeRow * VGA_WIDTH;
 		for (size_t x = 0; x < VGA_WIDTH; x++)
 		{
-			const size_t index = activeRow * VGA_WIDTH + x;
-			vgaBuffer[index] = vga_entry(' ', activeColor);
+			vgaBuffer[rowBegin + x] = vga_entry(' ', activeColor);
 		}
 	}
 	
@@ -82,7 +82,7 @@ void term_breakline(void)
 {
 	if (lineBroken)
 	{
-		_newline();
+		term_newline();
 	}
 
 	lineBroken = true;
@@ -93,7 +93,7 @@ void _putchar(const char c)
 {
 	if (lineBroken)
 	{
-		_newline();
+		term_newline();
 	}
 
 	if (c == '\n')
@@ -210,7 +210,7 @@ void _updateinputrow(const char* const inbuff)
 
 void _clearinputrow(void)
 {
-	for (size_t i = activeColumn; i < VGA_WIDTH; i++)
+	for (size_t i = 0; i < VGA_WIDTH; i++)
 	{
 		_putentryat(' ', activeColor, i, activeRow);
 	}
@@ -218,9 +218,9 @@ void _clearinputrow(void)
 
 char* term_readline(void)
 {
-	if (lineBroken)
+	if (lineBroken || activeColumn > 0)
 	{
-		_breakline_writeline();
+		term_newline();
 	}
 
 	char* inputbuffer = (char*)mem_alloc(1024);
@@ -318,4 +318,14 @@ void term_setactive(const size_t col, const size_t row)
 {
 	activeRow = row;
 	activeColumn = col;
+}
+
+size_t term_getcol(void)
+{
+	return activeColumn;
+}
+
+size_t term_getrow(void)
+{
+	return activeRow;
 }

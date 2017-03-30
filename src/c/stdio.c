@@ -1,4 +1,5 @@
 #include <io/terminal.h>
+#include <drivers/io/keyboard.h>
 
 void clear(void)
 {
@@ -43,4 +44,29 @@ void printat(const char* const str, const size_t col, const size_t row)
 char* scan(void)
 {
     return term_readline();
+}
+
+uint8_t readkey(void)
+{
+    return keybd_readkey();
+}
+
+char keytochar(const uint8_t key, const bool shift)
+{
+    return scancodeToChar(key, shift);
+}
+
+size_t getcol(void)
+{
+    return term_getcol();
+}
+
+size_t getrow(void)
+{
+    return term_getrow();
+}
+
+void newline(void)
+{
+    term_newline();
 }

@@ -9,8 +9,7 @@
 #include <drivers/memory.h>
 #include <io/terminal.h>
 #include <drivers/devices.h>
-#include <kernel/debug.h>
-#include <kernel/panic.h>
+#include <kernel.h>
 
 extern void shell_init(void);
 

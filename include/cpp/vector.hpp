@@ -78,4 +78,6 @@ private:
 };
 
 // Frees the memory used by a vector of string including the vector itself
-class string; template <> void vector<string>::dispose(void);
+class string;
+template <>
+void vector<string>::dispose(void);

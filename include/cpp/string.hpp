@@ -84,6 +84,8 @@ public:
     string& operator+=(const string& str);
 	// Joins two strings and returns the result
     string operator+(const string& str);
+	string& operator=(const string& str);
+	string& operator=(const char* const str);
 
 private:
     void* m_ptr;
