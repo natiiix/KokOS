@@ -1,3 +1,5 @@
+#include <modules/shell.hpp>
+
 #include <c/stdlib.h>
 #include <c/stdio.h>
 
@@ -6,60 +8,59 @@
 
 #include <kernel.h>
 
-string strPrefix;
-
-extern "C"
 void shell_init(void)
+{
+	Shell shellInstance;
+	shellInstance.init();
+}
+
+void Shell::init(void)
 {
     clear();
 
-    strPrefix = ">";
+	strPrefix.clear();
+    strPrefix.push_back(">");
 
     while (true)
     {
-        char* cstrinput = shell_readline();
-        string strinput = cstrinput;
-        delete cstrinput;
+        string strInput = readline();
 
-        vector<string> words = strinput.split(' ', true);
-        if (words.size() > 0)
-        {
-            print(words[0].c_str());
-            print("\n");
-        }
-        
-        strinput.dispose();
-        words.dispose();
+		sprint(strPrefix);
+        sprint(strInput);
+		newline();
+		
+		strInput.dispose();
 
-        debug_memusage();
+        debug_memusage(); // 0x100 is used by strPrefix
+		pause();
     }
 }
 
-void _print_input_temp(const string& strInput)
+char* Shell::_generate_spaces(const size_t count)
 {
-    size_t preLen = strPrefix.size();
-    size_t inSpace = VGA_WIDTH - preLen - 1;
-    size_t inLen = strInput.size();
-    size_t inRenderLen = (inSpace >= inLen ? inLen : inSpace);
-    size_t inStartIdx = inLen - inRenderLen;
+	char* strspaces = (char*)malloc(count + 1);
+	strspaces[count] = '\0';
+	
+	for (size_t i = 0; i < count; i++)
+	{
+		strspaces[i] = ' ';
+	}
 
-    print(strPrefix);
-    print(strInput.substr(inStartIdx, inRenderLen));
+	return strspaces;
 }
 
-void _print_input_clean(void)
-{
-
-}
-
-string shell_readline(void)
+string Shell::readline(void)
 {
     if (getcol() > 0)
 	{
 		newline();
 	}
 
-    size_t row = getrow();
+	size_t row = getrow();
+
+	size_t preLen = strPrefix.size();
+	size_t inSpace = VGA_WIDTH - preLen - 1;
+
 	string strInput;
 
 	while (true)
@@ -82,22 +83,44 @@ string shell_readline(void)
 				}
 				else if (keycode == KEY_ENTER)
 				{
-					_print_input_clean();
+					char* strspaces = _generate_spaces(VGA_WIDTH);
+					printat(strspaces, 0, row);
+					delete strspaces;
+
 					return strInput;
 				}
 				else if (keycode == KEY_BACKSPACE)
 				{
-					// Make sure the cursor doesn't get past the beginning of the input row
-					if (bufferptr > 0)
-						strInput[--bufferptr] = '\0';
-				}    
+					if (strInput.size() > 0)
+					{
+						strInput.pop_back();
+					}
+				}
 				else if (keycode == KEY_ESCAPE)
 				{
-					strInput[bufferptr = 0] = '\0';
+					strInput.clear();
 				}
 			}
 		}
 
-		_print_input_temp(strInput);
+		size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
+		size_t inStartIdx = strInput.size() - inRenderLen;
+
+		sprintat(strPrefix, 0, row);
+		string strInputRender = strInput.substr(inStartIdx, inRenderLen);
+		sprintat(strInputRender, preLen, row);
+		strInputRender.dispose();
+
+		size_t emptySpace = inSpace - inRenderLen;
+		size_t rowend = preLen + inRenderLen;
+
+		if (emptySpace > 0)
+		{
+			char* strspaces = _generate_spaces(emptySpace);
+			printat(strspaces, rowend, row);
+			delete strspaces;
+		}
+
+		setcursor(rowend, row);
 	}
 }

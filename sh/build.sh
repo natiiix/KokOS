@@ -26,7 +26,10 @@ function compileCpp()
 }
 
 echo compiling boot.s
-${BASH_SOURCE%/*}/../crosscompiler/bin/i686-elf-as $DIR_SOURCE/boot.s -o $DIR_OBJECTS/c/boot.o
+${BASH_SOURCE%/*}/../crosscompiler/bin/i686-elf-as $DIR_SOURCE/boot.s -o $DIR_OBJECTS/boot.o
+
+echo compiling lowlevel.asm
+nasm -f elf32 -g -F dwarf $DIR_SOURCE/lowlevel.asm -o $DIR_OBJECTS/lowlevel.o
 
 echo compiling C code
 compileC .
@@ -48,6 +51,6 @@ echo moving C++ object files from active directory to obj/cpp/
 mv *.o $DIR_OBJECTS/cpp/
 
 echo linking objects
-$GPP_RUN -T ${BASH_SOURCE%/*}/../src/linker.ld -o ${BASH_SOURCE%/*}/../bin/kokos.bin -ffreestanding -O2 -nostdlib $DIR_OBJECTS/c/*.o $DIR_OBJECTS/cpp/*.o -lgcc
+$GPP_RUN -T ${BASH_SOURCE%/*}/../src/linker.ld -o ${BASH_SOURCE%/*}/../bin/kokos.bin -ffreestanding -O2 -nostdlib $DIR_OBJECTS/*.o $DIR_OBJECTS/c/*.o $DIR_OBJECTS/cpp/*.o -lgcc
 
 echo build successful

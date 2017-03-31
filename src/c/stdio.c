@@ -70,3 +70,8 @@ void newline(void)
 {
     term_newline();
 }
+
+void pause(void)
+{
+    term_pause();
+}

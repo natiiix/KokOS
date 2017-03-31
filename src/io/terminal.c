@@ -16,6 +16,7 @@ void term_init(void)
 	activeColor = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
 	term_clear();
+	term_writeline("Terminal initialized.", false);
 }
 
 void term_clear(void)

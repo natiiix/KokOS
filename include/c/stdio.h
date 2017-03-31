@@ -68,6 +68,7 @@ char keytochar(const uint8_t key, const bool shift);
 size_t getcol(void);
 size_t getrow(void);
 void newline(void);
+void pause(void);
 
 #if defined(__cplusplus)
 }

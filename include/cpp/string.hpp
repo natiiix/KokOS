@@ -19,13 +19,13 @@ public:
 
     // ---- CAPACITY ----
 	// Returns the length of the string
-    size_t size(void);
+    size_t size(void) const;
 	// Resizes the string and puts '\0' at the end of it
     void resize(const size_t newsize);
 	// Clears the string by resizing it to 0
     void clear(void);
 	// Returns true if the string is empty (if it's length is 0)
-    bool empty(void);
+    bool empty(void) const;
 
     // ---- ELEMENT ACCESS ----
 	// Returns the character at index idx
@@ -55,37 +55,39 @@ public:
 
     // ---- STRING OPERATIONS ----
 	// Returns pointer to the cstring storage
-    char* c_str(void);
+    char* c_str(void) const;
 	// Returns part of a string starting at pos with the length len
-    string substr(const size_t pos, const size_t len = 0);
+    string substr(const size_t pos, const size_t len = 0) const;
 	// Compares two string, returns true if they're the same, false if they're different
-    bool compare(const string& str);
+    bool compare(const string& str) const;
 	// Compares the string to a cstring str, returns true if they're the same
-	bool compare(const char* const str);
+	bool compare(const char* const str) const;
 	// Converts a string to lowercase and returns it
-    string tolower(void);
+    string tolower(void) const;
 	// Converts a string to uppercase and returns it
-    string toupper(void);
+    string toupper(void) const;
 	// Splits the string, uses char as delimiter
 	vector<string> split(const char cDelimiter, const bool removeEmpty = false);
 	// Splits the string, uses string as delimiter
 	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false);
 	// Returns true if the string contains the cstring str, false otherwise
-	bool contains(const char* const str);
+	bool contains(const char* const str) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
-    bool operator==(const string& str);
+    bool operator==(const string& str) const;
 	// Synonymous to compare(const char* const str)
-	bool operator==(const char* const str);
+	bool operator==(const char* const str) const;
 	// Synonymous to at(const size_t idx)
     char& operator[](const size_t idx);
 	// Synonymous to push_back(const string& str)
     string& operator+=(const string& str);
+	string& operator+=(const char c);
+	string& operator+=(const char* const str);
 	// Joins two strings and returns the result
     string operator+(const string& str);
 	string& operator=(const string& str);
-	string& operator=(const char* const str);
+	//string& operator=(const char* const str);
 
 private:
     void* m_ptr;
@@ -99,3 +101,6 @@ private:
 	// Adds part of the string into the string vector (ignores empty string parts if removeEmpty is set to true)
 	void splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty);
 };
+
+void sprint(const string& str);
+void sprintat(const string& str, const size_t col, const size_t row);

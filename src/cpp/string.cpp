@@ -2,6 +2,7 @@
 #include <cpp/vector.hpp>
 
 #include <c/stdlib.h>
+#include <c/stdio.h>
 #include <c/string.h>
 
 string::string(void) :
@@ -30,7 +31,7 @@ void string::dispose(void)
 }
 
 // Capacity
-size_t string::size(void)
+size_t string::size(void) const
 {
     return m_size;
 }
@@ -46,7 +47,7 @@ void string::clear(void)
     string::resize(0);
 }
 //
-bool string::empty(void)
+bool string::empty(void) const
 {
     return !m_size;
 }
@@ -121,12 +122,12 @@ void string::pop_back(const size_t popcount)
 }
 
 // String operations
-char* string::c_str(void)
+char* string::c_str(void) const
 {
     return m_ptrC;
 }
 //
-string string::substr(const size_t pos, const size_t len)
+string string::substr(const size_t pos, const size_t len) const
 {
     string strout;
 
@@ -155,7 +156,7 @@ string string::substr(const size_t pos, const size_t len)
     return strout;
 }
 //
-bool string::compare(const string& str)
+bool string::compare(const string& str) const
 {
     // If they have share a pointer they must be the same
     if (str.m_ptrC == m_ptrC)
@@ -174,7 +175,7 @@ bool string::compare(const string& str)
     return true;
 }
 //
-bool string::compare(const char* const str)
+bool string::compare(const char* const str) const
 {
     // Check the whole string including the ending '\0'
     for (size_t i = 0; i < m_size + 1; i++)
@@ -186,7 +187,7 @@ bool string::compare(const char* const str)
     return true;
 }
 //
-string string::tolower(void)
+string string::tolower(void) const
 {
     string strout(m_ptrC);
 
@@ -202,7 +203,7 @@ string string::tolower(void)
     return strout;
 }
 //
-string string::toupper(void)
+string string::toupper(void) const
 {
     string strout(m_ptrC);
 
@@ -286,7 +287,7 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 	return vectout;
 }
 //
-bool string::contains(const char* const str)
+bool string::contains(const char* const str) const
 {
     size_t strlength = strlen(str);
 
@@ -315,12 +316,12 @@ bool string::contains(const char* const str)
 }
 
 // Operator overloads
-bool string::operator==(const string& str)
+bool string::operator==(const string& str) const
 {
     return string::compare(str);
 }
 //
-bool string::operator==(const char* const str)
+bool string::operator==(const char* const str) const
 {
     return string::compare(str);
 }
@@ -331,6 +332,18 @@ char& string::operator[](const size_t idx)
 }
 //
 string& string::operator+=(const string& str)
+{
+    string::push_back(str);
+    return *this;
+}
+//
+string& string::operator+=(const char c)
+{
+    string::push_back(c);
+    return *this;
+}
+//
+string& string::operator+=(const char* const str)
 {
     string::push_back(str);
     return *this;
@@ -350,12 +363,12 @@ string& string::operator=(const string& str)
     return *this;
 }
 //
-string& string::operator=(const char* const str)
+/*string& string::operator=(const char* const str)
 {
     string::clear();
     string::push_back(str);
     return *this;
-}
+}*/
 
 // Internal methods
 void string::updatePtr(void* ptr)
@@ -389,5 +402,15 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 	else
 	{
 		vectsplit.push_back(string::substr(start, end - start));
-	}	
+    }
+}
+
+void sprint(const string& str)
+{
+    print(str.c_str());
+}
+
+void sprintat(const string& str, const size_t col, const size_t row)
+{
+    printat(str.c_str(), col, row);
 }
