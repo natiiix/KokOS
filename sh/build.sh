@@ -25,8 +25,11 @@ function compileCpp()
     $GPP_RUN -I $DIR_INCLUDE -c $DIR_SOURCE/$1/*.cpp $GPP_PARAMS
 }
 
-echo compiling boot.s
-${BASH_SOURCE%/*}/../crosscompiler/bin/i686-elf-as $DIR_SOURCE/boot.s -o $DIR_OBJECTS/boot.o
+# echo compiling boot.s
+# ${BASH_SOURCE%/*}/../crosscompiler/bin/i686-elf-as $DIR_SOURCE/boot.s -o $DIR_OBJECTS/boot.o
+
+echo compiling boot.asm
+nasm -f elf32 -g -F dwarf $DIR_SOURCE/boot.asm -o $DIR_OBJECTS/boot.o
 
 echo compiling lowlevel.asm
 nasm -f elf32 -g -F dwarf $DIR_SOURCE/lowlevel.asm -o $DIR_OBJECTS/lowlevel.o

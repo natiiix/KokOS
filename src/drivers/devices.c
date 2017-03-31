@@ -79,19 +79,17 @@ void dev_init(void)
                     {
                         //term_writeline(" : SATA Mass Storage");
                         term_writeline(" : SATA", false);
-
-                        HBA_MEM* hbamem = (HBA_MEM*)mem_phystovirt(pcidev->baseaddr5);
+                        HBA_MEM* hbamem = (HBA_MEM*)pcidev->baseaddr5;
                         probe_port(hbamem);
-                        //port_rebase(&hbamem->ports[0], 0);
-                        
-                        /*char* cbuff = (char*)mem::alloc(513);
+
+                        /*char* cbuff = (char*)mem_alloc(513);
 
                         for (size_t i = 0; i < 512; i++)
                         {
                             cbuff[i] = '\0';
                         }
 
-                        if (read(&hbamem->ports[0], 0, 1, (uint16_t*)cbuff))
+                        if (ahci_read(&hbamem->ports[0], 0, 1, (uint16_t*)cbuff))
                         {
                             for (size_t i = 0; i < 512; i++)
                             {
@@ -101,14 +99,14 @@ void dev_init(void)
 
                             cbuff[512] = '\0';
 
-                            term_writeline(cbuff);
+                            term_writeline(cbuff, false);
                         }
                         else
                         {
-                            term_writeline("AHCI drive reading failed!");
+                            term_writeline("AHCI drive reading failed!", false);
                         }
 
-                        delete cbuff;*/
+                        mem_free(cbuff);*/
                     }
                     else
                     {
@@ -126,5 +124,5 @@ void dev_init(void)
 		}
 	}
 
-    term_writeline("Device initialization completed!", false);
+    term_writeline("Devices initialized.", false);
 }

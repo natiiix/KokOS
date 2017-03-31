@@ -1,8 +1,8 @@
 // http://wiki.osdev.org/AHCI
 #include <drivers/storage/ahci.h>
-
 #include <drivers/memory.h>
 #include <io/terminal.h>
+#include <c/string.h>
 
 // Detect attached SATA devices
 // 1) Which port is device attached
@@ -49,8 +49,6 @@ int check_type(HBA_PORT *port)
 	}
 }
 
-#include <io/terminal.h>
-#include <c/string.h>
 void trace_ahci(const char* const str, const int num)
 {
     term_write(str, false);
@@ -142,17 +140,17 @@ void port_rebase(HBA_PORT *port, int portno)
 	// Command list maxim size = 32*32 = 1K per port
 	port->clb = AHCI_BASE + (portno<<10);
 	port->clbu = 0;
-	mem_set(mem_phystovirt(port->clb), 0, 1024);
+	mem_set((void*)port->clb, 0, 1024);
 
 	// FIS offset: 32K+256*portno
 	// FIS entry size = 256 bytes per port
 	port->fb = AHCI_BASE + (32<<10) + (portno<<8);
 	port->fbu = 0;
-	mem_set(mem_phystovirt(port->fb), 0, 256);
+	mem_set((void*)port->fb, 0, 256);
  
 	// Command table offset: 40K + 8K*portno
 	// Command table size = 256*32 = 8K per port
-	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)mem_phystovirt(port->clb);
+	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)port->clb;
 	for (int i=0; i<32; i++)
 	{
 		cmdheader[i].prdtl = 8;	// 8 prdt entries per command table
@@ -160,7 +158,7 @@ void port_rebase(HBA_PORT *port, int portno)
 		// Command table offset: 40K + 8K*portno + cmdheader_index*256
 		cmdheader[i].ctba = AHCI_BASE + (40<<10) + (portno<<13) + (i<<8);
 		cmdheader[i].ctbau = 0;
-		mem_set(mem_phystovirt(cmdheader[i].ctba), 0, 256);
+		mem_set((void*)cmdheader[i].ctba, 0, 256);
 	}
  
 	start_cmd(port);	// Start command engine
@@ -192,7 +190,7 @@ int find_cmdslot(HBA_PORT *port)
 	return -1;
 }
  
-BOOL read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
+BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 {
 	port->is = (DWORD)-1; // Clear pending interrupt bits
 	int spin = 0; // Spin lock timeout counter
@@ -202,19 +200,19 @@ BOOL read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 		return FALSE;
 	}
  
-	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)mem_phystovirt(port->clb);
+	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)port->clb;
 	cmdheader += cmdslot;
 	cmdheader->cfl = sizeof(FIS_REG_H2D)/sizeof(DWORD);	// Command FIS size
 	cmdheader->w = 0;		// Read from device
 	cmdheader->prdtl = (WORD)((count-1)>>4) + 1;	// PRDT entries count
  
-	HBA_CMD_TBL *cmdtbl = (HBA_CMD_TBL*)mem_phystovirt(cmdheader->ctba);
+	HBA_CMD_TBL *cmdtbl = (HBA_CMD_TBL*)cmdheader->ctba;
 	mem_set(cmdtbl, 0, sizeof(HBA_CMD_TBL) + (cmdheader->prdtl-1)*sizeof(HBA_PRDT_ENTRY));
  
 	// 8K bytes (16 sectors) per PRDT
 	for (int i = 0; i < cmdheader->prdtl-1; i++)	
 	{
-		cmdtbl->prdt_entry[i].dba = (DWORD)mem_virttophysptr(buf);
+		cmdtbl->prdt_entry[i].dba = (DWORD)buf;
 		cmdtbl->prdt_entry[i].dbau = 0;
 		cmdtbl->prdt_entry[i].dbc = 1<<13; // 8K bytes
 		cmdtbl->prdt_entry[i].i = 1;
@@ -223,13 +221,13 @@ BOOL read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 	}
 
 	// Last entry
-	cmdtbl->prdt_entry[cmdheader->prdtl-1].dba = (DWORD)mem_virttophysptr(buf);
+	cmdtbl->prdt_entry[cmdheader->prdtl-1].dba = (DWORD)buf;
 	cmdtbl->prdt_entry[cmdheader->prdtl-1].dbau = 0;
 	cmdtbl->prdt_entry[cmdheader->prdtl-1].dbc = count<<9;	// 512 bytes per sector
 	cmdtbl->prdt_entry[cmdheader->prdtl-1].i = 1;
  
 	// Setup command
-	FIS_REG_H2D *cmdfis = (FIS_REG_H2D*)mem_phystovirtptr(&cmdtbl->cfis);
+	FIS_REG_H2D *cmdfis = (FIS_REG_H2D*)&cmdtbl->cfis;
  
 	cmdfis->fis_type = FIS_TYPE_REG_H2D;
 	cmdfis->c = 1; // Command

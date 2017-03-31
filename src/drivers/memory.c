@@ -1,5 +1,4 @@
 #include <drivers/memory.h>
-
 #include <c/string.h>
 
 /*// Memory size constants
@@ -71,12 +70,6 @@ void mem_init(void)
         dynsegbegin[i] = 0;
         dynseglen[i] = 0;
     }
-
-    // The first page is already used by the VGA buffer
-    mapPage = 1;
-    // Load the page table address and the number of mapped pages
-    pageTable = (size_t*)(*((size_t*)0xC07FFFFC));
-    pageCount = *((size_t*)0xC07FFFF8);
 }
 
 bool _getused(const size_t relbyte)
@@ -528,64 +521,4 @@ void* mem_set(void* ptr, int value, size_t num)
     }
 
     return ptr;
-}
-
-void* mem_phystovirt(const size_t physAddr)
-{
-    // Pages are 0x1000 aligned so the physical address must also be aligned so
-    size_t pageOffset = physAddr & (size_t)0xFFF;
-    size_t physAddrAligned = physAddr ^ pageOffset;
-    size_t pageTableEntry = physAddrAligned | 0x3;
-    
-    // The amount of entries which can be possibly stored
-    size_t entryCount = pageCount << 10;
-
-    // Check if the physical address is already mapped
-    for (size_t i = entryCount - 1; i < entryCount; i--)
-    {
-        // The physical address is already mapped
-        if (pageTable[i] == pageTableEntry)
-        {
-            void* virtAddr = (void*)(0xC0000000 + (i << 12) + pageOffset);
-            return virtAddr;
-        }
-    }
-
-    // Map the physical address to a virtual address
-    size_t pageTableIdx = entryCount - 1 - mapPage++;
-    pageTable[pageTableIdx] = pageTableEntry;
-
-    // Translate the input physical address to a virtual address
-    void* virtAddr = (void*)(0xC0000000 + (pageTableIdx << 12) + pageOffset);
-    return virtAddr;    
-}
-
-void* mem_phystovirtptr(const void* const physAddr)
-{
-    return mem_phystovirt((size_t)physAddr);
-}
-
-void* mem_virttophys(const size_t virtAddr)
-{
-    // Pages are 0x1000 aligned
-    size_t pageOffset = virtAddr & (size_t)0xFFF;
-    size_t virtAddrAligned = virtAddr ^ pageOffset;
-
-    size_t pageIdx = (virtAddrAligned - 0xC0000000) >> 12;
-    return (void*)((pageTable[pageIdx] >> 12 << 12) + pageOffset);
-}
-
-void* mem_virttophysptr(const void* const virtAddr)
-{
-    return mem_virttophys((size_t)virtAddr);
-}
-
-uint32_t low32(const uint64_t value)
-{
-    return (uint32_t)value;
-}
-
-uint32_t high32(const uint64_t value)
-{
-    return (uint32_t)(value >> 32);
 }

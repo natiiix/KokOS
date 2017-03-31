@@ -411,5 +411,5 @@ typedef struct tagHBA_CMD_TBL
 } HBA_CMD_TBL;
 
 void probe_port(HBA_MEM *abar);
-void port_rebase(HBA_PORT *port, int portno);
-BOOL read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf);
+//void port_rebase(HBA_PORT *port, int portno); // I don't really know what this is for
+BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf);

@@ -11,12 +11,8 @@
 #include <drivers/devices.h>
 #include <kernel.h>
 
-extern void shell_init(void);
-
-void idt_init(void);
-void load_idt_entry(int isr_number, uint32_t base, short int selector, unsigned char flags);
-extern void keyboard_handler_int(void);
-void kb_init(void);
+void shell_init(void);
+void interrupts_init(void);
 
 void kernel_init(void)
 {
@@ -24,16 +20,14 @@ void kernel_init(void)
 	term_init();
 	dev_init();
 
-    /*idt_init();
-    load_idt_entry(0x21, (uint32_t)keyboard_handler_int, 0x08, 0x8e);
-    kb_init();*/
+	interrupts_init();
 }
 
 void kernel_main(void)
 {
 	kernel_init(); // Initialize basic components
 
-	//while (true) { }
+	while (true) { }
 
 	shell_init(); // Initialize the shell
 

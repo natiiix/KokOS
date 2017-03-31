@@ -12,7 +12,7 @@ bool lineBroken;
 
 void term_init(void)
 {
-    vgaBuffer = (uint16_t*)0xC07FF000;
+    vgaBuffer = (uint16_t*)0xB8000;
 	activeColor = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
 	term_clear();
