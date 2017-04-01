@@ -1,5 +1,6 @@
 #include <drivers/io/keyboard.h>
 #include <assembly.h>
+#include <io/terminal.h>
 
 const char asciiDefault[] =
 {
@@ -125,18 +126,35 @@ const char asciiShift[] =
     32,	// SPACE
 };
 
+#define KEY_BUFFER_SIZE 1024
+uint8_t keybuffer[KEY_BUFFER_SIZE];
+size_t keybufferWriteIdx; // Where should the next key event be stored
+size_t keybufferReadIdx; // From where should the next key event be read
+
 const uint16_t PORT_KEYBOARD = 0x60;
 bool keyPressed[KEYS_COUNT];
 
 void keybd_init(void)
 {
+    for (size_t i = 0; i < KEY_BUFFER_SIZE; i++)
+    {
+        keybuffer[i] = 0;
+    }
+
+    keybufferWriteIdx = 0;
+    keybufferReadIdx = 0;
+
 	for (size_t i = 0; i < KEYS_COUNT; i++)
 	{
 		keyPressed[i] = false;
 	}
+
+    term_writeline("Keyboard initialized.", false);
 }
 
-uint8_t keybd_readkey(void)
+// ---- OBSOLETE CODE ----
+// Reads a pressed key scancode from keyboard using polling
+/*uint8_t keybd_readkey(void)
 {
 	uint8_t c = 0;
 	
@@ -153,7 +171,7 @@ uint8_t keybd_readkey(void)
 		}
 	}
 	while (true);
-}
+}*/
 
 char scancodeToChar(const uint8_t scancode, const bool shiftPressed)
 {
@@ -165,4 +183,59 @@ char scancodeToChar(const uint8_t scancode, const bool shiftPressed)
 	}
 
     return (shiftPressed ? asciiShift[scancode] : asciiDefault[scancode]);
+}
+
+void keyboard_handler(void)
+{
+    uint8_t status;
+    uint8_t keycode;
+
+    // Acknowledgment
+    status = inb(0x64);
+    // Lowest bit of status will be set if buffer is not empty
+    if (status & 0x01)
+    {
+        keycode = inb(0x60);
+
+        if (keycode)
+        {
+            // Store the key event into the buffer
+            keybuffer[keybufferWriteIdx] = keycode;
+
+            // Increment the buffer writing index
+            if (++keybufferWriteIdx >= KEY_BUFFER_SIZE)
+            {
+                keybufferWriteIdx = 0;
+            }
+        }
+    }
+
+    // Enable interrupts again
+    outb(0x20, 0x20);
+}
+
+// Reads a pressed key scancode from key buffer (no polling)
+// If there are no key entets in the buffer return 0
+uint8_t keybd_readkey(void)
+{
+    if (keybufferReadIdx < keybufferWriteIdx)
+    {
+        // Read the key event from the buffer
+        uint8_t keycode = keybuffer[keybufferReadIdx];
+
+        // Delete the key event buffer entry to make sure it won't accidentally get read again
+        keybuffer[keybufferReadIdx] = 0;
+
+        // Increment the buffer reading index
+        if (++keybufferReadIdx >= KEY_BUFFER_SIZE)
+        {
+            keybufferReadIdx = 0;
+        }
+
+        return keycode;
+    }
+    else
+    {
+        return 0;
+    }
 }

@@ -1,4 +1,4 @@
-#include "interrupts.h"
+#include <assembly.h>
 
 #define IDT_SIZE 256
 #define PIC_1_CTRL 0x20
@@ -45,29 +45,29 @@ static void initialize_idt_pointer()
 static void initialize_pic()
 {
     /* ICW1 - begin initialization */
-    write_port(PIC_1_CTRL, 0x11);
-    write_port(PIC_2_CTRL, 0x11);
+    outb(PIC_1_CTRL, 0x11);
+    outb(PIC_2_CTRL, 0x11);
 
     /* ICW2 - remap offset address of idt_table */
     /*
     * In x86 protected mode, we have to remap the PICs beyond 0x20 because
     * Intel have designated the first 32 interrupts as "reserved" for cpu exceptions
     */
-    write_port(PIC_1_DATA, 0x20);
-    write_port(PIC_2_DATA, 0x28);
+    outb(PIC_1_DATA, 0x20);
+    outb(PIC_2_DATA, 0x28);
 
     /* ICW3 - setup cascading */
-    write_port(PIC_1_DATA, 0x00);
-    write_port(PIC_2_DATA, 0x00);
+    outb(PIC_1_DATA, 0x00);
+    outb(PIC_2_DATA, 0x00);
 
     /* ICW4 - environment info */
-    write_port(PIC_1_DATA, 0x01);
-    write_port(PIC_2_DATA, 0x01);
+    outb(PIC_1_DATA, 0x01);
+    outb(PIC_2_DATA, 0x01);
     /* Initialization finished */
 
     /* mask interrupts */
-    write_port(0x21 , 0xff);
-    write_port(0xA1 , 0xff);
+    outb(0x21 , 0xff);
+    outb(0xA1 , 0xff);
 }
 
 void idt_init()
@@ -81,5 +81,7 @@ void interrupts_init(void)
 {
     idt_init();
     load_idt_entry(0x21, (unsigned long) keyboard_handler_int, 0x08, 0x8e);
-    kb_init();
+    
+    /* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
+    outb(0x21 , 0xFD);
 }

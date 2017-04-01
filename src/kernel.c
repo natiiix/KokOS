@@ -16,18 +16,35 @@ void interrupts_init(void);
 
 void kernel_init(void)
 {
-	mem_init();
 	term_init();
+	mem_init();
 	dev_init();
 
 	interrupts_init();
 }
 
+#include <drivers/io/keyboard.h>
+
 void kernel_main(void)
 {
 	kernel_init(); // Initialize basic components
 
-	while (true) { }
+	keybd_init();
+
+	while (true)
+	{
+		uint8_t keycode = keybd_readkey();
+
+		if (keycode)
+		{
+			char keystr[2];
+
+			keystr[0] = scancodeToChar(keycode & 0x7F, false);
+			keystr[1] = '\0';
+
+			term_write(keystr, false);
+		}
+	}
 
 	shell_init(); // Initialize the shell
 

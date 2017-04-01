@@ -2,17 +2,6 @@
 
 #include <cpp/string.hpp>
 
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
-
-void shell_init(void);
-
-#if defined(__cplusplus)
-}
-#endif
-
 class Shell
 {
 public:

@@ -1,5 +1,6 @@
 #include <drivers/memory.h>
 #include <c/string.h>
+#include <io/terminal.h>
 
 /*// Memory size constants
 const size_t MEMORY_SIZE_BYTES = 4 << 20;
@@ -70,6 +71,8 @@ void mem_init(void)
         dynsegbegin[i] = 0;
         dynseglen[i] = 0;
     }
+
+    term_writeline("Memory initialized.", false);
 }
 
 bool _getused(const size_t relbyte)
