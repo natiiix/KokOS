@@ -1,5 +1,5 @@
 #include <drivers/storage/fat.h>
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
 #include <drivers/storage/atapio.h>
 #include <drivers/memory.h>
 

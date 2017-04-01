@@ -1,5 +1,5 @@
 #include <assembly.h>
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
 #include <c/string.h>
 #include <drivers/memory.h>
 

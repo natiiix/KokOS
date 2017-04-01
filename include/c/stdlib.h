@@ -15,11 +15,6 @@ void* realloc(void* const ptr, size_t size);
 #if defined(__cplusplus)
 }
 
-inline void* operator new(size_t count)
-{
-    return calloc(count);
-}
-
 inline void operator delete(void* ptr)
 {
     free(ptr);

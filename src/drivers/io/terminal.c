@@ -1,4 +1,4 @@
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
 #include <drivers/memory.h>
 #include <c/string.h>
 #include <assembly.h>
@@ -217,7 +217,7 @@ void _clearinputrow(void)
 	}
 }
 
-char* term_readline(void)
+/*char* term_readline(void)
 {
 	if (lineBroken || activeColumn > 0)
 	{
@@ -267,9 +267,9 @@ char* term_readline(void)
 
 		_updateinputrow(inputbuffer);
 	}
-}
+}*/
 
-void term_pause(void)
+/*void term_pause(void)
 {
 	term_write("Press ENTER to continue...", false);
 
@@ -287,6 +287,23 @@ void term_pause(void)
 			{
 				break;
 			}
+		}
+	}
+
+	term_breakline();
+}*/
+
+void term_pause(void)
+{
+	term_write("Press ENTER to continue...", false);
+
+	while (true)
+	{
+		struct keyevent ke = keybd_readevent();
+
+		if (ke.scancode == KEY_ENTER && ke.state == KEY_DOWN)
+		{
+			break;
 		}
 	}
 

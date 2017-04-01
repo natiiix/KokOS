@@ -1,7 +1,7 @@
 // http://wiki.osdev.org/AHCI
 #include <drivers/storage/ahci.h>
 #include <drivers/memory.h>
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
 #include <c/string.h>
 
 // Detect attached SATA devices

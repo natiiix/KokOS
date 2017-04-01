@@ -8,6 +8,7 @@
 
 #include <kernel.h>
 
+extern "C"
 void shell_init(void)
 {
 	Shell shellInstance;
@@ -65,41 +66,32 @@ string Shell::readline(void)
 
 	while (true)
 	{
-		uint8_t scancode = readkey();
-		uint8_t keycode = scancode & 0b01111111;
-		bool keystate = (scancode == keycode);
-
-		if (keyPressed[keycode] != keystate)
-		{
-			keyPressed[keycode] = keystate;
+		struct keyevent ke = readKeyEvent();
 			
-			if (keystate)
+		if (ke.state)
+		{			
+			if (ke.keychar > 0)
 			{
-				char inchar = keytochar(keycode, keyPressed[KEY_SHIFT_LEFT] || keyPressed[KEY_SHIFT_RIGHT]);
-				
-				if (inchar > 0)
-				{
-					strInput += inchar;
-				}
-				else if (keycode == KEY_ENTER)
-				{
-					char* strspaces = _generate_spaces(VGA_WIDTH);
-					printat(strspaces, 0, row);
-					delete strspaces;
+				strInput += ke.keychar;
+			}
+			else if (ke.scancode == KEY_ENTER)
+			{
+				char* strspaces = _generate_spaces(VGA_WIDTH);
+				printat(strspaces, 0, row);
+				delete strspaces;
 
-					return strInput;
-				}
-				else if (keycode == KEY_BACKSPACE)
+				return strInput;
+			}
+			else if (ke.scancode == KEY_BACKSPACE)
+			{
+				if (strInput.size() > 0)
 				{
-					if (strInput.size() > 0)
-					{
-						strInput.pop_back();
-					}
+					strInput.pop_back();
 				}
-				else if (keycode == KEY_ESCAPE)
-				{
-					strInput.clear();
-				}
+			}
+			else if (ke.scancode == KEY_ESCAPE)
+			{
+				strInput.clear();
 			}
 		}
 

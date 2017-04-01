@@ -1,6 +1,7 @@
 #include <drivers/io/keyboard.h>
 #include <assembly.h>
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
+#include <drivers/memory.h>
 
 const char asciiDefault[] =
 {
@@ -126,23 +127,21 @@ const char asciiShift[] =
     32,	// SPACE
 };
 
-#define KEY_BUFFER_SIZE 1024
-uint8_t keybuffer[KEY_BUFFER_SIZE];
-size_t keybufferWriteIdx; // Where should the next key event be stored
-size_t keybufferReadIdx; // From where should the next key event be read
+// KEB = Key Event Buffer
+#define KEB_SIZE 1024
+struct keyevent keyEventBuffer[KEB_SIZE];
+size_t kebWriteIdx; // Where should the next key event be stored
+size_t kebReadIdx; // From where should the next key event be read
 
 const uint16_t PORT_KEYBOARD = 0x60;
 bool keyPressed[KEYS_COUNT];
 
 void keybd_init(void)
 {
-    for (size_t i = 0; i < KEY_BUFFER_SIZE; i++)
-    {
-        keybuffer[i] = 0;
-    }
+    mem_set(&keyEventBuffer, 0, sizeof(struct keyevent) * KEB_SIZE);
 
-    keybufferWriteIdx = 0;
-    keybufferReadIdx = 0;
+    kebWriteIdx = 0;
+    kebReadIdx = 0;
 
 	for (size_t i = 0; i < KEYS_COUNT; i++)
 	{
@@ -187,8 +186,8 @@ char scancodeToChar(const uint8_t scancode, const bool shiftPressed)
 
 void keyboard_handler(void)
 {
-    uint8_t status;
-    uint8_t keycode;
+    uint8_t status = 0;
+    uint8_t keycode = 0;
 
     // Acknowledgment
     status = inb(0x64);
@@ -197,16 +196,33 @@ void keyboard_handler(void)
     {
         keycode = inb(0x60);
 
-        if (keycode)
-        {
-            // Store the key event into the buffer
-            keybuffer[keybufferWriteIdx] = keycode;
+        struct keyevent ke;
 
-            // Increment the buffer writing index
-            if (++keybufferWriteIdx >= KEY_BUFFER_SIZE)
-            {
-                keybufferWriteIdx = 0;
-            }
+        ke.scancode = keycode & 0x7F;
+        ke.state = !(keycode & 0x80);
+
+        keyPressed[ke.scancode] = ke.state;
+
+        ke.shift = (keyPressed[KEY_SHIFT_LEFT] || keyPressed[KEY_SHIFT_RIGHT]);
+        ke.ctrl = keyPressed[KEY_CTRL];
+        ke.alt = keyPressed[KEY_ALT];
+
+        if (ke.scancode > 57 || !ke.state || ke.ctrl || ke.alt)
+        {
+            ke.keychar = 0;
+        }
+        else
+        {
+            ke.keychar = (ke.shift ? asciiShift[ke.scancode] : asciiDefault[ke.scancode]);
+        }
+
+        // Store the key event into the buffer
+        keyEventBuffer[kebWriteIdx] = ke;
+
+        // Increment the buffer writing index
+        if (++kebWriteIdx >= KEB_SIZE)
+        {
+            kebWriteIdx = 0;
         }
     }
 
@@ -215,27 +231,46 @@ void keyboard_handler(void)
 }
 
 // Reads a pressed key scancode from key buffer (no polling)
-// If there are no key entets in the buffer return 0
-uint8_t keybd_readkey(void)
+// If there are no key events in the buffer return 0
+/*uint8_t keybd_readkey(void)
 {
-    if (keybufferReadIdx < keybufferWriteIdx)
-    {
-        // Read the key event from the buffer
-        uint8_t keycode = keybuffer[keybufferReadIdx];
-
-        // Delete the key event buffer entry to make sure it won't accidentally get read again
-        keybuffer[keybufferReadIdx] = 0;
-
-        // Increment the buffer reading index
-        if (++keybufferReadIdx >= KEY_BUFFER_SIZE)
-        {
-            keybufferReadIdx = 0;
-        }
-
-        return keycode;
-    }
-    else
+    // The buffer is empty
+    if (kebReadIdx == kebWriteIdx)
     {
         return 0;
     }
+
+    // Read the key event from the buffer
+    uint8_t scancode = keyEventBuffer[kebReadIdx].scancode;
+
+    // Increment the buffer reading index
+    if (++kebReadIdx >= KEB_SIZE)
+    {
+        kebReadIdx = 0;
+    }
+
+    return scancode;
+}*/
+
+struct keyevent keybd_readevent(void)
+{
+    struct keyevent ke;
+
+    // The buffer is empty
+    if (kebReadIdx == kebWriteIdx)
+    {
+        mem_set(&ke, 0, sizeof(struct keyevent));
+        return ke;
+    }
+
+    // Read the key event from the buffer
+    ke = keyEventBuffer[kebReadIdx];
+
+    // Increment the buffer reading index
+    if (++kebReadIdx >= KEB_SIZE)
+    {
+        kebReadIdx = 0;
+    }
+
+    return ke;
 }

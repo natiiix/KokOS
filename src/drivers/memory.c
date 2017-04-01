@@ -1,6 +1,6 @@
 #include <drivers/memory.h>
 #include <c/string.h>
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
 
 /*// Memory size constants
 const size_t MEMORY_SIZE_BYTES = 4 << 20;

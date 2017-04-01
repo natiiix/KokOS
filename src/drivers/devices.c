@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <io/terminal.h>
+#include <drivers/io/terminal.h>
 #include <drivers/memory.h>
 #include <drivers/storage/atapio.h>
 #include <drivers/pci.h>
