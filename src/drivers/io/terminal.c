@@ -217,89 +217,13 @@ void _clearinputrow(void)
 	}
 }
 
-/*char* term_readline(void)
-{
-	if (lineBroken || activeColumn > 0)
-	{
-		term_newline();
-	}
-
-	char* inputbuffer = (char*)mem_alloc(1024);
-	size_t bufferptr = 0;
-	inputbuffer[0] = '\0';
-
-	while (true)
-	{
-		uint8_t scancode = keybd_readkey();
-		uint8_t keycode = scancode & 0b01111111;
-		bool keystate = (scancode == keycode);
-
-		if (keyPressed[keycode] != keystate)
-		{
-			keyPressed[keycode] = keystate;
-			
-			if (keystate)
-			{
-				char inchar = scancodeToChar(keycode, keyPressed[KEY_SHIFT_LEFT] || keyPressed[KEY_SHIFT_RIGHT]);
-				
-				if (inchar > 0)
-				{
-					inputbuffer[bufferptr++] = inchar;
-					inputbuffer[bufferptr] = '\0';
-				}
-				else if (keycode == KEY_ENTER)
-				{
-					_clearinputrow();
-					return inputbuffer;
-				}
-				else if (keycode == KEY_BACKSPACE)
-				{
-					// Make sure the cursor doesn't get past the beginning of the input row
-					if (bufferptr > 0)
-						inputbuffer[--bufferptr] = '\0';
-				}    
-				else if (keycode == KEY_ESCAPE)
-				{
-					inputbuffer[bufferptr = 0] = '\0';
-				}
-			}
-		}
-
-		_updateinputrow(inputbuffer);
-	}
-}*/
-
-/*void term_pause(void)
-{
-	term_write("Press ENTER to continue...", false);
-
-	while (true)
-	{
-		uint8_t scancode = keybd_readkey();
-		uint8_t keycode = scancode & 0b01111111;
-		bool keystate = (scancode == keycode);
-
-		if (keyPressed[keycode] != keystate)
-		{
-			keyPressed[keycode] = keystate;
-			
-			if (keycode == KEY_ENTER && keystate)
-			{
-				break;
-			}
-		}
-	}
-
-	term_breakline();
-}*/
-
 void term_pause(void)
 {
 	term_write("Press ENTER to continue...", false);
 
 	while (true)
 	{
-		struct keyevent ke = keybd_readevent();
+		struct keyevent ke = keybd_read();
 
 		if (ke.scancode == KEY_ENTER && ke.state == KEY_DOWN)
 		{

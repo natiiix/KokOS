@@ -151,39 +151,6 @@ void keybd_init(void)
     term_writeline("Keyboard initialized.", false);
 }
 
-// ---- OBSOLETE CODE ----
-// Reads a pressed key scancode from keyboard using polling
-/*uint8_t keybd_readkey(void)
-{
-	uint8_t c = 0;
-	
-	do
-	{
-		if (inb(PORT_KEYBOARD) != c)
-		{
-			c = inb(PORT_KEYBOARD);
-
-			if (c > 0)
-			{
-				return c;
-			}
-		}
-	}
-	while (true);
-}*/
-
-char scancodeToChar(const uint8_t scancode, const bool shiftPressed)
-{
-	// Scan code 57 is the last character key
-	// Key with scan code above 57 is guaranteed to be non-character
-	if (scancode > 57)
-	{
-		return 0;
-	}
-
-    return (shiftPressed ? asciiShift[scancode] : asciiDefault[scancode]);
-}
-
 void keyboard_handler(void)
 {
     uint8_t status = 0;
@@ -230,29 +197,7 @@ void keyboard_handler(void)
     outb(0x20, 0x20);
 }
 
-// Reads a pressed key scancode from key buffer (no polling)
-// If there are no key events in the buffer return 0
-/*uint8_t keybd_readkey(void)
-{
-    // The buffer is empty
-    if (kebReadIdx == kebWriteIdx)
-    {
-        return 0;
-    }
-
-    // Read the key event from the buffer
-    uint8_t scancode = keyEventBuffer[kebReadIdx].scancode;
-
-    // Increment the buffer reading index
-    if (++kebReadIdx >= KEB_SIZE)
-    {
-        kebReadIdx = 0;
-    }
-
-    return scancode;
-}*/
-
-struct keyevent keybd_readevent(void)
+struct keyevent keybd_read(void)
 {
     struct keyevent ke;
 

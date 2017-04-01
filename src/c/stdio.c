@@ -63,5 +63,5 @@ void pause(void)
 
 struct keyevent readKeyEvent(void)
 {
-    return keybd_readevent();
+    return keybd_read();
 }
