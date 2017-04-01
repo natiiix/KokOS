@@ -3,16 +3,20 @@
 #include <drivers/storage/atapio.h>
 #include <drivers/memory.h>
 
+static const uint16_t BYTES_PER_SECTOR = 0x200;
+static const uint8_t FAT_COUNT = 0x2;
 static const uint16_t SIGNATURE = 0xAA55;
 
 bool checkVolumeID(const enum BUS bus, const enum DRIVE drive, uint64_t lba)
 {
-    uint8_t* volumeid = readLBA48(bus, drive, lba);
+    struct VOLUMEID* volid = (struct VOLUMEID*)readLBA48(bus, drive, lba);
 
-    uint16_t* signptr = (uint16_t*)(volumeid + 0x1FE);
-    bool volumeidValid =  (*signptr == SIGNATURE);
+    bool volumeidValid =
+        (volid->bytesPerSector == BYTES_PER_SECTOR) &&
+        (volid->fatCount == FAT_COUNT) &&
+        (volid->signature == SIGNATURE);
 
-    mem_free(volumeid);
+    mem_free(volid);
     return volumeidValid;
 }
 
@@ -53,7 +57,7 @@ void fat_init_ide(const enum BUS bus, const enum DRIVE drive)
                     term_write("Partition ", false);
                     term_write_convert(i, 16);
                     term_write(": 0x", false);
-                    term_write_convert(part->sectors * 0x200, 16);
+                    term_write_convert(part->sectors * BYTES_PER_SECTOR, 16);
                     term_writeline(" Bytes", false);
                 }
             }

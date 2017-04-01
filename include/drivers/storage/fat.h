@@ -29,6 +29,17 @@
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
 
+struct MBR
+{
+    uint8_t jumpinstr[0x3];
+    uint8_t oemname[0x8];
+    uint8_t unknown[0x1B3];
+    // PARTITION struct uses one extra byte for some reason
+    //PARTITION part[4];
+    uint8_t part[4][16];
+    uint16_t signature;
+};
+
 struct PARTITION
 {
     uint8_t bootflag;
@@ -39,14 +50,18 @@ struct PARTITION
     uint32_t sectors;
 };
 
-struct MBR
+struct VOLUMEID
 {
-    uint8_t jumpinstr[0x3];
-    uint8_t oemname[0x8];
-    uint8_t unknown[0x1B3];
-    // PARTITION struct uses one extra byte for some reason
-    //PARTITION part[4];
-    uint8_t part[4][16];
+    uint8_t unknown0[0xB];
+    uint16_t bytesPerSector;
+    uint8_t sectorsPerCluster;
+    uint16_t reservedSectors;
+    uint8_t fatCount;
+    uint8_t unknown1[0x13];
+    uint32_t fatSectors;
+    uint8_t unknown2[0x4];
+    uint32_t rootDirCluster;
+    uint8_t unknown3[0x1CE];
     uint16_t signature;
 };
 

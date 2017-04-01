@@ -17,6 +17,11 @@ void shell_init(void)
 
 void Shell::init(void)
 {
+	#ifdef DEBUG
+		// Give the user a chance to see kernel initialization messages
+		pause();
+	#endif
+
     clear();
 
 	strPrefix.clear();

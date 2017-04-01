@@ -59,54 +59,27 @@ void dev_init(void)
                 // If a valid device is present
                 if (pcidev->vendorid != 0xFFFF && pcidev->deviceid != 0xFFFF)
                 {
-                    term_write("PCI: Bus 0x", false);
-                    term_write_convert(ibus, 16);
-                    term_write(" : Slot 0x", false);
-                    term_write_convert(islot, 16);
-                    term_write(" : Func 0x", false);
-                    term_write_convert(ifunc, 16);
+                    term_write("PCI: Bus ", false);
+                    term_write_convert(ibus, 10);
+                    term_write(" : Slot ", false);
+                    term_write_convert(islot, 10);
+                    term_write(" : Func ", false);
+                    term_write_convert(ifunc, 10);
 
-                    term_write(" : Hdr ", false);
+                    term_write(" : 0x", false); // Header type
                     term_write_convert(pcidev->headertype, 16);
-                    term_write(" : Cls ", false);
+                    term_write(" : 0x", false); // Class
                     term_write_convert(pcidev->classid, 16);
-                    term_write(" : Sbcls ", false);
+                    term_write(" : 0x", false); // Subclass
                     term_write_convert(pcidev->subclass, 16);
-                    term_write(" : PIF ", false);
+                    term_write(" : 0x", false); // Prog IF
                     term_write_convert(pcidev->progif, 16);
 
                     if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6 && pcidev->progif == 1)
                     {
-                        //term_writeline(" : SATA Mass Storage");
-                        term_writeline(" : SATA", false);
+                        term_writeline(" : SATA Mass Storage", false);
                         HBA_MEM* hbamem = (HBA_MEM*)pcidev->baseaddr5;
                         probe_port(hbamem);
-
-                        /*char* cbuff = (char*)mem_alloc(513);
-
-                        for (size_t i = 0; i < 512; i++)
-                        {
-                            cbuff[i] = '\0';
-                        }
-
-                        if (ahci_read(&hbamem->ports[0], 0, 1, (uint16_t*)cbuff))
-                        {
-                            for (size_t i = 0; i < 512; i++)
-                            {
-                                if (cbuff[i] == '\0')
-                                    cbuff[i] = '.';
-                            }
-
-                            cbuff[512] = '\0';
-
-                            term_writeline(cbuff, false);
-                        }
-                        else
-                        {
-                            term_writeline("AHCI drive reading failed!", false);
-                        }
-
-                        mem_free(cbuff);*/
                     }
                     else
                     {

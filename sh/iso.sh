@@ -11,7 +11,7 @@ if grub-file --is-x86-multiboot ${BASH_SOURCE%/*}/../bin/kokos.bin; then
 	cp ${BASH_SOURCE%/*}/../src/core/grub.cfg ${BASH_SOURCE%/*}/../isodir/boot/grub/grub.cfg
 	echo Building iso
 	grub-mkrescue -o ${BASH_SOURCE%/*}/../iso/kokos.iso ${BASH_SOURCE%/*}/../isodir/
-	#qemu-system-i386 -cdrom ${BASH_SOURCE%/*}/../iso/kokos.iso
+	qemu-system-i386 -cdrom ${BASH_SOURCE%/*}/../iso/kokos.iso -boot d
 else
 	echo The file is not multiboot
 fi
