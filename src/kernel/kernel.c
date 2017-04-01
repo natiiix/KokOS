@@ -34,5 +34,5 @@ void kernel_main(void)
 
 	// ---- UNREACHABLE CODE ----
 
-	kernel_panic_default(); // End of kernel reached, panic
+	kernel_panic("End of kernel reached!"); // End of kernel reached, panic
 }

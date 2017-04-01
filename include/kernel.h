@@ -5,8 +5,7 @@ extern "C"
 {
 #endif
 
-void kernel_panic(void);
-void kernel_panic_default(void);
+void kernel_panic(const char* const str);
 
 void debug_memusage(void);
 

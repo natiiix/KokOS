@@ -4,14 +4,18 @@
 
 void kernel_panic(const char* const str)
 {
-    term_setcolor(vga_entry_color(VGA_COLOR_LIGHT_RED, VGA_COLOR_BLUE));
+    // Choice of colors inspired by old Windows BSOD
+    static const enum VGA_COLOR colorBackground = VGA_COLOR_BLUE;
+    static const enum VGA_COLOR colorForeground = VGA_COLOR_WHITE;
+
+    static const char strHeader[] = "Kernel Panic\n\n\n\n";
+
+    term_setcolor(vga_entry_color(colorForeground, colorBackground));
     term_clear();
-    term_writeline(str, false);
+
+    // The memory should normally be freed, but since the kernel has panicked
+    // it shouldn't really matter since it's not expected to recover
+    term_writeline(strcenter(strjoin(&strHeader[0], str)), false);
 
     hlt();
-}
-
-void kernel_panic_default(void)
-{
-    kernel_panic(strcenter("Fatal Error: Kernel Panic", VGA_WIDTH, VGA_HEIGHT));
 }

@@ -1,5 +1,6 @@
 #include <c/string.h>
 #include <drivers/memory.h>
+#include <drivers/io/terminal.h>
 
 size_t strlen(const char* const strinput)
 {
@@ -111,39 +112,99 @@ size_t strparse(const char* const str, const size_t base)
     return value;
 }
 
-char* strcenter(const char* const str, const size_t width, const size_t height)
+char* strcenter(const char* const str)
 {
-    size_t strlength = strlen(str);
+    size_t len = strlen(str);
 
-    size_t strwidth = (strlength > width ? width : strlength);
-    size_t strheight = (strwidth / width) + !!(strwidth % width);
+    size_t linesOffset[VGA_HEIGHT];
+    size_t linesLen[VGA_HEIGHT];
+    size_t linesCount = 0;
 
-    size_t xoffset = (width - strwidth) / 2;
-    size_t yoffset = (height > strheight ? (height - strheight) / 2 : 0);
-
-    char* strout = (char*)mem_alloc(yoffset + xoffset + strlength + 1);
-    size_t istr = 0;
-
-    for (size_t i = 0; i < yoffset; i++)
+    size_t currLineLen = 0;
+    for (size_t i = 0; i < len && linesCount < VGA_HEIGHT - 1; i++)
     {
-        strout[istr++] = '\n';
-    }
+        if (currLineLen == 0)
+        {
+            linesOffset[linesCount] = i;
+        }
 
-    for (size_t i = 0; i < xoffset; i++)
-    {
-        strout[istr++] = ' ';
-    }
-
-    // I was too lazy to figure out input with line breaks so I just replace them with spaces
-    for (size_t i = 0; i < strlength; i++)
-    {
         if (str[i] == '\n')
-            strout[istr++] = ' ';
+        {
+            linesLen[linesCount] = currLineLen;
+            linesCount++;            
+            currLineLen = 0;
+        }
         else
-            strout[istr++] = str[i];
+        {
+            currLineLen++;
+
+            if (currLineLen == VGA_WIDTH)
+            {
+                linesLen[linesCount] = currLineLen;
+                linesCount++;
+                currLineLen = 0;
+            }
+        }
     }
 
-    strout[istr] = '\0';
+    if (currLineLen > 0)
+    {
+        linesLen[linesCount] = currLineLen;
+        linesCount++;
+    }
+
+    char* strbuff = (char*)mem_alloc(VGA_HEIGHT * VGA_WIDTH);
+    size_t buffIdx = 0;
+
+    size_t marginTop = (VGA_HEIGHT / 2) - (linesCount / 2);
+    for (size_t i = 0; i < marginTop; i++)
+    {
+        strbuff[buffIdx++] = '\n';
+    }
+
+    for (size_t i = 0; i < linesCount; i++)
+    {
+        size_t marginLeft = (VGA_WIDTH / 2) - (linesLen[i] / 2) - (linesLen[i] % 2);
+        for (size_t j = 0; j < marginLeft; j++)
+        {
+            strbuff[buffIdx++] = ' ';
+        }
+
+        for (size_t j = 0; j < linesLen[i]; j++)
+        {
+            strbuff[buffIdx++] = str[linesOffset[i] + j];
+        }
+
+        if (i < linesCount - 1 && linesLen[i] < VGA_WIDTH)
+        {
+            strbuff[buffIdx++] = '\n';
+        }
+    }
+
+    strbuff[buffIdx] = '\0';
+
+    return strbuff;
+}
+
+char* strjoin(const char* const str1, const char* const str2)
+{
+    size_t len1 = strlen(str1);
+    size_t len2 = strlen(str2);
+
+    char* strout = (char*)mem_alloc(len1 + len2 + 1);
+    size_t strIdx = 0;
+
+    for (size_t i = 0; i < len1; i++)
+    {
+        strout[strIdx++] = str1[i];
+    }
+
+    for (size_t i = 0; i < len2; i++)
+    {
+        strout[strIdx++] = str2[i];
+    }
+
+    strout[strIdx] = '\0';
 
     return strout;
 }
