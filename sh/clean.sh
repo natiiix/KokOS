@@ -2,7 +2,7 @@
 
 set -e
 
-echo cleaning old files
+echo Cleaning old files
 rm -rfv ${BASH_SOURCE%/*}/../*.o
 rm -rfv ${BASH_SOURCE%/*}/../*.bin
 rm -rfv ${BASH_SOURCE%/*}/../*.iso

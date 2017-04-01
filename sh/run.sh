@@ -7,5 +7,5 @@ set -e
 
 ${BASH_SOURCE%/*}/build.sh
 
-echo booting the kernel
+echo Booting the kernel
 qemu-system-i386 -kernel ${BASH_SOURCE%/*}/../bin/kokos.bin

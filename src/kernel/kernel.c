@@ -6,13 +6,14 @@
 	#error "This kernel needs to be compiled with a ix86-elf compiler!"
 #endif
 
-#include <drivers/memory.h>
-#include <drivers/io/terminal.h>
-#include <drivers/devices.h>
 #include <kernel.h>
 
-void shell_init(void);
+void term_init(void);
+void mem_init(void);
+void dev_init(void);
+
 void interrupts_init(void);
+void shell_init(void);
 
 void kernel_init(void)
 {
@@ -32,9 +33,6 @@ void kernel_main(void)
 	shell_init(); // Initialize the shell
 
 	// ---- UNREACHABLE CODE ----
-
-	debug_memusage(); // Check for memory leaks
-	term_pause(); // Let the user see the memory usage
 
 	kernel_panic_default(); // End of kernel reached, panic
 }

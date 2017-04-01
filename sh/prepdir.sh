@@ -2,7 +2,7 @@
 
 set -e
 
-echo preparing directory tree
+echo Preparing directory tree
 mkdir ${BASH_SOURCE%/*}/../obj/
 mkdir ${BASH_SOURCE%/*}/../obj/c/
 mkdir ${BASH_SOURCE%/*}/../obj/cpp/
