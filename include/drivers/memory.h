@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void mem_init(void);
 size_t mem_used(void);
 size_t mem_empty(void);
 void* mem_alloc(const size_t length);

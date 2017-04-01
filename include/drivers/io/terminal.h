@@ -13,8 +13,6 @@ static inline uint8_t vga_entry_color(const enum VGA_COLOR fg, const enum VGA_CO
 static inline uint16_t vga_entry(const unsigned char uc, const uint8_t color)
 { return (uint16_t) uc | (uint16_t) color << 8; }
 
-// Initializes terminal
-void term_init(void);
 // Clears the terminal
 void term_clear(void);
 // Sets the terminal color

@@ -8,6 +8,9 @@
 
 #include <kernel.h>
 
+// These _init() functions are not in their respective headers because
+// they're supposed to be never called from anywhere else than from here
+
 void term_init(void);
 void mem_init(void);
 void dev_init(void);
@@ -15,24 +18,17 @@ void dev_init(void);
 void interrupts_init(void);
 void shell_init(void);
 
-void kernel_init(void)
+void kernel_main(void)
 {
+	// Initialize basic components
 	term_init();
 	mem_init();
 	dev_init();
-
 	interrupts_init();
-}
 
-#include <drivers/io/keyboard.h>
+	// Start the Shell module
+	shell_init();
 
-void kernel_main(void)
-{
-	kernel_init(); // Initialize basic components
-
-	shell_init(); // Initialize the shell
-
-	// ---- UNREACHABLE CODE ----
-
-	kernel_panic("End of kernel reached!"); // End of kernel reached, panic
+	// This should be unreachable code
+	kernel_panic("End of kernel reached!");
 }
