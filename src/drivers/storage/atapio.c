@@ -22,6 +22,7 @@ const uint8_t COMMAND_READ           = 0x20;
 const uint8_t COMMAND_READ_EXTENDED  = 0x24;
 const uint8_t COMMAND_WRITE          = 0x30;
 const uint8_t COMMAND_WRITE_EXTENDED = 0x34;
+const uint8_t COMMAND_IDENTIFY       = 0xEC;
 
 const uint8_t STATUS_BSY  = 0x80; // Busy
 const uint8_t STATUS_DRDY = 0x40; // Drive ready
@@ -47,6 +48,82 @@ void awaitStatusFalse(const enum BUS bus, const uint8_t status)
     while (inb(bus + REGISTER_STATUS) & status) { }
 }
 
+void switchDrive(const enum BUS bus, const enum DRIVE drive)
+{
+    // Convert drive from 0/1 to 0xA0/0xB0
+    uint8_t driveValue = 0xA0 + (drive << 4);
+    outb(bus + REGISTER_DRIVE_HEAD, driveValue);
+
+    // 400ns wait
+    inb(bus + REGISTER_STATUS);
+    inb(bus + REGISTER_STATUS);
+    inb(bus + REGISTER_STATUS);
+    inb(bus + REGISTER_STATUS);
+}
+
+bool ideIdentify(const enum BUS bus, const enum DRIVE drive)
+{
+    switchDrive(bus, drive);
+
+    outb(bus + REGISTER_SECTOR_COUNT, 0);
+    outb(bus + REGISTER_LBA_LOW, 0);
+    outb(bus + REGISTER_LBA_MID, 0);
+    outb(bus + REGISTER_LBA_HIGH, 0);
+
+    outb(bus + REGISTER_COMMAND, COMMAND_IDENTIFY);
+    uint8_t status = inb(bus + REGISTER_STATUS);
+
+    if (status)
+    {
+        awaitStatusFalse(bus, STATUS_BSY);
+
+        if (!inb(bus + REGISTER_LBA_MID) && !inb(bus + REGISTER_LBA_HIGH))
+        {
+            awaitStatus(bus, STATUS_DRQ | STATUS_ERR);
+
+            if (inb(bus + REGISTER_STATUS) & STATUS_DRQ)
+            {
+                // Read the indentification data from the drive
+                for (size_t idx = 0; idx < 256; idx++)
+                {
+                    // The identification data MUST BE read from the drive
+                    // so let's read it and then dump it immediately
+                    // because we don't need it for anything
+                    inw(bus + REGISTER_DATA);
+                }
+
+                /*uint8_t* ptrBuff = (uint8_t*)mem_alloc(513);
+                ptrBuff[512] = '\0';
+                uint16_t tmpword = 0;
+
+                outb(bus + REGISTER_COMMAND, COMMAND_READ);
+                awaitStatus(bus, STATUS_DRQ);
+
+                for (size_t idx = 0; idx < 256; idx++)
+                {
+                    tmpword = inw(bus + REGISTER_DATA);
+                    ptrBuff[(idx << 1)] = (uint8_t)tmpword;
+                    ptrBuff[(idx << 1) + 1] = (uint8_t)(tmpword >> 8);
+                }
+
+                for (size_t i = 0; i < 512; i++)
+                {
+                    if (ptrBuff[i] == '\0')
+                    {
+                        ptrBuff[i] = '.';
+                    }
+                }
+
+                term_writeline((char*)ptrBuff, true);*/
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool probeBus(const enum BUS bus)
 {
     outb(bus + REGISTER_LBA_LOW, PROBE_BYTE);
@@ -57,13 +134,14 @@ bool probeBus(const enum BUS bus)
 
 bool probeDrive(const enum BUS bus, const enum DRIVE drive)
 {
-    // Convert drive from 0/1 to 0xA0/0xB0
-    uint8_t probeDrive = 0xA0 + (drive << 4);
+    // ideIdentify() is used to tell ATA apart from ATAPI which we can't read from
+    bool identified = ideIdentify(bus, drive);
 
-    outb(bus + REGISTER_DRIVE_HEAD, probeDrive);
-    uint8_t probeResponse = inb(bus + REGISTER_STATUS);
+    switchDrive(bus, drive);
+    uint8_t status = inb(bus + REGISTER_STATUS);
 
-    return (probeResponse & STATUS_DRDY);
+    // Only returns true if the drive is an ATA storage device
+    return (status & STATUS_DRDY) && identified;
 }
 
 void setupLBA28(const enum BUS bus, const enum DRIVE drive, const uint32_t addr)

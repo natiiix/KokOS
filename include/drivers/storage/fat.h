@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <drivers/storage/atapio.h>
+#include <drivers/storage/harddrive.h>
 
 // Sector 0 : Master Boot Record
 //  -- 0x000 [0x003] : Jump instruction
@@ -61,8 +61,8 @@ struct VOLUMEID
     uint32_t fatSectors;
     uint8_t unknown2[0x4];
     uint32_t rootDirCluster;
-    uint8_t unknown3[0x1CE];
+    uint8_t unknown3[0x1CA];
     uint16_t signature;
 };
 
-void fat_init_ide(const enum BUS bus, const enum DRIVE drive);
+bool fat_init(const struct HARDDRIVE hdd);

@@ -3,6 +3,7 @@
 #include <drivers/memory.h>
 #include <drivers/io/terminal.h>
 #include <c/string.h>
+#include <drivers/storage/harddrive.h>
 
 // Detect attached SATA devices
 // 1) Which port is device attached
@@ -69,6 +70,9 @@ void probe_port(HBA_MEM *abar)
 			if (dt == AHCI_DEV_SATA)
 			{
 				trace_ahci("SATA drive found at port ", i);
+
+				// Store the SATA drive in the HDD array
+				hddAddAHCI(&abar->ports[i]);
 			}
 			else if (dt == (int)AHCI_DEV_SATAPI)
 			{

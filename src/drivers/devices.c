@@ -7,6 +7,7 @@
 #include <drivers/storage/atapio.h>
 #include <drivers/pci.h>
 #include <drivers/storage/ahci.h>
+#include <drivers/storage/harddrive.h>
 
 void dev_init(void)
 {
@@ -18,11 +19,13 @@ void dev_init(void)
         if (probeDrive(BUS_PRIMARY, DRIVE_MASTER))
         {
             term_writeline("IDE: Primary Bus : Master Drive", false);
+            hddAddIDE(BUS_PRIMARY, DRIVE_MASTER);
         }
 
         if (probeDrive(BUS_PRIMARY, DRIVE_SLAVE))
         {
             term_writeline("IDE: Primary Bus : Slave Drive", false);
+            hddAddIDE(BUS_PRIMARY, DRIVE_SLAVE);
         }
     }
     if (probeBus(BUS_SECONDARY))
@@ -30,11 +33,13 @@ void dev_init(void)
         if (probeDrive(BUS_SECONDARY, DRIVE_MASTER))
         {
             term_writeline("IDE: Secondary Bus : Master Drive", false);
+            hddAddIDE(BUS_SECONDARY, DRIVE_MASTER);
         }
 
         if (probeDrive(BUS_SECONDARY, DRIVE_SLAVE))
         {
             term_writeline("IDE: Secondary Bus : Slave Drive", false);
+            hddAddIDE(BUS_SECONDARY, DRIVE_SLAVE);
         }
     }
 
@@ -97,5 +102,6 @@ void dev_init(void)
 		}
 	}
 
+    term_writeline_convert(hddCount, 16);
     term_writeline("Devices initialized.", false);
 }
