@@ -27,12 +27,18 @@ bool checkVolumeID(const struct HARDDRIVE hdd, uint64_t lba)
     strvolid[512] = '\0';
     term_writeline(strvolid, true);
 
-    term_writeline_convert(volid->bytesPerSector, 16);
-    term_writeline_convert(volid->sectorsPerCluster, 16);
-    term_writeline_convert(volid->reservedSectors, 16);
-    term_writeline_convert(volid->fatCount, 16);
-    term_writeline_convert(volid->fatSectors, 16);
-    term_writeline_convert(volid->rootDirCluster, 16);
+    term_write_convert(volid->bytesPerSector, 16);
+    term_write("; ", false);
+    term_write_convert(volid->sectorsPerCluster, 16);
+    term_write("; ", false);
+    term_write_convert(volid->reservedSectors, 16);
+    term_write("; ", false);
+    term_write_convert(volid->fatCount, 16);
+    term_write("; ", false);
+    term_write_convert(volid->fatSectors, 16);
+    term_write("; ", false);
+    term_write_convert(volid->rootDirCluster, 16);
+    term_write("; ", false);
     term_writeline_convert(volid->signature, 16);
 
     bool volumeidValid =

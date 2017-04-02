@@ -64,7 +64,7 @@ void dev_init(void)
                 // If a valid device is present
                 if (pcidev->vendorid != 0xFFFF && pcidev->deviceid != 0xFFFF)
                 {
-                    term_write("PCI: Bus ", false);
+                    /*term_write("PCI: Bus ", false);
                     term_write_convert(ibus, 10);
                     term_write(" : Slot ", false);
                     term_write_convert(islot, 10);
@@ -78,17 +78,24 @@ void dev_init(void)
                     term_write(" : 0x", false); // Subclass
                     term_write_convert(pcidev->subclass, 16);
                     term_write(" : 0x", false); // Prog IF
-                    term_write_convert(pcidev->progif, 16);
+                    term_write_convert(pcidev->progif, 16);*/
 
                     if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6 && pcidev->progif == 1)
                     {
+                        term_write("PCI: Bus ", false);
+                        term_write_convert(ibus, 10);
+                        term_write(" : Slot ", false);
+                        term_write_convert(islot, 10);
+                        term_write(" : Func ", false);
+                        term_write_convert(ifunc, 10);
+
                         term_writeline(" : SATA Mass Storage", false);
                         HBA_MEM* hbamem = (HBA_MEM*)pcidev->baseaddr5;
                         probe_port(hbamem);
                     }
                     else
                     {
-                        term_breakline();
+                        //term_breakline();
                     }
                 }
 
