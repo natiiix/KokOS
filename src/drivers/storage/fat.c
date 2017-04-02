@@ -27,13 +27,12 @@ bool checkVolumeID(const struct HARDDRIVE hdd, uint64_t lba)
     strvolid[512] = '\0';
     term_writeline(strvolid, true);
 
-    term_writeline_convert(sizeof(struct VOLUMEID), 16);
-    term_writeline_convert((size_t)volid, 16);
-    term_writeline_convert((size_t)&volid->bytesPerSector, 16);
-    term_writeline_convert((size_t)&volid->fatCount, 16);
-    term_writeline_convert((size_t)&volid->signature, 16);
     term_writeline_convert(volid->bytesPerSector, 16);
+    term_writeline_convert(volid->sectorsPerCluster, 16);
+    term_writeline_convert(volid->reservedSectors, 16);
     term_writeline_convert(volid->fatCount, 16);
+    term_writeline_convert(volid->fatSectors, 16);
+    term_writeline_convert(volid->rootDirCluster, 16);
     term_writeline_convert(volid->signature, 16);
 
     bool volumeidValid =
@@ -70,13 +69,11 @@ bool fat_init(const struct HARDDRIVE hdd)
 
         for (size_t i = 0; i < 4; i++)
         {
-            struct PARTITION* part = (struct PARTITION*)mbr->part[i];
-
             // A valid partition must not start at the very beginning of the disk
             // and it must occupy at least one disk sector
-            if (part->lbabegin > 0 && part->sectors > 0)
+            if (mbr->part[i].lbabegin > 0 && mbr->part[i].sectors > 0)
             {
-                partValid[i] = checkVolumeID(hdd, part->lbabegin);
+                partValid[i] = checkVolumeID(hdd, mbr->part[i].lbabegin);
                 
                 if (partValid[i])
                 {
@@ -85,7 +82,7 @@ bool fat_init(const struct HARDDRIVE hdd)
                     term_write("Partition ", false);
                     term_write_convert(i, 16);
                     term_write(": 0x", false);
-                    term_write_convert(part->sectors * BYTES_PER_SECTOR, 16);
+                    term_write_convert(mbr->part[i].sectors * BYTES_PER_SECTOR, 16);
                     term_writeline(" Bytes", false);
                 }
             }

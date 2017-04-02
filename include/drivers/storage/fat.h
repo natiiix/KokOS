@@ -28,17 +28,9 @@
 //  -- 0x5 [0x3] : CHS end
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
-
-struct MBR
-{
-    uint8_t jumpinstr[0x3];
-    uint8_t oemname[0x8];
-    uint8_t unknown[0x1B3];
-    // PARTITION struct uses one extra byte for some reason
-    //PARTITION part[4];
-    uint8_t part[4][16];
-    uint16_t signature;
-};
+//
+// Volume ID
+// TODO :)
 
 struct PARTITION
 {
@@ -48,7 +40,16 @@ struct PARTITION
     uint8_t chsend[3];
     uint32_t lbabegin;
     uint32_t sectors;
-};
+} __attribute__((packed));
+
+struct MBR
+{
+    uint8_t jumpinstr[0x3];
+    uint8_t oemname[0x8];
+    uint8_t unknown[0x1B3];
+    struct PARTITION part[4];
+    uint16_t signature;
+} __attribute__((packed));
 
 struct VOLUMEID
 {
@@ -61,8 +62,8 @@ struct VOLUMEID
     uint32_t fatSectors;
     uint8_t unknown2[0x4];
     uint32_t rootDirCluster;
-    uint8_t unknown3[0x1CA];
+    uint8_t unknown3[0x1CE];
     uint16_t signature;
-};
+} __attribute__((packed));
 
 bool fat_init(const struct HARDDRIVE hdd);
