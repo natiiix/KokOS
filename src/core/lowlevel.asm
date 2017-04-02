@@ -47,6 +47,7 @@ load_gdt:
     mov es, eax
     mov fs, eax
     mov gs, eax
+    mov ss, eax
     ret
 
 keyboard_handler_int:
