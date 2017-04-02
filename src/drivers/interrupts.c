@@ -1,4 +1,5 @@
 #include <assembly.h>
+#include <drivers/io/terminal.h>
 
 #define IDT_SIZE 256
 #define PIC_1_CTRL 0x20
@@ -6,8 +7,8 @@
 #define PIC_1_DATA 0x21
 #define PIC_2_DATA 0xA1
 
-void keyboard_handler_int();
-void load_idt(void*);
+extern void keyboard_handler_int(void);
+extern void load_idt(void*);
 
 struct idt_entry
 {
@@ -66,11 +67,11 @@ static void initialize_pic()
     /* Initialization finished */
 
     /* mask interrupts */
-    outb(0x21 , 0xff);
-    outb(0xA1 , 0xff);
+    outb(0x21 , 0xFF);
+    outb(0xA1 , 0xFF);
 }
 
-void idt_init()
+void idt_init(void)
 {
     initialize_pic();
     initialize_idt_pointer();
@@ -80,8 +81,10 @@ void idt_init()
 void interrupts_init(void)
 {
     idt_init();
-    load_idt_entry(0x21, (unsigned long) keyboard_handler_int, 0x08, 0x8e);
+    load_idt_entry(0x21, (unsigned long) keyboard_handler_int, 0x08, 0x8E);
     
     /* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
     outb(0x21 , 0xFD);
+
+    term_writeline("Interrupts initialized.", false);
 }

@@ -1,10 +1,9 @@
 section .text
 
-extern keyboard_handler
-global read_port
-global write_port
-global load_idt
 global keyboard_handler_int
+global load_idt
+
+extern keyboard_handler
 
 keyboard_handler_int:
     pushad
