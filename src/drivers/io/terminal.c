@@ -166,10 +166,10 @@ void term_setcursor(const size_t col, const size_t row)
 
 	// cursor LOW port to vga INDEX register
 	outb(0x3D4, 0x0F);
-	outb(0x3D5, (uint8_t)(position & 0xFF));
+	outb(0x3D5, (uint8_t)position);
 	// cursor HIGH port to vga INDEX register
 	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t)((position >> 8) & 0xFF));
+	outb(0x3D5, (uint8_t)(position >> 8));
 }
 
 void _updateinputrow(const char* const inbuff)

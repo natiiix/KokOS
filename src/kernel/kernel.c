@@ -26,7 +26,7 @@ void kernel_main(void)
 	term_init();
 	mem_init();
 	dev_init();
-	//interrupts_init();
+	interrupts_init();
 
 	// Start the Shell module
 	shell_init();
