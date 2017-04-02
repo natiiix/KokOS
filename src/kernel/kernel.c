@@ -17,10 +17,12 @@ void dev_init(void);
 
 void interrupts_init(void);
 void shell_init(void);
+void load_gdt(void);
 
 void kernel_main(void)
 {
 	// Initialize basic components
+    load_gdt();
 	term_init();
 	mem_init();
 	dev_init();
