@@ -26,6 +26,9 @@ void term_write_convert(const size_t input, const size_t base);
 // Extension of term_write() which breaks the line after writing
 void term_writeline(const char* const str, const bool dispose);
 void term_writeline_convert(const size_t input, const size_t base);
+// Enables the underline text mode cursor
+// Needed for cases when bootloader doesn't enable it automatically
+void term_enablecursor(void);
 // Moves the terminal cursor to a specified position
 void term_setcursor(const size_t col, const size_t row);
 // Reads a string from the input buffer into memory and returns a pointer to it

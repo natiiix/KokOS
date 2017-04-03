@@ -4,6 +4,15 @@
 #include <assembly.h>
 #include <drivers/io/keyboard.h>
 
+// The location is specified as pixels from the top
+// 0x0 = the very top
+// 0xF = the very bottom
+
+// The bottom horizontal coordinate of the cursor
+static const uint8_t CURSOR_BOTTOM = 0xF;
+// Specifies the horizontal size of the cursor
+static const uint8_t CURSOR_THICKNESS = 0x2;
+
 uint16_t* vgaBuffer;
 uint8_t activeColor;
 size_t activeRow;
@@ -16,6 +25,7 @@ void term_init(void)
 	activeColor = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
 	term_clear();
+	term_enablecursor();
 	term_writeline("Terminal initialized.", false);
 }
 
@@ -158,6 +168,17 @@ void term_writeline_convert(const size_t input, const size_t base)
 {
 	term_write_convert(input, base);
 	_breakline_writeline();
+}
+
+void term_enablecursor(void)
+{
+    outb(0x3D4, 0x0A);
+	// Set top cursor location and clear the disable bit
+    outb(0x3D5, (CURSOR_BOTTOM - CURSOR_THICKNESS + 1) & 0xEF);
+
+	outb(0x3D4, 0x0B);
+	// Set the bottom cursor location
+    outb(0x3D5, CURSOR_BOTTOM);
 }
 
 void term_setcursor(const size_t col, const size_t row)
