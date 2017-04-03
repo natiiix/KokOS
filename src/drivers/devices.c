@@ -109,6 +109,7 @@ void dev_init(void)
 		}
 	}*/
 
+    term_write("Number of detected FAT drives: ", false);
     term_writeline_convert(hddCount, 10);
     term_writeline("Devices initialized.", false);
 }
