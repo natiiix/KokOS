@@ -10,12 +10,25 @@ size_t activeRow;
 size_t activeColumn;
 bool lineBroken;
 
+void term_enable_cursor(void)
+{
+	outb(0x3D4, 0x0A);
+	char curstart = inb(0x3D5) & 0x1F; // get cursor scanline start
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, curstart & ~0x20);
+	outb(0x3D4, 0x0A);   // set the cursor start scanline to 13(0x0d) and enable cursor visibility
+	outb(0x3D5, 0x0D);
+	outb(0x3D4, 0x0B);   // set the cursor end scanline to 14(0x0e)
+	outb(0x3D5, 0x0E);
+}
+
 void term_init(void)
 {
-    vgaBuffer = (uint16_t*)0xB8000;
+	vgaBuffer = (uint16_t*)0xB8000;
 	activeColor = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
 	term_clear();
+	term_enable_cursor();
 	term_writeline("Terminal initialized.", false);
 }
 
