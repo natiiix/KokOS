@@ -53,7 +53,7 @@ int check_type(HBA_PORT *port)
 void trace_ahci(const char* const str, const int num)
 {
     term_write(str, false);
-    term_writeline_convert((size_t)num, 16);
+    term_writeline_convert((size_t)num, 10);
 }
  
 void probe_port(HBA_MEM *abar)

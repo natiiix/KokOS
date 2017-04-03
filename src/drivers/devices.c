@@ -5,8 +5,8 @@
 #include <drivers/io/terminal.h>
 #include <drivers/memory.h>
 #include <drivers/storage/atapio.h>
-#include <drivers/pci.h>
-#include <drivers/storage/ahci.h>
+//#include <drivers/pci.h>
+//#include <drivers/storage/ahci.h>
 #include <drivers/storage/harddrive.h>
 
 void dev_init(void)
@@ -44,7 +44,7 @@ void dev_init(void)
     }
 
     // -------- PCI --------
-    struct pcidevice* pcidev;
+    /*struct pcidevice* pcidev;
 
 	for (uint8_t ibus = 0; ibus < 8; ibus++)
 	{
@@ -64,21 +64,21 @@ void dev_init(void)
                 // If a valid device is present
                 if (pcidev->vendorid != 0xFFFF && pcidev->deviceid != 0xFFFF)
                 {
-                    /*term_write("PCI: Bus ", false);
-                    term_write_convert(ibus, 10);
-                    term_write(" : Slot ", false);
-                    term_write_convert(islot, 10);
-                    term_write(" : Func ", false);
-                    term_write_convert(ifunc, 10);
+                    //term_write("PCI: Bus ", false);
+                    //term_write_convert(ibus, 10);
+                    //term_write(" : Slot ", false);
+                    //term_write_convert(islot, 10);
+                    //term_write(" : Func ", false);
+                    //term_write_convert(ifunc, 10);
 
-                    term_write(" : 0x", false); // Header type
-                    term_write_convert(pcidev->headertype, 16);
-                    term_write(" : 0x", false); // Class
-                    term_write_convert(pcidev->classid, 16);
-                    term_write(" : 0x", false); // Subclass
-                    term_write_convert(pcidev->subclass, 16);
-                    term_write(" : 0x", false); // Prog IF
-                    term_write_convert(pcidev->progif, 16);*/
+                    //term_write(" : 0x", false); // Header type
+                    //term_write_convert(pcidev->headertype, 16);
+                    //term_write(" : 0x", false); // Class
+                    //term_write_convert(pcidev->classid, 16);
+                    //term_write(" : 0x", false); // Subclass
+                    //term_write_convert(pcidev->subclass, 16);
+                    //term_write(" : 0x", false); // Prog IF
+                    //term_write_convert(pcidev->progif, 16);
 
                     if (pcidev->headertype == 0 && pcidev->classid == 1 && pcidev->subclass == 6 && pcidev->progif == 1)
                     {
@@ -107,8 +107,8 @@ void dev_init(void)
                 }
             }
 		}
-	}
+	}*/
 
-    term_writeline_convert(hddCount, 16);
+    term_writeline_convert(hddCount, 10);
     term_writeline("Devices initialized.", false);
 }
