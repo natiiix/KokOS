@@ -179,8 +179,8 @@ void term_enablecursor(void)
 	outb(VGA_PORT_DIRECTION, 0x0A);
 	uint8_t tmp = inb(VGA_PORT_DATA);
 
-	tmp &= 0xC0; // clear first 5 bits (location and disable bit)
-	tmp |= (CURSOR_BOTTOM - CURSOR_THICKNESS + 1); // set the location
+	tmp &= 0xC0; // clear first 6 bits (top location and disable bit)
+	tmp |= (CURSOR_BOTTOM - CURSOR_THICKNESS + 1); // set the top location
 
 	outb(VGA_PORT_DIRECTION, 0x0A);
 	outb(VGA_PORT_DATA, tmp);
@@ -189,7 +189,7 @@ void term_enablecursor(void)
 	outb(VGA_PORT_DIRECTION, 0x0B);
 	tmp = inb(VGA_PORT_DATA);
 
-	tmp &= 0xE0; // clear first 4 bits (bottom location)
+	tmp &= 0xE0; // clear first 5 bits (bottom location)
 	tmp |= CURSOR_BOTTOM; // set the bottom location
 
 	outb(VGA_PORT_DIRECTION, 0x0B);
