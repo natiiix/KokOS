@@ -10,15 +10,16 @@ size_t activeRow;
 size_t activeColumn;
 bool lineBroken;
 
-void term_enable_cursor(void) {
-    outb(0x3D4, 0x0A);
-    char curstart = inb(0x3D5) & 0x1F; // get cursor scanline start
-    outb(0x3D4, 0x0A);
-    outb(0x3D5, curstart & ~0x20);
-    outb(0x3D4, 0x0A);   // set the cursor start line to 14 and enable cursor visibility
-    outb(0x3D5, 0x0D);
-    outb(0x3D4, 0x0B);   // set the cursor end line to 15
-    outb(0x3D5, 0x0E);
+void term_enable_cursor(void)
+{
+	outb(0x3D4, 0x0A);
+	char curstart = inb(0x3D5) & 0x1F; // get cursor scanline start
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, curstart & ~0x20);
+	outb(0x3D4, 0x0A);   // set the cursor start line to 14 and enable cursor visibility
+	outb(0x3D5, 0x0D);
+	outb(0x3D4, 0x0B);   // set the cursor end line to 15
+	outb(0x3D5, 0x0E);
 }
 
 void term_init(void)
