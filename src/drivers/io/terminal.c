@@ -16,12 +16,12 @@ void term_enable_cursor(void)
 	outb(0x3D5, 0x0D);
 
 	outb(0x3D4, 0x0B);
-	char prevval = inb(0x3D5) & ~(0x1F);
+	char scanend = inb(0x3D5) & ~(0x1F);
 					// get byte that has the current scanline end (lower 5 bits) and set them to 0
 					// we want to keep the upper 3 bits unchanged
-	prevval |= 0x0e;		// set the end scanline to 14(0x0e).
+	scanend |= 0x0e;		// set the end scanline to 14(0x0e).
 	outb(0x3D4, 0x0B);
-	outb(0x3D5, prevval);
+	outb(0x3D5, scanend);
 }
 
 void term_init(void)
