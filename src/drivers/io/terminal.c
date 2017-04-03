@@ -12,14 +12,16 @@ bool lineBroken;
 
 void term_enable_cursor(void)
 {
-	outb(0x3D4, 0x0A);
-	char curstart = inb(0x3D5) & 0x1F; // get cursor scanline start
-	outb(0x3D4, 0x0A);
-	outb(0x3D5, curstart & ~0x20);
-	outb(0x3D4, 0x0A);   // set the cursor start scanline to 13(0x0d) and enable cursor visibility
+	outb(0x3D4, 0x0A);		// set the cursor start scanline to 13(0x0d) and enable cursor visibility
 	outb(0x3D5, 0x0D);
-	outb(0x3D4, 0x0B);   // set the cursor end scanline to 14(0x0e)
-	outb(0x3D5, 0x0E);
+
+	outb(0x3D4, 0x0B);
+	char scanend = inb(0x3D5) & ~(0x1F);
+					// get byte that has the current scanline end (lower 5 bits) and set them to 0
+					// we want to keep the upper 3 bits unchanged
+	scanend |= 0x0e;		// set the end scanline to 14(0x0e).
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, scanend);
 }
 
 void term_init(void)
