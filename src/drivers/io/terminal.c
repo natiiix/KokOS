@@ -13,25 +13,14 @@ static const uint8_t CURSOR_BOTTOM = 0xF;
 // Specifies the horizontal size of the cursor
 static const uint8_t CURSOR_THICKNESS = 0x2;
 
+static const uint16_t VGA_PORT_DIRECTION = 0x3D4;
+static const uint16_t VGA_PORT_DATA = 0x3D5;
+
 uint16_t* vgaBuffer;
 uint8_t activeColor;
 size_t activeRow;
 size_t activeColumn;
 bool lineBroken;
-
-void term_enable_cursor(void)
-{
-	outb(0x3D4, 0x0A);		// set the cursor start scanline to 13(0x0d) and enable cursor visibility
-	outb(0x3D5, 0x0D);
-
-	outb(0x3D4, 0x0B);
-	char scanend = inb(0x3D5) & ~(0x1F);
-					// get byte that has the current scanline end (lower 5 bits) and set them to 0
-					// we want to keep the upper 3 bits unchanged
-	scanend |= 0x0e;		// set the end scanline to 14(0x0e).
-	outb(0x3D4, 0x0B);
-	outb(0x3D5, scanend);
-}
 
 void term_init(void)
 {
@@ -39,7 +28,7 @@ void term_init(void)
 	activeColor = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
 	term_clear();
-	term_enable_cursor();
+	term_enablecursor();
 	term_writeline("Terminal initialized.", false);
 }
 
@@ -186,13 +175,25 @@ void term_writeline_convert(const size_t input, const size_t base)
 
 void term_enablecursor(void)
 {
-    outb(0x3D4, 0x0A);
-	// Set top cursor location and clear the disable bit
-    outb(0x3D5, (CURSOR_BOTTOM - CURSOR_THICKNESS + 1) & 0xEF);
+	// A - set top cursor location and clear the disable bit
+	outb(VGA_PORT_DIRECTION, 0x0A);
+	uint8_t tmp = inb(VGA_PORT_DATA);
 
-	outb(0x3D4, 0x0B);
-	// Set the bottom cursor location
-    outb(0x3D5, CURSOR_BOTTOM);
+	tmp &= 0xC0; // clear first 5 bits (location and disable bit)
+	tmp |= (CURSOR_BOTTOM - CURSOR_THICKNESS + 1); // set the location
+
+	outb(VGA_PORT_DIRECTION, 0x0A);
+	outb(VGA_PORT_DATA, tmp);
+
+	// B - set the bottom cursor location
+	outb(VGA_PORT_DIRECTION, 0x0B);
+	tmp = inb(VGA_PORT_DATA);
+
+	tmp &= 0xE0; // clear first 4 bits (bottom location)
+	tmp |= CURSOR_BOTTOM; // set the bottom location
+
+	outb(VGA_PORT_DIRECTION, 0x0B);
+	outb(VGA_PORT_DATA, tmp);
 }
 
 void term_setcursor(const size_t col, const size_t row)
