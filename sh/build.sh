@@ -6,8 +6,10 @@ ${BASH_SOURCE%/*}/clean.sh
 ${BASH_SOURCE%/*}/prepdir.sh
 
 COMMON_RUN="${BASH_SOURCE%/*}/../crosscompiler/bin"
-GCC_RUN="$COMMON_RUN/i686-elf-gcc"
-GPP_RUN="$COMMON_RUN/i686-elf-g++"
+#GCC_RUN="$COMMON_RUN/i686-elf-gcc"
+#GPP_RUN="$COMMON_RUN/i686-elf-g++"
+GCC_RUN="i686-elf-gcc"
+GPP_RUN="i686-elf-g++"
 
 COMMON_PARAMS="-ffreestanding -O2 -Wall -Wextra -D DEBUG"
 GCC_PARAMS="-std=gnu99 $COMMON_PARAMS"
