@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <drivers/storage/harddrive.h>
 
@@ -20,17 +21,15 @@
 //  -- 0x5 [0x3] : CHS end
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
-//
-// Volume ID
-//  -- 0x000 [0x003] : Jump instruction
-//  -- 0x003 [0x008] : OEM name
-//
-// TODO :)
-//
+
+// ---- FAT ----
+static const uint16_t BYTES_PER_SECTOR = 0x200;
+static const uint8_t FAT_COUNT = 0x2;
+static const uint16_t FAT_SIGNATURE = 0xAA55;
 
 static const uint8_t FAT_ALTERNATIVE_SIGNATURE = 0x28;
 
-struct PARTITION
+struct MBR_PARTITION
 {
     uint8_t bootflag;
     uint8_t chsbegin[3];
@@ -43,7 +42,7 @@ struct PARTITION
 struct MBR
 {
     uint8_t unknown[0x1BE];
-    struct PARTITION part[4];
+    struct MBR_PARTITION part[4];
     uint16_t signature;
 } __attribute__((packed));
 
@@ -69,3 +68,34 @@ struct VOLUMEID
 } __attribute__((packed));
 
 bool fat_init(const struct HARDDRIVE hdd);
+
+// ---- PARTITION ----
+struct PARTITION
+{
+    // cstrings here are explicitly terminated by '\0'
+    char oemname[0x9];
+    uint8_t sectorsPerCluster;
+    uint16_t reservedSectors;
+    uint32_t fatSectors;
+    uint32_t rootDirCluster;
+    uint8_t extBootSignature;
+    uint32_t volumeID;
+    char label[0xC];
+    char fsType[0x9];
+
+    uint32_t lbaBegin;
+    uint32_t sectorCount;
+};
+
+extern struct PARTITION partArray[0x10];
+extern uint8_t partCount;
+
+bool checkVolumeID(const struct HARDDRIVE hdd, uint64_t lba);
+char* getPartInfoStr(const struct PARTITION part);
+
+// ---- DIR / FILE ----
+struct FAT
+{
+    uint32_t entry[128];
+} __attribute__((packed));
+

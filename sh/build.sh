@@ -48,6 +48,7 @@ compileC c
 compileC drivers
 compileC drivers/io
 compileC drivers/storage
+compileC drivers/storage/fat
 
 echo Moving C object files to /obj/c/
 mv *.o $DIR_OBJECTS/c/
