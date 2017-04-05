@@ -1,5 +1,4 @@
 #include <drivers/storage/fat.h>
-#include <drivers/io/terminal.h>
 #include <drivers/memory.h>
 #include <drivers/storage/harddrive.h>
 #include <c/string.h>
@@ -7,9 +6,9 @@
 struct PARTITION partArray[0x10];
 uint8_t partCount = 0;
 
-bool checkVolumeID(const struct HARDDRIVE hdd, uint64_t lba)
+bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
 {
-    struct VOLUMEID* volid = (struct VOLUMEID*)hddRead(hdd, lba);
+    struct VOLUMEID* volid = (struct VOLUMEID*)hddRead(hddArray[hddIdx], lba);
 
     bool volumeidValid =
         (volid->bytesPerSector == BYTES_PER_SECTOR) &&
@@ -54,7 +53,7 @@ bool checkVolumeID(const struct HARDDRIVE hdd, uint64_t lba)
     return volumeidValid;
 }
 
-char* getPartInfoStr(const struct PARTITION part)
+char* getPartInfoStr(const uint8_t partIdx)
 {
     // Generate the partition info string
     char* strInfo = mem_alloc(128);
@@ -63,7 +62,7 @@ char* getPartInfoStr(const struct PARTITION part)
     // OEM Name
     for (size_t i = 0; i < 8; i++)
     {
-        strInfo[strIdx++] = part.oemname[i];
+        strInfo[strIdx++] = partArray[partIdx].oemname[i];
     }
 
     strInfo[strIdx++] = ' ';
@@ -71,7 +70,7 @@ char* getPartInfoStr(const struct PARTITION part)
     strInfo[strIdx++] = ' ';
 
     // Volume ID
-    char* strid = tostr(part.volumeID, 16);
+    char* strid = tostr(partArray[partIdx].volumeID, 16);
     size_t idlen = strlen(strid);
     size_t padlen = 8 - idlen;
 
@@ -97,7 +96,7 @@ char* getPartInfoStr(const struct PARTITION part)
     strIdx++;
 
     // Only generate this part of the info string if extBootSignature is correct
-    if (part.extBootSignature != FAT_ALTERNATIVE_SIGNATURE)
+    if (partArray[partIdx].extBootSignature != FAT_ALTERNATIVE_SIGNATURE)
     {
         strInfo[strIdx++] = ' ';
         strInfo[strIdx++] = ':';
@@ -106,7 +105,7 @@ char* getPartInfoStr(const struct PARTITION part)
         // Volume Label
         for (size_t i = 0; i < 11; i++)
         {
-            strInfo[strIdx++] = part.label[i];
+            strInfo[strIdx++] = partArray[partIdx].label[i];
         }
 
         strInfo[strIdx++] = ' ';
@@ -116,12 +115,12 @@ char* getPartInfoStr(const struct PARTITION part)
         // Volume File System Type
         for (size_t i = 0; i < 8; i++)
         {
-            strInfo[strIdx++] = part.fsType[i];
+            strInfo[strIdx++] = partArray[partIdx].fsType[i];
         }
     }
 
     // Size of the partition in Bytes
-    char* strbytes = tostr(part.sectorCount * BYTES_PER_SECTOR, 10);
+    char* strbytes = tostr(partArray[partIdx].sectorCount * BYTES_PER_SECTOR, 10);
     size_t byteslen = strlen(strbytes);
 
     strInfo[strIdx++] = ' ';

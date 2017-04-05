@@ -22,14 +22,14 @@
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
 
-// ---- FAT ----
+// ---- HARDDRIVE ----
 static const uint16_t BYTES_PER_SECTOR = 0x200;
 static const uint8_t FAT_COUNT = 0x2;
 static const uint16_t FAT_SIGNATURE = 0xAA55;
 
 static const uint8_t FAT_ALTERNATIVE_SIGNATURE = 0x28;
 
-struct MBR_PARTITION
+struct MBR_ENTRY
 {
     uint8_t bootflag;
     uint8_t chsbegin[3];
@@ -42,7 +42,7 @@ struct MBR_PARTITION
 struct MBR
 {
     uint8_t unknown[0x1BE];
-    struct MBR_PARTITION part[4];
+    struct MBR_ENTRY part[4];
     uint16_t signature;
 } __attribute__((packed));
 
@@ -67,7 +67,7 @@ struct VOLUMEID
     uint16_t signature;         // 0x1FE
 } __attribute__((packed));
 
-bool fat_init(const struct HARDDRIVE hdd);
+bool hdd_init(const uint8_t hddIdx);
 
 // ---- PARTITION ----
 struct PARTITION
@@ -83,6 +83,7 @@ struct PARTITION
     char label[0xC];
     char fsType[0x9];
 
+    uint8_t hddIdx;
     uint32_t lbaBegin;
     uint32_t sectorCount;
 };
@@ -90,12 +91,29 @@ struct PARTITION
 extern struct PARTITION partArray[0x10];
 extern uint8_t partCount;
 
-bool checkVolumeID(const struct HARDDRIVE hdd, uint64_t lba);
-char* getPartInfoStr(const struct PARTITION part);
+bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba);
+char* getPartInfoStr(const uint8_t partIdx);
 
-// ---- DIR / FILE ----
-struct FAT
+// ---- DIRECTORY / FILE ----
+struct DIR_ENTRY
 {
-    uint32_t entry[128];
+    char fileName[11];
+    uint8_t attrib;
+    uint8_t unknown1[8];
+    uint16_t clusterHigh;
+    uint8_t unknown2[4];
+    uint16_t clusterLow;
+    uint32_t fileSize;
 } __attribute__((packed));
 
+struct DIR_SECTOR
+{
+    struct DIR_ENTRY entries[16];
+} __attribute__((packed));
+
+struct FAT_TABLE
+{
+    uint32_t entries[128];
+} __attribute__((packed));
+
+void rootDirDump(const uint8_t partIdx);

@@ -9,7 +9,7 @@ uint8_t hddCount = 0;
 
 uint8_t hddTestLast(void)
 {
-    if (fat_init(hddArray[hddCount]))
+    if (hdd_init(hddCount))
     {
         return hddCount++;
     }
