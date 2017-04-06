@@ -72,6 +72,12 @@ public:
 	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false);
 	// Returns true if the string contains the cstring str, false otherwise
 	bool contains(const char* const str) const;
+	// Removes a character / multiple characters from a specified position in the string
+	void remove(const size_t pos, const size_t len = 1);
+	// Inserts a character at a specified position in the string
+	void insert(const char c, const size_t pos);
+	// Inserts a string at a specified position in the string
+	void insert(const string& str, const size_t pos);
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
@@ -100,6 +106,10 @@ private:
     void fixend(void);
 	// Adds part of the string into the string vector (ignores empty string parts if removeEmpty is set to true)
 	void splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty);
+	// Makes space for characters to insert
+	void shiftCharsRight(const size_t pos, const size_t offset);
+	// Gets rid of removed characters
+	void shiftCharsLeft(const size_t pos, const size_t offset);
 };
 
 void sprint(const string& str);

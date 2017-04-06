@@ -314,6 +314,21 @@ bool string::contains(const char* const str) const
 
     return false;
 }
+//
+void string::remove(const size_t pos, const size_t len)
+{
+
+}
+//
+void string::insert(const char c, const size_t pos)
+{
+
+}
+//
+void string::insert(const string& str, const size_t pos)
+{
+
+}
 
 // Operator overloads
 bool string::operator==(const string& str) const
@@ -403,6 +418,39 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 	{
 		vectsplit.push_back(string::substr(start, end - start));
     }
+}
+//
+void string::shiftCharsRight(const size_t pos, const size_t offset)
+{
+    if (pos >= m_size)
+    {
+        return;
+    }
+
+    size_t oldsize = m_size;
+    resize(m_size + offset);
+
+    size_t shiftedElements = oldsize - pos;
+
+    for (size_t i = 0; i < shiftedElements; i++)
+    {
+        m_ptrC[m_size - 1 - i] = m_ptrC[oldsize - 1 - i];
+    }
+}
+//
+void string::shiftCharsLeft(const size_t pos, const size_t offset)
+{
+    if (pos >= m_size || pos < offset)
+    {
+        return;
+    }
+    
+    for (size_t i = pos; i < m_size; i++)
+    {
+        m_ptrC[i] = m_ptrC[i + offset];
+    }
+
+    resize(m_size - offset);
 }
 
 void sprint(const string& str)
