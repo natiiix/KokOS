@@ -7,16 +7,16 @@
 
 void Disk::process(const string& strArgs)
 {
+    sprint(strArgs);
+    print("\n");
+
     vector<string> vecArgs = strArgs.split(' ', true);
 
-    char* strsize = tostr(vecArgs.size(), 10);
-    print(strsize);
-    print("\n");
-    free(strsize);
+    printint(vecArgs.size());
     
     for (size_t i = 0; i < vecArgs.size(); i++)
     {
-        print(vecArgs[i].c_str());
+        sprint(vecArgs[i]);
         print("\n");
     }
 
@@ -37,6 +37,5 @@ void Disk::process(const string& strArgs)
         }
     }
 
-    //string::disposeVector(vecArgs);
     vecArgs.dispose();
 }

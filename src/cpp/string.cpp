@@ -9,7 +9,7 @@ string::string(void) :
     m_ptr(malloc(1)),
     m_ptrC((char*)m_ptr),
     m_size(0)
-{    
+{
     fixend();
 }
 
@@ -435,16 +435,12 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 		}
 		else
 		{
-            string strEmpty;
-			vectsplit.push_back(strEmpty);
-            strEmpty.dispose();
+			vectsplit.push_back(string());
 		}
 	}
 	else
 	{
-        string strTmp = string::substr(start, end - start);
-		vectsplit.push_back(strTmp);
-        strTmp.dispose();
+		vectsplit.push_back(string::substr(start, end - start));
     }
 }
 //

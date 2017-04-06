@@ -71,7 +71,7 @@ void Shell::process(const string& strInput)
 	}
 
 	// Separate arguments from command string
-	string strArgs = strInput.substr(strCmd.size());
+	string strArgs = strInput.substr(strCmd.size() + 1);
 
 	// Compare the input string against each module command string
 	if (m_modDisk.compare(strCmd))
