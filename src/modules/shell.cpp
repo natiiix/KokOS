@@ -41,6 +41,9 @@ void Shell::init(void)
         sprint(strInput);
 		newline();
 
+		vector<string> vectest = strInput.split(' ');
+		string::disposeVector(vectest);
+
 		process(strInput);
 		
 		strInput.dispose();
@@ -48,16 +51,14 @@ void Shell::init(void)
 		#ifdef DEBUG
 			// Some memory is allocated for constant strings
 			debug_memusage();
-			pause();
+			//pause();
 		#endif
     }
 }
 
 void Shell::initModules(void)
 {
-	Disk modDisk;
-	modDisk.init("disk");
-	m_modules.push_back(modDisk);
+	m_modDisk.init("disk");
 }
 
 void Shell::process(const string& strInput)
@@ -72,23 +73,25 @@ void Shell::process(const string& strInput)
 		strCmd.push_back(strInput.at(i));
 	}
 
-	// Compare the input string against each module command string
-	size_t modsize = m_modules.size();
+	// Separate arguments from command string
+	string strArgs = strInput.substr(strCmd.size());
 
-	for (size_t i = 0; i < modsize; i++)
+	// Compare the input string against each module command string
+	if (m_modDisk.compare(strCmd))
 	{
-		if (m_modules[i].compare(strCmd))
-		{
-			strCmd.dispose();
-			return;
-		}
+		debug_memusage();
+		m_modDisk.process(strArgs);
+		debug_memusage();
+	}
+	else
+	{
+		print("Invalid command: \"");
+		sprint(strCmd);
+		print("\"\n");
 	}
 
-	print("Invalid command: \"");
-	sprint(strCmd);
-	print("\"\n");
-
 	strCmd.dispose();
+	strArgs.dispose();
 }
 
 char* Shell::_generate_spaces(const size_t count)

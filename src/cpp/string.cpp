@@ -127,6 +127,11 @@ char* string::c_str(void) const
     return m_ptrC;
 }
 //
+string string::substr(const size_t pos) const
+{
+    return string::substr(pos, m_size - pos);
+}
+//
 string string::substr(const size_t pos, const size_t len) const
 {
     string strout;
@@ -136,12 +141,12 @@ string string::substr(const size_t pos, const size_t len) const
         return strout;
     }
 
-    // If len is 0 or higher than the number of remaining
+    // If len is higher than the number of remaining
     // characters the rest of the string is returned
     size_t copylen = len;
     size_t remainchar = m_size - pos;
 
-    if (len == 0 || len > remainchar)
+    if (len > remainchar)
     {
         copylen = remainchar;
     }
@@ -219,7 +224,7 @@ string string::toupper(void) const
     return strout;
 }
 //
-vector<string> string::split(const char cDelimiter, const bool removeEmpty)
+vector<string> string::split(const char cDelimiter, const bool removeEmpty) const
 {
 	vector<string> vectout;
 	size_t partstart = 0;
@@ -238,7 +243,7 @@ vector<string> string::split(const char cDelimiter, const bool removeEmpty)
 	return vectout;
 }
 //
-vector<string> string::split(const char* const strDelimiter, const bool removeEmpty)
+vector<string> string::split(const char* const strDelimiter, const bool removeEmpty) const
 {
 	vector<string> vectout;
 	size_t delimlen = strlen(strDelimiter);
@@ -266,8 +271,7 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 					delimfound = false;
 					break;
 				}
-			}
-			
+			}			
 		}
 		
 		if (delimfound)
@@ -393,6 +397,18 @@ string& string::operator=(const string& str)
     return *this;
 }*/
 
+void string::disposeVector(vector<string>& vec)
+{
+    size_t vecsize = vec.size();
+
+    for (size_t i = 0; i < vecsize; i++)
+    {
+        vec[i].dispose();
+    }
+
+    vec.dispose();
+}
+
 // Internal methods
 void string::updatePtr(void* ptr)
 {
@@ -405,7 +421,7 @@ void string::fixend(void)
     m_ptrC[m_size] = '\0';
 }
 //
-void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty)
+void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty) const
 {
 	if (end < start)
 	{

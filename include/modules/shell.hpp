@@ -3,7 +3,7 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
-#include <modules/module.hpp>
+#include <modules/disk.hpp>
 
 class Shell
 {
@@ -15,7 +15,7 @@ private:
     string m_strPrefix;
 
     // Modules
-    vector<Module> m_modules;
+    Disk m_modDisk;
 
     // Internal shell calls
     void initModules(void);
