@@ -108,6 +108,19 @@ char* getPartInfoStr(const uint8_t partIdx)
             strInfo[strIdx++] = partArray[partIdx].label[i];
         }
 
+        // Remove spaces from the end
+        for (size_t i = 0; i < 11; i++)
+        {
+            if (strInfo[strIdx - 1] == ' ')
+            {
+                strIdx--;
+            }
+            else
+            {
+                break;
+            }
+        }
+
         strInfo[strIdx++] = ' ';
         strInfo[strIdx++] = ':';
         strInfo[strIdx++] = ' ';
@@ -116,6 +129,19 @@ char* getPartInfoStr(const uint8_t partIdx)
         for (size_t i = 0; i < 8; i++)
         {
             strInfo[strIdx++] = partArray[partIdx].fsType[i];
+        }
+
+        // Remove spaces from the end
+        for (size_t i = 0; i < 11; i++)
+        {
+            if (strInfo[strIdx - 1] == ' ')
+            {
+                strIdx--;
+            }
+            else
+            {
+                break;
+            }
         }
     }
 
@@ -129,6 +155,12 @@ char* getPartInfoStr(const uint8_t partIdx)
 
     for (size_t i = 0; i < byteslen; i++)
     {
+        // Separate each 3 digits by ','
+        if (i > 0 && (byteslen - i) % 3 == 0)
+        {
+            strInfo[strIdx++] = ',';
+        }
+
         strInfo[strIdx++] = strbytes[i];
     }
 

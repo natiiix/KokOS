@@ -95,6 +95,14 @@ bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba);
 char* getPartInfoStr(const uint8_t partIdx);
 
 // ---- DIRECTORY / FILE ----
+struct FAT_TABLE
+{
+    uint32_t entries[128];
+} __attribute__((packed));
+
+static const uint8_t DIR_ENTRY_END = 0x00;
+static const uint8_t DIR_ENTRY_UNUSED = 0xE5;
+
 struct DIR_ENTRY
 {
     char fileName[11];
@@ -111,9 +119,5 @@ struct DIR_SECTOR
     struct DIR_ENTRY entries[16];
 } __attribute__((packed));
 
-struct FAT_TABLE
-{
-    uint32_t entries[128];
-} __attribute__((packed));
-
-void rootDirDump(const uint8_t partIdx);
+uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
