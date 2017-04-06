@@ -8,7 +8,7 @@ uint64_t clusterToSector(const uint8_t partIdx, const uint32_t clust)
 {
     size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
     size_t fatSectors = 2 * partArray[partIdx].fatSectors;
-    return fatBegin + fatSectors + (partArray[partIdx].sectorsPerCluster * clust);
+    return fatBegin + fatSectors + (partArray[partIdx].sectorsPerCluster * (clust - 2));
 }
 
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
@@ -63,41 +63,52 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
 
     bool endOfDir = false;
     size_t chainIdx = 0;
-    do
+
+    while (clusterChain[chainIdx] < 0xFFFFFFFF && !endOfDir)
     {
         uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
 
-        for (size_t i = 0; i < partArray[partIdx].sectorsPerCluster && !endOfDir; i++)
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
         {
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + i);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
 
-            for (size_t j = 0; j < 16 && !endOfDir; j++)
+            for (size_t iEntry = 0; iEntry < 16 && !endOfDir; iEntry++)
             {
-                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[j]);
+                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[iEntry]);
 
                 if (entryFirstByte == DIR_ENTRY_END)
                 {
                     endOfDir = true;
                 }
-                else if (entryFirstByte != DIR_ENTRY_UNUSED)
+                else if (entryFirstByte != DIR_ENTRY_UNUSED &&
+                    dirsec->entries[iEntry].attrib != ATTRIB_VOLUME_ID &&
+                    dirsec->entries[iEntry].attrib != ATTRIB_LONG_NAME)
                 {
-                    char filename[12];
+                    char filename[14];
 
                     for (size_t k = 0; k < 11; k++)
                     {
-                        filename[k] = dirsec->entries[j].fileName[k];
+                        if (k > 7)
+                        {
+                            filename[k + 1] = dirsec->entries[iEntry].fileName[k];
+                        }
+                        else
+                        {
+                            filename[k] = dirsec->entries[iEntry].fileName[k];
+                        }
                     }
 
-                    filename[11] = '\0';
+                    filename[8] = '.';
+                    filename[12] = '|';
+                    filename[13] = '\0';
 
-                    //term_writeline(&filename[0], false);
+                    term_writeline(&filename[0], false);
                 }
             }
 
             mem_free(dirsec);
         }
     }
-    while (clusterChain[chainIdx] < 0xFFFFFFFF && !endOfDir);
 
     mem_free(clusterChain);
 }

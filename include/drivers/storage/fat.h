@@ -103,6 +103,9 @@ struct FAT_TABLE
 static const uint8_t DIR_ENTRY_END = 0x00;
 static const uint8_t DIR_ENTRY_UNUSED = 0xE5;
 
+static const uint8_t ATTRIB_VOLUME_ID = 0x8;
+static const uint8_t ATTRIB_LONG_NAME = 0xF;
+
 struct DIR_ENTRY
 {
     char fileName[11];
