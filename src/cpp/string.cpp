@@ -53,7 +53,7 @@ bool string::empty(void) const
 }
 
 // Element access
-char& string::at(const size_t idx)
+char string::at(const size_t idx) const
 {
     return m_ptrC[idx];
 }
@@ -317,17 +317,25 @@ bool string::contains(const char* const str) const
 //
 void string::remove(const size_t pos, const size_t len)
 {
-
+    shiftCharsLeft(pos, len);
 }
 //
 void string::insert(const char c, const size_t pos)
 {
+    shiftCharsRight(pos, 1);
 
+    m_ptrC[pos] = c;
 }
 //
 void string::insert(const string& str, const size_t pos)
 {
+    size_t strsize = str.size();
+    shiftCharsRight(pos, strsize);
 
+    for (size_t i = 0; i < strsize; i++)
+    {
+        m_ptrC[pos + i] = str.at(i);
+    }
 }
 
 // Operator overloads
@@ -343,7 +351,7 @@ bool string::operator==(const char* const str) const
 //
 char& string::operator[](const size_t idx)
 {
-	return string::at(idx);
+	return m_ptrC[idx];
 }
 //
 string& string::operator+=(const string& str)

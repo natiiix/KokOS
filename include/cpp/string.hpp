@@ -29,7 +29,7 @@ public:
 
     // ---- ELEMENT ACCESS ----
 	// Returns the character at index idx
-    char& at(const size_t idx);
+    char at(const size_t idx) const;
 	// Returns the first character of the string
     char& front(void);
 	// Returns the last character of the string (before the final '\0')

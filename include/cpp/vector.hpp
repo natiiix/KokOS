@@ -39,9 +39,9 @@ public:
 
     // Element access
     inline T& operator[](const size_t idx)
-    { return at(idx); }
+    { return m_ptrT[idx]; }
     //
-    inline T& at(const size_t idx)
+    inline T at(const size_t idx) const
     { return m_ptrT[idx]; }
     //
     inline T& front(void)
@@ -66,14 +66,14 @@ public:
         shiftElementsLeft(pos, len);
     }
 	// Inserts an element at a specified position in the vector
-	inline void insert(const T element, const size_t pos)
+	inline void insert(const T& element, const size_t pos)
     {
         shiftElementsRight(pos, 1);
 
         m_ptrT[pos] = element;
     }
 	// Inserts a vector at a specified position in the vector
-	inline void insert(const vector<T> vec, const size_t pos)
+	inline void insert(const vector<T>& vec, const size_t pos)
     {
         size_t vecsize = vec.size();
         shiftElementsRight(pos, vecsize);
