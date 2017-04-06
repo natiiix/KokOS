@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <drivers/storage/harddrive.h>
 
@@ -20,17 +21,15 @@
 //  -- 0x5 [0x3] : CHS end
 //  -- 0x8 [0x4] : LBA begin
 //  -- 0xC [0x4] : Number of sectors
-//
-// Volume ID
-//  -- 0x000 [0x003] : Jump instruction
-//  -- 0x003 [0x008] : OEM name
-//
-// TODO :)
-//
+
+// ---- HARDDRIVE ----
+static const uint16_t BYTES_PER_SECTOR = 0x200;
+static const uint8_t FAT_COUNT = 0x2;
+static const uint16_t FAT_SIGNATURE = 0xAA55;
 
 static const uint8_t FAT_ALTERNATIVE_SIGNATURE = 0x28;
 
-struct PARTITION
+struct MBR_ENTRY
 {
     uint8_t bootflag;
     uint8_t chsbegin[3];
@@ -43,7 +42,7 @@ struct PARTITION
 struct MBR
 {
     uint8_t unknown[0x1BE];
-    struct PARTITION part[4];
+    struct MBR_ENTRY part[4];
     uint16_t signature;
 } __attribute__((packed));
 
@@ -68,4 +67,60 @@ struct VOLUMEID
     uint16_t signature;         // 0x1FE
 } __attribute__((packed));
 
-bool fat_init(const struct HARDDRIVE hdd);
+bool hdd_init(const uint8_t hddIdx);
+
+// ---- PARTITION ----
+struct PARTITION
+{
+    // cstrings here are explicitly terminated by '\0'
+    char oemname[0x9];
+    uint8_t sectorsPerCluster;
+    uint16_t reservedSectors;
+    uint32_t fatSectors;
+    uint32_t rootDirCluster;
+    uint8_t extBootSignature;
+    uint32_t volumeID;
+    char label[0xC];
+    char fsType[0x9];
+
+    uint8_t hddIdx;
+    uint32_t lbaBegin;
+    uint32_t sectorCount;
+};
+
+extern struct PARTITION partArray[0x10];
+extern uint8_t partCount;
+
+bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba);
+char* getPartInfoStr(const uint8_t partIdx);
+
+// ---- DIRECTORY / FILE ----
+struct FAT_TABLE
+{
+    uint32_t entries[128];
+} __attribute__((packed));
+
+static const uint8_t DIR_ENTRY_END = 0x00;
+static const uint8_t DIR_ENTRY_UNUSED = 0xE5;
+
+static const uint8_t ATTRIB_VOLUME_ID = 0x8;
+static const uint8_t ATTRIB_LONG_NAME = 0xF;
+
+struct DIR_ENTRY
+{
+    char fileName[11];
+    uint8_t attrib;
+    uint8_t unknown1[8];
+    uint16_t clusterHigh;
+    uint8_t unknown2[4];
+    uint16_t clusterLow;
+    uint32_t fileSize;
+} __attribute__((packed));
+
+struct DIR_SECTOR
+{
+    struct DIR_ENTRY entries[16];
+} __attribute__((packed));
+
+uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);

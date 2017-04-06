@@ -18,6 +18,7 @@ void shell_init(void)
 void Shell::init(void)
 {
 	#ifdef DEBUG
+		debug_memusage();
 		// Give the user a chance to see kernel initialization messages
 		pause();
 	#endif
