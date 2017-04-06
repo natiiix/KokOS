@@ -13,12 +13,18 @@ void Disk::process(const string& strArgs)
     print(strsize);
     print("\n");
     free(strsize);
+    
+    for (size_t i = 0; i < vecArgs.size(); i++)
+    {
+        print(vecArgs[i].c_str());
+        print("\n");
+    }
 
     if (vecArgs.size() > 0)
     {
-        if (vecArgs[0] == "list\0" && vecArgs.size() > 1)
+        if (vecArgs[0] == "list" && vecArgs.size() > 1)
         {
-            if (vecArgs[1] == "disks\0")
+            if (vecArgs[1] == "disks")
             {
                 // TODO: list disks
                 print("DISKS");
@@ -32,11 +38,5 @@ void Disk::process(const string& strArgs)
     }
 
     //string::disposeVector(vecArgs);
-
-    for (size_t i = 0; i < vecArgs.size(); i++)
-    {
-        vecArgs[i].dispose();
-    }
-
     vecArgs.dispose();
 }

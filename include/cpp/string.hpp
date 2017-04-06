@@ -97,7 +97,7 @@ public:
 	string& operator=(const string& str);
 	//string& operator=(const char* const str);
 
-	static void disposeVector(vector<string>& vec);
+	//static void disposeVector(vector<string>& vec);
 
 private:
     void* m_ptr;

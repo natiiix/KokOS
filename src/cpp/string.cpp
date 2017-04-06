@@ -397,7 +397,7 @@ string& string::operator=(const string& str)
     return *this;
 }*/
 
-void string::disposeVector(vector<string>& vec)
+/*void string::disposeVector(vector<string>& vec)
 {
     size_t vecsize = vec.size();
 
@@ -407,7 +407,7 @@ void string::disposeVector(vector<string>& vec)
     }
 
     vec.dispose();
-}
+}*/
 
 // Internal methods
 void string::updatePtr(void* ptr)
@@ -435,12 +435,16 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 		}
 		else
 		{
-			vectsplit.push_back(string());
+            string strEmpty;
+			vectsplit.push_back(strEmpty);
+            strEmpty.dispose();
 		}
 	}
 	else
 	{
-		vectsplit.push_back(string::substr(start, end - start));
+        string strTmp = string::substr(start, end - start);
+		vectsplit.push_back(strTmp);
+        strTmp.dispose();
     }
 }
 //

@@ -41,9 +41,6 @@ void Shell::init(void)
         sprint(strInput);
 		newline();
 
-		vector<string> vectest = strInput.split(' ');
-		string::disposeVector(vectest);
-
 		process(strInput);
 		
 		strInput.dispose();
@@ -79,9 +76,7 @@ void Shell::process(const string& strInput)
 	// Compare the input string against each module command string
 	if (m_modDisk.compare(strCmd))
 	{
-		debug_memusage();
 		m_modDisk.process(strArgs);
-		debug_memusage();
 	}
 	else
 	{

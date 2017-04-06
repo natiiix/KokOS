@@ -137,7 +137,7 @@ private:
 };
 
 // Frees the memory used by a vector of string including the vector itself
-/*#include <cpp/string.hpp>
+#include <cpp/string.hpp>
 
 template <>
 inline void vector<string>::dispose(void)
@@ -148,4 +148,4 @@ inline void vector<string>::dispose(void)
 	}
 
     delete m_ptrT;
-}*/
+}
