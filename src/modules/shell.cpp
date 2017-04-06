@@ -28,18 +28,20 @@ void Shell::init(void)
 
     clear();
 
-	strPrefix.clear();
-    strPrefix.push_back(">");
+	m_strPrefix.clear();
+    m_strPrefix.push_back(">");
 
-	// TODO: Initialize modules
+	initModules();
 
     while (true)
     {
         string strInput = readline();
 
-		sprint(strPrefix);
+		sprint(m_strPrefix);
         sprint(strInput);
 		newline();
+
+		process(strInput);
 		
 		strInput.dispose();
 
@@ -51,9 +53,42 @@ void Shell::init(void)
     }
 }
 
+void Shell::initModules(void)
+{
+	Disk modDisk;
+	modDisk.init("disk");
+	m_modules.push_back(modDisk);
+}
+
 void Shell::process(const string& strInput)
 {
-	// TODO
+	// Extract command string from the input string
+	string strCmd;
+
+	size_t strsize = strInput.size();
+
+	for (size_t i = 0; i < strsize && strInput.at(i) != ' '; i++)
+	{
+		strCmd.push_back(strInput.at(i));
+	}
+
+	// Compare the input string against each module command string
+	size_t modsize = m_modules.size();
+
+	for (size_t i = 0; i < modsize; i++)
+	{
+		if (m_modules[i].compare(strCmd))
+		{
+			strCmd.dispose();
+			return;
+		}
+	}
+
+	print("Invalid command: \"");
+	sprint(strCmd);
+	print("\"\n");
+
+	strCmd.dispose();
 }
 
 char* Shell::_generate_spaces(const size_t count)
@@ -78,7 +113,7 @@ string Shell::readline(void)
 
 	size_t row = getrow();
 
-	size_t preLen = strPrefix.size();
+	size_t preLen = m_strPrefix.size();
 	size_t inSpace = VGA_WIDTH - preLen - 1;
 
 	string strInput;
@@ -117,7 +152,7 @@ string Shell::readline(void)
 		size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
 		size_t inStartIdx = strInput.size() - inRenderLen;
 
-		sprintat(strPrefix, 0, row);
+		sprintat(m_strPrefix, 0, row);
 		string strInputRender = strInput.substr(inStartIdx, inRenderLen);
 		sprintat(strInputRender, preLen, row);
 		strInputRender.dispose();

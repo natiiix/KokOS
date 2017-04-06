@@ -6,7 +6,7 @@ void Module::init(const char* const strCmd)
     m_strCmd.push_back(strCmd);
 }
 
-bool Module::compareCommand(const string& strCmd)
+bool Module::compare(const string& strCmd)
 {
     return (strCmd == m_strCmd);
 }

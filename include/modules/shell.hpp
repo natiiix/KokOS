@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cpp/string.hpp>
+#include <cpp/vector.hpp>
+
+#include <modules/module.hpp>
 
 class Shell
 {
@@ -9,9 +12,13 @@ public:
     void process(const string& strInput);
 
 private:
-    string strPrefix;
+    string m_strPrefix;
+
+    // Modules
+    vector<Module> m_modules;
 
     // Internal shell calls
+    void initModules(void);
     string readline(void);
 
     // Helping functions
