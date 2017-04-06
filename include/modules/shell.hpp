@@ -6,6 +6,7 @@ class Shell
 {
 public:
     void init(void);
+    void process(const string& strInput);
 
 private:
     string strPrefix;

@@ -8,6 +8,8 @@
 
 #include <kernel.h>
 
+#include <modules/disk.hpp>
+
 extern "C"
 void shell_init(void)
 {
@@ -18,6 +20,7 @@ void shell_init(void)
 void Shell::init(void)
 {
 	#ifdef DEBUG
+		// Used to make sure there is no memory leaking during kernel initialization
 		debug_memusage();
 		// Give the user a chance to see kernel initialization messages
 		pause();
@@ -28,24 +31,29 @@ void Shell::init(void)
 	strPrefix.clear();
     strPrefix.push_back(">");
 
-	string strtest;
-	strtest.push_back("(: TEST :)");
+	// TODO: Initialize modules
 
     while (true)
     {
         string strInput = readline();
 
 		sprint(strPrefix);
-		strInput.remove(0, 2);
-		strInput.insert(strtest, 4);
         sprint(strInput);
 		newline();
 		
 		strInput.dispose();
 
-        debug_memusage(); // 0x100 is used by strPrefix
-		pause();
+		#ifdef DEBUG
+			// Some memory is allocated for constant strings
+			debug_memusage();
+			pause();
+		#endif
     }
+}
+
+void Shell::process(const string& strInput)
+{
+	// TODO
 }
 
 char* Shell::_generate_spaces(const size_t count)
