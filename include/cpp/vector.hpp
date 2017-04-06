@@ -122,7 +122,7 @@ private:
     // Gets rid of removed elements
     inline void shiftElementsLeft(const size_t pos, const size_t offset)
     {
-        if (pos >= m_size || pos < offset)
+        if (pos >= m_size || m_size - pos < offset)
         {
             return;
         }

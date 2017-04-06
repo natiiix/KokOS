@@ -28,11 +28,16 @@ void Shell::init(void)
 	strPrefix.clear();
     strPrefix.push_back(">");
 
+	string strtest;
+	strtest.push_back("(: TEST :)");
+
     while (true)
     {
         string strInput = readline();
 
 		sprint(strPrefix);
+		strInput.remove(0, 2);
+		strInput.insert(strtest, 4);
         sprint(strInput);
 		newline();
 		

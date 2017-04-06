@@ -448,7 +448,7 @@ void string::shiftCharsRight(const size_t pos, const size_t offset)
 //
 void string::shiftCharsLeft(const size_t pos, const size_t offset)
 {
-    if (pos >= m_size || pos < offset)
+    if (pos >= m_size || m_size - pos < offset)
     {
         return;
     }
