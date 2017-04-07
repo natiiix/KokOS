@@ -193,9 +193,14 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
     return 0;
 }
 
-struct FILE getFile(const uint8_t partIdx, const char* const path)
+uint32_t joinCluster(const uint16_t clusterHigh, const uint16_t clusterLow)
 {
-    struct FILE file;
+    return (((uint32_t)clusterHigh) << 16) | (uint32_t)clusterLow;
+}
+
+struct FILE* getFile(const uint8_t partIdx, const char* const path)
+{
+    struct FILE* file = mem_alloc(sizeof(struct FILE));
     mem_set(&file, 0, sizeof(struct FILE));
 
     size_t pathsize = strlen(path);
@@ -212,7 +217,8 @@ struct FILE getFile(const uint8_t partIdx, const char* const path)
             strsearch[stridx] = '\0';
 
             struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY);
-            searchCluster = (((uint32_t)direntry->clusterHigh) << 16) | direntry->clusterLow;
+            searchCluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+            mem_free(direntry);
 
             if (searchCluster == 0)
             {
@@ -226,6 +232,16 @@ struct FILE getFile(const uint8_t partIdx, const char* const path)
             strsearch[stridx++] = path[i];
         }
     }
+
+    struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
+
+    mem_copy(&direntry->fileName[0], &file->fileName[0], 11);
+    file->fileName[11] = '\0';
+    file->attrib = direntry->attrib;
+    file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+    file->fileSize = direntry->fileSize;
+
+    mem_free(direntry);
 
     return file;
 }

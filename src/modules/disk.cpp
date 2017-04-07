@@ -3,7 +3,7 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 #include <c/stdio.h>
-#include <drivers/storage/fat.h>
+#include <c/string.h>
 
 void Disk::process(const string& strArgs)
 {
@@ -11,7 +11,7 @@ void Disk::process(const string& strArgs)
 
     if (vecArgs.size() > 0)
     {
-        if (vecArgs[0] == "list" && vecArgs.size() > 1)
+        if (vecArgs[0] == "list" && vecArgs.size() == 2)
         {
             if (vecArgs[1] == "disks")
             {
@@ -57,6 +57,16 @@ void Disk::process(const string& strArgs)
                     }
                 }
             }
+        }
+        else if (vecArgs[0] == "check" && vecArgs.size() == 3)
+        {
+            uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
+            
+            struct FILE* file = getFile(partIdx, vecArgs[2].c_str());
+
+            print(file->fileName);
+
+            delete file;
         }
     }
 

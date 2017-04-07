@@ -136,7 +136,7 @@ static const uint8_t FILE_ATTRIB_LONG_NAME  = 0x0F;
 
 struct FILE
 {
-    char fileName[11];
+    char fileName[12]; // += '\0'
     uint8_t attrib;
     uint32_t cluster;
     uint32_t fileSize;
@@ -148,4 +148,4 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
 #if defined(__cplusplus)
 extern "C"
 #endif
-struct FILE getFile(const uint8_t partIdx, const char* const path);
+struct FILE* getFile(const uint8_t partIdx, const char* const path);
