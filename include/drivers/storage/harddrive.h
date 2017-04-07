@@ -19,6 +19,11 @@ struct HARDDRIVE
 extern struct HARDDRIVE hddArray[0x10];
 extern uint8_t hddCount;
 
+#if defined(__cplusplus)
+extern "C"
+#endif
+char* getHddInfoStr(const uint8_t hddIdx);
+
 #define HDD_INVALID 0xFF
 
 uint8_t hddAddIDE(const uint16_t bus, const uint8_t drive);

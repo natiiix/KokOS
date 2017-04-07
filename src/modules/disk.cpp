@@ -15,12 +15,47 @@ void Disk::process(const string& strArgs)
         {
             if (vecArgs[1] == "disks")
             {
-                // TODO: list disks
-                print("DISKS");
+                if (hddCount == 0)
+                {
+                    print("No hard disks found.\n");
+                }
+                else
+                {
+                    for (size_t i = 0; i < hddCount; i++)
+                    {
+                        char* strdiskinfo = getHddInfoStr(i);
+
+                        print("Disk #");
+                        printint(i);
+                        print(": ");
+                        print(strdiskinfo);
+                        print("\n");
+
+                        delete strdiskinfo;
+                    }
+                }
             }
             else if (vecArgs[1] == "partitions")
             {
-                
+                if (partCount == 0)
+                {
+                    print("No partitions found.\n");
+                }
+                else
+                {
+                    for (size_t i = 0; i < partCount; i++)
+                    {
+                        char* strpartinfo = getPartInfoStr(i);
+
+                        print("Partition #");
+                        printint(i);
+                        print(": ");
+                        print(strpartinfo);
+                        print("\n");
+
+                        delete strpartinfo;
+                    }
+                }
             }
         }
     }
