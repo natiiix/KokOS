@@ -23,7 +23,7 @@ void Shell::init(void)
 		// Used to make sure there is no memory leaking during kernel initialization
 		debug_memusage();
 		// Give the user a chance to see kernel initialization messages
-		pause();
+		//pause();
 	#endif
 
     clear();

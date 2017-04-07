@@ -3,22 +3,11 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 #include <c/stdio.h>
-#include <c/string.h>
+#include <drivers/storage/fat.h>
 
 void Disk::process(const string& strArgs)
 {
-    sprint(strArgs);
-    print("\n");
-
     vector<string> vecArgs = strArgs.split(' ', true);
-
-    printint(vecArgs.size());
-    
-    for (size_t i = 0; i < vecArgs.size(); i++)
-    {
-        sprint(vecArgs[i]);
-        print("\n");
-    }
 
     if (vecArgs.size() > 0)
     {
@@ -31,8 +20,7 @@ void Disk::process(const string& strArgs)
             }
             else if (vecArgs[1] == "partitions")
             {
-                // TODO: list partitions
-                print("PARTITIONS");
+                
             }
         }
     }

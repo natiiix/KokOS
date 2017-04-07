@@ -51,7 +51,7 @@ public:
     { return m_ptrT[m_size - 1]; }
 
     // Modifiers
-    inline void push_back(const T element)
+    inline void push_back(const T& element)
     {
         updatePtr(realloc(m_ptr, ++m_size * m_sizeofT));
         m_ptrT[m_size - 1] = element;

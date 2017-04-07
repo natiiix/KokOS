@@ -94,8 +94,6 @@ public:
 	string& operator+=(const char* const str);
 	// Joins two strings and returns the result
     string operator+(const string& str);
-	string& operator=(const string& str);
-	//string& operator=(const char* const str);
 
 	//static void disposeVector(vector<string>& vec);
 

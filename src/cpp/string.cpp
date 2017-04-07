@@ -227,6 +227,7 @@ string string::toupper(void) const
 vector<string> string::split(const char cDelimiter, const bool removeEmpty) const
 {
 	vector<string> vectout;
+    vectout.clear();
 	size_t partstart = 0;
 	
 	for (size_t i = 0; i < m_size; i++)
@@ -382,20 +383,6 @@ string string::operator+(const string& str)
     strout.push_back(str.m_ptrC);
     return strout;
 }
-//
-string& string::operator=(const string& str)
-{
-    string::clear();
-    string::push_back(str);
-    return *this;
-}
-//
-/*string& string::operator=(const char* const str)
-{
-    string::clear();
-    string::push_back(str);
-    return *this;
-}*/
 
 /*void string::disposeVector(vector<string>& vec)
 {
@@ -440,7 +427,7 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 	}
 	else
 	{
-		vectsplit.push_back(string::substr(start, end - start));
+        vectsplit.push_back(string::substr(start, end - start));
     }
 }
 //
