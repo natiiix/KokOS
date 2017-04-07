@@ -208,3 +208,15 @@ char* strjoin(const char* const str1, const char* const str2)
 
     return strout;
 }
+
+void strcopy(const char* const strInput, char* const strOutput, const size_t outputIdx)
+{
+    size_t len = strlen(strInput);
+
+    for (size_t i = 0; i < len; i++)
+    {
+        strOutput[outputIdx + i] = strInput[i];
+    }
+
+    strOutput[outputIdx + len] = '\0';
+}

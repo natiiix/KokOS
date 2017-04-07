@@ -9,7 +9,7 @@ string::string(void) :
     m_ptr(malloc(1)),
     m_ptrC((char*)m_ptr),
     m_size(0)
-{    
+{
     fixend();
 }
 
@@ -53,7 +53,7 @@ bool string::empty(void) const
 }
 
 // Element access
-char& string::at(const size_t idx)
+char string::at(const size_t idx) const
 {
     return m_ptrC[idx];
 }
@@ -127,6 +127,11 @@ char* string::c_str(void) const
     return m_ptrC;
 }
 //
+string string::substr(const size_t pos) const
+{
+    return string::substr(pos, m_size - pos);
+}
+//
 string string::substr(const size_t pos, const size_t len) const
 {
     string strout;
@@ -136,12 +141,12 @@ string string::substr(const size_t pos, const size_t len) const
         return strout;
     }
 
-    // If len is 0 or higher than the number of remaining
+    // If len is higher than the number of remaining
     // characters the rest of the string is returned
     size_t copylen = len;
     size_t remainchar = m_size - pos;
 
-    if (len == 0 || len > remainchar)
+    if (len > remainchar)
     {
         copylen = remainchar;
     }
@@ -219,9 +224,10 @@ string string::toupper(void) const
     return strout;
 }
 //
-vector<string> string::split(const char cDelimiter, const bool removeEmpty)
+vector<string> string::split(const char cDelimiter, const bool removeEmpty) const
 {
 	vector<string> vectout;
+    vectout.clear();
 	size_t partstart = 0;
 	
 	for (size_t i = 0; i < m_size; i++)
@@ -238,7 +244,7 @@ vector<string> string::split(const char cDelimiter, const bool removeEmpty)
 	return vectout;
 }
 //
-vector<string> string::split(const char* const strDelimiter, const bool removeEmpty)
+vector<string> string::split(const char* const strDelimiter, const bool removeEmpty) const
 {
 	vector<string> vectout;
 	size_t delimlen = strlen(strDelimiter);
@@ -266,8 +272,7 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 					delimfound = false;
 					break;
 				}
-			}
-			
+			}			
 		}
 		
 		if (delimfound)
@@ -314,6 +319,29 @@ bool string::contains(const char* const str) const
 
     return false;
 }
+//
+void string::remove(const size_t pos, const size_t len)
+{
+    shiftCharsLeft(pos, len);
+}
+//
+void string::insert(const char c, const size_t pos)
+{
+    shiftCharsRight(pos, 1);
+
+    m_ptrC[pos] = c;
+}
+//
+void string::insert(const string& str, const size_t pos)
+{
+    size_t strsize = str.size();
+    shiftCharsRight(pos, strsize);
+
+    for (size_t i = 0; i < strsize; i++)
+    {
+        m_ptrC[pos + i] = str.at(i);
+    }
+}
 
 // Operator overloads
 bool string::operator==(const string& str) const
@@ -328,7 +356,7 @@ bool string::operator==(const char* const str) const
 //
 char& string::operator[](const size_t idx)
 {
-	return string::at(idx);
+	return m_ptrC[idx];
 }
 //
 string& string::operator+=(const string& str)
@@ -355,19 +383,17 @@ string string::operator+(const string& str)
     strout.push_back(str.m_ptrC);
     return strout;
 }
-//
-string& string::operator=(const string& str)
+
+/*void string::disposeVector(vector<string>& vec)
 {
-    string::clear();
-    string::push_back(str);
-    return *this;
-}
-//
-/*string& string::operator=(const char* const str)
-{
-    string::clear();
-    string::push_back(str);
-    return *this;
+    size_t vecsize = vec.size();
+
+    for (size_t i = 0; i < vecsize; i++)
+    {
+        vec[i].dispose();
+    }
+
+    vec.dispose();
 }*/
 
 // Internal methods
@@ -382,7 +408,7 @@ void string::fixend(void)
     m_ptrC[m_size] = '\0';
 }
 //
-void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty)
+void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty) const
 {
 	if (end < start)
 	{
@@ -401,8 +427,41 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 	}
 	else
 	{
-		vectsplit.push_back(string::substr(start, end - start));
+        vectsplit.push_back(string::substr(start, end - start));
     }
+}
+//
+void string::shiftCharsRight(const size_t pos, const size_t offset)
+{
+    if (pos >= m_size)
+    {
+        return;
+    }
+
+    size_t oldsize = m_size;
+    resize(m_size + offset);
+
+    size_t shiftedElements = oldsize - pos;
+
+    for (size_t i = 0; i < shiftedElements; i++)
+    {
+        m_ptrC[m_size - 1 - i] = m_ptrC[oldsize - 1 - i];
+    }
+}
+//
+void string::shiftCharsLeft(const size_t pos, const size_t offset)
+{
+    if (pos >= m_size || m_size - pos < offset)
+    {
+        return;
+    }
+    
+    for (size_t i = pos; i < m_size; i++)
+    {
+        m_ptrC[i] = m_ptrC[i + offset];
+    }
+
+    resize(m_size - offset);
 }
 
 void sprint(const string& str)

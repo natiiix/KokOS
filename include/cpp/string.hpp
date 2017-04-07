@@ -29,7 +29,7 @@ public:
 
     // ---- ELEMENT ACCESS ----
 	// Returns the character at index idx
-    char& at(const size_t idx);
+    char at(const size_t idx) const;
 	// Returns the first character of the string
     char& front(void);
 	// Returns the last character of the string (before the final '\0')
@@ -56,8 +56,10 @@ public:
     // ---- STRING OPERATIONS ----
 	// Returns pointer to the cstring storage
     char* c_str(void) const;
+	// Returns part of a string starting at pos containing the rest of the string
+	string substr(const size_t pos) const;
 	// Returns part of a string starting at pos with the length len
-    string substr(const size_t pos, const size_t len = 0) const;
+    string substr(const size_t pos, const size_t len) const;
 	// Compares two string, returns true if they're the same, false if they're different
     bool compare(const string& str) const;
 	// Compares the string to a cstring str, returns true if they're the same
@@ -67,11 +69,17 @@ public:
 	// Converts a string to uppercase and returns it
     string toupper(void) const;
 	// Splits the string, uses char as delimiter
-	vector<string> split(const char cDelimiter, const bool removeEmpty = false);
+	vector<string> split(const char cDelimiter, const bool removeEmpty = false) const;
 	// Splits the string, uses string as delimiter
-	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false);
+	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false) const;
 	// Returns true if the string contains the cstring str, false otherwise
 	bool contains(const char* const str) const;
+	// Removes a character / multiple characters from a specified position in the string
+	void remove(const size_t pos, const size_t len = 1);
+	// Inserts a character at a specified position in the string
+	void insert(const char c, const size_t pos);
+	// Inserts a string at a specified position in the string
+	void insert(const string& str, const size_t pos);
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
@@ -86,8 +94,8 @@ public:
 	string& operator+=(const char* const str);
 	// Joins two strings and returns the result
     string operator+(const string& str);
-	string& operator=(const string& str);
-	//string& operator=(const char* const str);
+
+	//static void disposeVector(vector<string>& vec);
 
 private:
     void* m_ptr;
@@ -99,7 +107,11 @@ private:
 	// Puts '\0' at the end of the string
     void fixend(void);
 	// Adds part of the string into the string vector (ignores empty string parts if removeEmpty is set to true)
-	void splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty);
+	void splitVectorAdd(vector<string>& vectsplit, const size_t start, const size_t end, const bool removeEmpty) const;
+	// Makes space for characters to insert
+	void shiftCharsRight(const size_t pos, const size_t offset);
+	// Gets rid of removed characters
+	void shiftCharsLeft(const size_t pos, const size_t offset);
 };
 
 void sprint(const string& str);

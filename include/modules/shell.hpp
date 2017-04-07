@@ -1,16 +1,24 @@
 #pragma once
 
 #include <cpp/string.hpp>
+#include <cpp/vector.hpp>
+
+#include <modules/disk.hpp>
 
 class Shell
 {
 public:
     void init(void);
+    void process(const string& strInput);
 
 private:
-    string strPrefix;
+    string m_strPrefix;
+
+    // Modules
+    Disk m_modDisk;
 
     // Internal shell calls
+    void initModules(void);
     string readline(void);
 
     // Helping functions

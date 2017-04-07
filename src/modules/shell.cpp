@@ -8,6 +8,8 @@
 
 #include <kernel.h>
 
+#include <modules/disk.hpp>
+
 extern "C"
 void shell_init(void)
 {
@@ -18,29 +20,73 @@ void shell_init(void)
 void Shell::init(void)
 {
 	#ifdef DEBUG
+		// Used to make sure there is no memory leaking during kernel initialization
 		debug_memusage();
 		// Give the user a chance to see kernel initialization messages
-		pause();
+		//pause();
 	#endif
 
     clear();
 
-	strPrefix.clear();
-    strPrefix.push_back(">");
+	m_strPrefix.clear();
+    m_strPrefix.push_back(">");
+
+	initModules();
 
     while (true)
     {
         string strInput = readline();
 
-		sprint(strPrefix);
+		sprint(m_strPrefix);
         sprint(strInput);
 		newline();
+
+		process(strInput);
 		
 		strInput.dispose();
 
-        debug_memusage(); // 0x100 is used by strPrefix
-		pause();
+		#ifdef DEBUG
+			// Some memory is allocated for constant strings
+			debug_memusage();
+			//pause();
+		#endif
     }
+}
+
+void Shell::initModules(void)
+{
+	m_modDisk.init("disk");
+}
+
+void Shell::process(const string& strInput)
+{
+	// Extract command string from the input string
+	string strCmd;
+
+	size_t strsize = strInput.size();
+
+	for (size_t i = 0; i < strsize && strInput.at(i) != ' '; i++)
+	{
+		strCmd.push_back(strInput.at(i));
+	}
+
+	// Separate arguments from command string
+	string strArgs = strInput.substr(strCmd.size() + 1);
+
+	// Compare the input string against each module command string
+	if (m_modDisk.compare(strCmd))
+	{
+		m_modDisk.process(strArgs);
+	}
+	else
+	{
+		print("Invalid command: \"");
+		sprint(strCmd);
+		print("\"\n");
+	}
+
+	strCmd.dispose();
+	strArgs.dispose();
 }
 
 char* Shell::_generate_spaces(const size_t count)
@@ -65,7 +111,7 @@ string Shell::readline(void)
 
 	size_t row = getrow();
 
-	size_t preLen = strPrefix.size();
+	size_t preLen = m_strPrefix.size();
 	size_t inSpace = VGA_WIDTH - preLen - 1;
 
 	string strInput;
@@ -104,7 +150,7 @@ string Shell::readline(void)
 		size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
 		size_t inStartIdx = strInput.size() - inRenderLen;
 
-		sprintat(strPrefix, 0, row);
+		sprintat(m_strPrefix, 0, row);
 		string strInputRender = strInput.substr(inStartIdx, inRenderLen);
 		sprintat(strInputRender, preLen, row);
 		strInputRender.dispose();

@@ -41,6 +41,11 @@ void printat(const char* const str, const size_t col, const size_t row)
     term_writeat(str, col, row);
 }
 
+void printint(const size_t i)
+{
+    term_write_convert(i, 10);
+}
+
 size_t getcol(void)
 {
     return term_getcol();

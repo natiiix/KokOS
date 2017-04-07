@@ -92,6 +92,10 @@ extern struct PARTITION partArray[0x10];
 extern uint8_t partCount;
 
 bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba);
+
+#if defined(__cplusplus)
+extern "C"
+#endif
 char* getPartInfoStr(const uint8_t partIdx);
 
 // ---- DIRECTORY / FILE ----
