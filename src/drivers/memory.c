@@ -380,16 +380,16 @@ void* _copy(const void* const ptrsrc, const size_t length)
     return ptrdst;
 }
 
-// Data are always copied to a static segment
-void* mem_copy(const void* const ptrsrc, const size_t length)
+// Copy a specified amount of bytes from source to destination
+void mem_copy(const void* const ptrsrc, const void* const ptrdst, const size_t length)
 {
-    // Copy the data
-    void* dstptr = _copy(ptrsrc, length);
-    // Get relative address of the copied data
-    size_t dstbyte = _toreladdressptr(dstptr);
-    // Store the static segment information
-    _statsegstore(dstbyte, length);
-    return dstptr;
+    uint8_t* byteptrsrc = (uint8_t*)ptrsrc;
+    uint8_t* byteptrdst = (uint8_t*)ptrdst;
+
+    for (size_t i = 0; i < length; i++)
+    {
+        byteptrdst[i] = byteptrsrc[i];
+    }
 }
 
 // Finds the smallest dynamic segment size with at least segsize bytes

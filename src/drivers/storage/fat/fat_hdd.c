@@ -32,7 +32,6 @@ bool hdd_init(const uint8_t hddIdx)
                     partArray[partCount - 1].sectorCount = mbr->part[i].sectors;
 
                     term_writeline(getPartInfoStr(partCount - 1), true);
-                    listDirectory(partCount - 1, partArray[partCount - 1].rootDirCluster);
                 }
             }
             else

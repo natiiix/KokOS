@@ -37,7 +37,7 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
     }
 
     clusterChain = mem_dynresize(clusterChain, ++chainSize * 4);
-    clusterChain[chainSize - 1] = 0xFFFFFFFF;
+    clusterChain[chainSize - 1] = CLUSTER_CHAIN_TERMINATOR;
 
     return clusterChain;
 }
@@ -57,7 +57,7 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
     mem_free(clusterChain);
 }*/
 
-void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
+/*void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
 {
     uint32_t* clusterChain = getClusterChain(partIdx, dirFirstClust);
 
@@ -111,4 +111,121 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
     }
 
     mem_free(clusterChain);
+}*/
+
+struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib)
+{
+    // Get cluster chain
+    uint32_t* clusterChain = getClusterChain(partIdx, baseDirCluster);
+
+    bool endOfDir = false;
+    size_t chainIdx = 0;
+
+    // Search through the cluster chain until the end of the directory is reached
+    while (clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR && !endOfDir)
+    {
+        // Convert cluster to sector for LBA addressing
+        uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
+
+        // Look through each sector within the cluster
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
+        {
+            // Read the sector from the drive
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+
+            // Look through all the entries in the sector
+            for (size_t iEntry = 0; iEntry < 16 && !endOfDir; iEntry++)
+            {
+                // Get the first byte of the entry
+                // Used to find unused entries and the end of the directory
+                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[iEntry]);
+
+                // End of directory reached
+                if (entryFirstByte == DIR_ENTRY_END)
+                {
+                    endOfDir = true;
+                }
+                else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
+                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME && // mustn't be a long name entry
+                    ((dirsec->entries[iEntry].attrib & attribMask) == attrib)) // check attributes
+                {
+                    bool namesMatch = true;
+                    bool nameEnd = false; // end of the name reached (entry name must contain only spaces after the terminator)
+
+                    // Check if the name in the entry matches the name requested
+                    for (size_t i = 0; i < 11; i++)
+                    {
+                        if (name[i] == '\0')
+                        {
+                            nameEnd = true;
+                        }
+
+                        if ((nameEnd && dirsec->entries[iEntry].fileName[i] != ' ') ||
+                            (!nameEnd && dirsec->entries[iEntry].fileName[i] != name[i]))
+                        {
+                            // Names don't match, don't check further
+                            namesMatch = false;
+                            break;
+                        }
+                    }
+
+                    // Names match, return the directory entry
+                    if (namesMatch)
+                    {
+                        struct DIR_ENTRY* direntry = mem_alloc(sizeof(struct DIR_ENTRY));
+                        mem_copy(&dirsec->entries[iEntry], direntry, sizeof(struct DIR_ENTRY));
+
+                        mem_free(dirsec);
+                        mem_free(clusterChain);
+
+                        return direntry;
+                    }
+                }
+            }
+
+            mem_free(dirsec);
+        }
+    }
+
+    mem_free(clusterChain);
+
+    // Entry not found, return 0 (it's safe, because clusters 0 and 1 are never really used)
+    return 0;
+}
+
+struct FILE getFile(const uint8_t partIdx, const char* const path)
+{
+    struct FILE file;
+    mem_set(&file, 0, sizeof(struct FILE));
+
+    size_t pathsize = strlen(path);
+
+    char strsearch[16];
+    size_t stridx = 0;
+
+    uint32_t searchCluster = partArray[partIdx].rootDirCluster;
+
+    for (size_t i = 0; i < pathsize; i++)
+    {
+        if (path[i] == '/' && stridx > 0)
+        {
+            strsearch[stridx] = '\0';
+
+            struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY);
+            searchCluster = (((uint32_t)direntry->clusterHigh) << 16) | direntry->clusterLow;
+
+            if (searchCluster == 0)
+            {
+                return file;
+            }
+
+            strsearch[stridx = 0] = '\0';
+        }
+        else
+        {
+            strsearch[stridx++] = path[i];
+        }
+    }
+
+    return file;
 }

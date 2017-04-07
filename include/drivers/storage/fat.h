@@ -99,6 +99,8 @@ extern "C"
 char* getPartInfoStr(const uint8_t partIdx);
 
 // ---- DIRECTORY / FILE ----
+static const uint32_t CLUSTER_CHAIN_TERMINATOR = 0xFFFFFFFF;
+
 struct FAT_TABLE
 {
     uint32_t entries[128];
@@ -106,9 +108,6 @@ struct FAT_TABLE
 
 static const uint8_t DIR_ENTRY_END = 0x00;
 static const uint8_t DIR_ENTRY_UNUSED = 0xE5;
-
-static const uint8_t ATTRIB_VOLUME_ID = 0x8;
-static const uint8_t ATTRIB_LONG_NAME = 0xF;
 
 struct DIR_ENTRY
 {
@@ -126,5 +125,27 @@ struct DIR_SECTOR
     struct DIR_ENTRY entries[16];
 } __attribute__((packed));
 
+static const uint8_t FILE_ATTRIB_READ_ONLY  = 0x01;
+static const uint8_t FILE_ATTRIB_HIDDEN     = 0x02;
+static const uint8_t FILE_ATTRIB_SYSTEM     = 0x04;
+static const uint8_t FILE_ATTRIB_VOLUME_ID  = 0x08;
+static const uint8_t FILE_ATTRIB_DIRECTORY  = 0x10;
+static const uint8_t FILE_ATTRIB_ARCHIVE    = 0x20;
+
+static const uint8_t FILE_ATTRIB_LONG_NAME  = 0x0F;
+
+struct FILE
+{
+    char fileName[11];
+    uint8_t attrib;
+    uint32_t cluster;
+    uint32_t fileSize;
+};
+
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
-void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
+//void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
+
+#if defined(__cplusplus)
+extern "C"
+#endif
+struct FILE getFile(const uint8_t partIdx, const char* const path);
