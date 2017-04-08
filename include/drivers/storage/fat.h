@@ -152,4 +152,9 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
 #if defined(__cplusplus)
 extern "C"
 #endif
+uint32_t resolvePath(const uint8_t partIdx, const char* const path);
+
+#if defined(__cplusplus)
+extern "C"
+#endif
 struct FILE* getFile(const uint8_t partIdx, const char* const path);

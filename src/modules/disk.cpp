@@ -84,7 +84,7 @@ void Disk::process(const string& strArgs)
                 }
             }
         }
-        else if (vecArgs[0] == "root" && vecArgs.size() == 2)
+        else if (vecArgs[0] == "dir" && vecArgs.size() == 3)
         {
             uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
             if (partIdx >= partCount)
@@ -93,13 +93,22 @@ void Disk::process(const string& strArgs)
             }
             else
             {
-                listDirectory(partIdx, partArray[partIdx].rootDirCluster);
+                uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
+
+                if (pathCluster)
+                {
+                    listDirectory(partIdx, pathCluster);
+                }
+                else
+                {
+                    print("Invalid path!\n");
+                }
             }
         }
-    }
-    else
-    {
-        print("Invalid arguments!\n");
+        else
+        {
+            print("Invalid arguments!\n");
+        }
     }
 
     vecArgs.dispose();
