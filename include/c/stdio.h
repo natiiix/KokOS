@@ -19,6 +19,8 @@ void setactive(const size_t col, const size_t row);
 void print(const char* const str);
 void printat(const char* const str, const size_t col, const size_t row);
 void printint(const size_t i);
+void printbin(const size_t i);
+void printhex(const size_t i);
 size_t getcol(void);
 size_t getrow(void);
 void newline(void);

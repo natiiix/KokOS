@@ -61,12 +61,42 @@ void Disk::process(const string& strArgs)
         else if (vecArgs[0] == "check" && vecArgs.size() == 3)
         {
             uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
-            
-            struct FILE* file = getFile(partIdx, vecArgs[2].c_str());
+            if (partIdx >= partCount)
+            {
+                print("Invalid partition index!\n");
+            }
+            else
+            {
+                struct FILE* file = getFile(partIdx, vecArgs[2].c_str());
 
-            print(file->fileName);
+                if (file == nullptr)
+                {
+                    print("Invalid file path!\n");
+                }
+                else
+                {
+                    print(file->fileName);
+                    print(" - ");
+                    printbin(file->attrib);
+                    print(" - ");
+                    printint(file->fileSize);
+                    print("\n");
 
-            delete file;
+                    delete file;
+                }
+            }
+        }
+        else if (vecArgs[0] == "root" && vecArgs.size() == 2)
+        {
+            uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
+            if (partIdx >= partCount)
+            {
+                print("Invalid partition index!\n");
+            }
+            else
+            {
+                listDirectory(partIdx, partArray[partIdx].rootDirCluster);
+            }
         }
     }
 

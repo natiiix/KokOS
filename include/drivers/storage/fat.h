@@ -143,7 +143,11 @@ struct FILE
 };
 
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
-//void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
+
+#if defined(__cplusplus)
+extern "C"
+#endif
+void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
 
 #if defined(__cplusplus)
 extern "C"
