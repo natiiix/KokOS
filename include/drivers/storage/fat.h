@@ -162,4 +162,4 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path);
 #endif
 
 // ---- READ ----
-uint8_t* fatReadFile(const struct FILE file);
+uint8_t* fatReadFile(const struct FILE* const file);
