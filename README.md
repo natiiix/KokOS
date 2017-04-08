@@ -1,8 +1,7 @@
 # KokOS
-*very basic operating system*
+*very basic text-mode operating system developed by Ivo Meixner*
 
-Features
-====
+## Features
 - text mode screen output
 - ~~standard keyboard input (using port polling)~~ (removed due to redundancy / obsolescence)
 - keyboard input using interrupts
@@ -13,14 +12,12 @@ Features
 - C++ &lt;string&gt; implementation
 - C++ &lt;vector&gt; implementation
 
-In progress
-====
+## In progress
 - FAT file system
 - shell
 - shell commands
 
-TODO
-====
+## TODO
 - file operations
 - OS-specific programming language (something along the lines of bash script)
 - implement more C/C++ libraries
@@ -30,10 +27,8 @@ TODO
 - automatically convert paths to uppercase (because FAT doesn't seem to store lowercase names in basic directory entries)
 - basic text editor
 
-On Hold
-====
+## On Hold
 - AHCI driver (I wasn't able to make it work and it's not of high importance to me)
 
-Links
-====
+## Links
 <div>Inspiration / based upon: <a href="http://wiki.osdev.org/Main_Page">OSDev Wiki</a></div>
