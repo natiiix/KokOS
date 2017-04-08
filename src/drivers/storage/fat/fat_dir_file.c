@@ -123,25 +123,6 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME &&
                     attribCheck(dirsec->entries[iEntry].attrib, FILE_ATTRIB_VOLUME_ID, 0))
                 {
-                    /*char filename[14];
-
-                    for (size_t k = 0; k < 11; k++)
-                    {
-                        if (k > 7)
-                        {
-                            filename[k + 1] = dirsec->entries[iEntry].fileName[k];
-                        }
-                        else
-                        {
-                            filename[k] = dirsec->entries[iEntry].fileName[k];
-                        }
-                    }
-
-                    filename[8] = '.';
-                    filename[12] = '|';
-                    filename[13] = '\0';
-
-                    term_write(&filename[0], false);*/
                     char* strName = fileNameToString(&dirsec->entries[iEntry].fileName[0]);
                                         
                     // Add a slash after the name if the entry is a directory to make it possible to differenciate them from ordinary files
@@ -149,7 +130,6 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     {
                         term_write(strName, true);
                         term_writeline("/", false);
-                        term_writeline_convert(dirsec->entries[iEntry].clusterLow, 16);
                     }
                     else
                     {
@@ -164,78 +144,6 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
 
     mem_free(clusterChain);
 }
-
-/*bool compareNameWithExt(const char* const entryName, const char* const name)
-{
-    bool namesMatch = true;
-    bool nameEnd = false;
-    bool extsMatch = true;
-    bool extEnd = true;
-    size_t extBase = 9;
-
-    for (size_t i = 0; i < 8; i++)
-    {
-        if (name[i] == '\0')
-        {
-            nameEnd = true;
-        }
-        else if (name[i] == '.')
-        {
-            nameEnd = true;
-            extEnd = false;
-            extBase = i + 1;
-        }
-
-        if ((nameEnd && entryName[i] != ' ') ||
-            (!nameEnd && entryName[i] != name[i]))
-        {
-            namesMatch = false;
-            break;
-        }
-    }
-
-    for (size_t i = 0; i < 3; i++)
-    {
-        if (name[extBase + i] == '\0')
-        {
-            extEnd = true;
-        }
-
-        if ((extEnd && entryName[8 + i] != ' ') ||
-            (!extEnd && entryName[8 + i] != name[extBase + i]))
-        {
-            extsMatch = false;
-            break;
-        }
-    }
-
-    return namesMatch && extsMatch;
-}*/
-
-/*bool compareName(const char* const entryName, const char* const name)
-{
-    bool namesMatch = true;
-    bool nameEnd = false; // end of the name reached (entry name must contain only spaces after the terminator)
-
-    // Check if the name in the entry matches the name requested
-    for (size_t i = 0; i < 11; i++)
-    {
-        if (name[i] == '\0')
-        {
-            nameEnd = true;
-        }
-
-        if ((nameEnd && entryName[i] != ' ') ||
-            (!nameEnd && entryName[i] != name[i]))
-        {
-            // Names don't match, don't check further
-            namesMatch = false;
-            break;
-        }
-    }
-
-    return namesMatch;
-}*/
 
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib)
 {
@@ -329,12 +237,32 @@ uint32_t resolvePath(const uint8_t partIdx, const char* const path)
                 strsearch[stridx] = '\0';
 
                 struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY);
-                searchCluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+
+                if (direntry)
+                {
+                    searchCluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+                }
+                else
+                {
+                    searchCluster = 0;
+                }
+
                 mem_free(direntry);
 
                 if (searchCluster == 0)
                 {
-                    return 0;
+                    // '..' entry pointing to root directory points to cluster 0 (which isn't the actual root dir cluster) for some reason
+                    // so it needs to be translated into the proper value, aside from that the root directory itself doesn't contain
+                    // '.' and '..' so we have to emulate them and pretend they're there, both of them point to the root directory itself
+                    if (strcmp(&strsearch[0], ".") ||
+                        strcmp(&strsearch[0], ".."))
+                    {
+                        searchCluster = partArray[partIdx].rootDirCluster;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
                 }
             }
 
@@ -379,9 +307,11 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
     }
 
     struct FILE* file = mem_alloc(sizeof(struct FILE));
+
     char* strName = fileNameToString(&direntry->fileName[0]);
     strcopy(strName, &file->name[0]);
     mem_free(strName);
+    
     file->attrib = direntry->attrib;
     file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
     file->size = direntry->fileSize;
