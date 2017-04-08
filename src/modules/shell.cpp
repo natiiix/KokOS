@@ -9,6 +9,7 @@
 #include <kernel.h>
 
 #include <modules/disk.hpp>
+#include <drivers/storage/fat.h>
 
 extern "C"
 void shell_init(void)
@@ -28,28 +29,40 @@ void Shell::init(void)
 
     clear();
 
-	m_strPrefix.clear();
-    m_strPrefix.push_back(">");
+	m_diskToolsEnabled = (partCount > 0);
+
+	if (m_diskToolsEnabled)
+	{
+		m_activePart = 0;
+		m_activeDir = partArray[m_activePart].rootDirCluster;
+		m_pathDirs.clear();
+		_update_prefix();
+	}
+	else
+	{
+		m_prefix.clear();
+		m_prefix.push_back('>');
+	}
 
 	initModules();
 
     while (true)
     {
+		#ifdef DEBUG
+			// Some memory is allocated for constant strings
+			debug_memusage();
+			//pause();
+		#endif
+
         string strInput = readline();
 
-		sprint(m_strPrefix);
+		sprint(m_prefix);
         sprint(strInput);
 		newline();
 
 		process(strInput);
 		
 		strInput.dispose();
-
-		#ifdef DEBUG
-			// Some memory is allocated for constant strings
-			debug_memusage();
-			//pause();
-		#endif
     }
 }
 
@@ -73,8 +86,34 @@ void Shell::process(const string& strInput)
 	// Separate arguments from command string
 	string strArgs = strInput.substr(strCmd.size() + 1);
 
+	// Check internal shell commands
+	if (strCmd.compare("dir"))
+	{
+		/*uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
+		if (partIdx >= partCount)
+		{
+			print("Invalid partition index!\n");
+		}
+		else
+		{
+			uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
+
+			if (pathCluster)
+			{
+				listDirectory(partIdx, pathCluster);
+			}
+			else
+			{
+				print("Invalid directory path!\n");
+			}
+		}*/
+	}
+	else if (strCmd.compare("cd"))
+	{
+
+	}
 	// Compare the input string against each module command string
-	if (m_modDisk.compare(strCmd))
+	else if (m_modDisk.compare(strCmd))
 	{
 		m_modDisk.process(strArgs);
 	}
@@ -111,7 +150,7 @@ string Shell::readline(void)
 
 	size_t row = getrow();
 
-	size_t preLen = m_strPrefix.size();
+	size_t preLen = m_prefix.size();
 	size_t inSpace = VGA_WIDTH - preLen - 1;
 
 	string strInput;
@@ -150,7 +189,7 @@ string Shell::readline(void)
 		size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
 		size_t inStartIdx = strInput.size() - inRenderLen;
 
-		sprintat(m_strPrefix, 0, row);
+		sprintat(m_prefix, 0, row);
 		string strInputRender = strInput.substr(inStartIdx, inRenderLen);
 		sprintat(strInputRender, preLen, row);
 		strInputRender.dispose();
@@ -167,4 +206,23 @@ string Shell::readline(void)
 
 		setcursor(rowend, row);
 	}
+}
+
+void Shell::_update_prefix(void)
+{
+	m_prefix.clear();
+
+	if (m_diskToolsEnabled)
+	{
+		string activePath = string::join(m_pathDirs, '/', true);
+
+		m_prefix.push_back('A' + m_activePart);
+		m_prefix.push_back(':');
+		m_prefix.push_back(activePath);
+		m_prefix.push_back('/');
+
+		activePath.dispose();
+	}
+
+	m_prefix.push_back('>');
 }

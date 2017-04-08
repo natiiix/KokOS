@@ -96,7 +96,7 @@ public:
     string operator+(const string& str);
 
 	//static void disposeVector(vector<string>& vec);
-	static string join(const vector<string>& vect, const char* cDelimiter, const bool removeEmpty);
+	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
 
 private:
     void* m_ptr;

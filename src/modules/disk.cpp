@@ -97,27 +97,6 @@ void Disk::process(const string& strArgs)
                 }
             }
         }
-        else if (vecArgs[0] == "dir" && vecArgs.size() == 3)
-        {
-            uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
-            if (partIdx >= partCount)
-            {
-                print("Invalid partition index!\n");
-            }
-            else
-            {
-                uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
-
-                if (pathCluster)
-                {
-                    listDirectory(partIdx, pathCluster);
-                }
-                else
-                {
-                    print("Invalid directory path!\n");
-                }
-            }
-        }
         else
         {
             print("Invalid arguments!\n");

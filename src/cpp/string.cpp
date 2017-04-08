@@ -396,7 +396,7 @@ string string::operator+(const string& str)
     vec.dispose();
 }*/
 
-string string::join(const vector<string>& vect, const char* cDelimiter, const bool removeEmpty)
+string string::join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty)
 {
     string strout;
     strout.clear();
