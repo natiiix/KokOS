@@ -240,6 +240,8 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
         }
     }
 
+    strsearch[stridx] = '\0';
+    
     struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
     
     if ((size_t)direntry == 0)

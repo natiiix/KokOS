@@ -77,10 +77,8 @@ void Disk::process(const string& strArgs)
                 {
                     print(file->fileName);
                     print(" - ");
-                    printbin(file->attrib);
-                    print(" - ");
                     printint(file->fileSize);
-                    print("\n");
+                    print(" Bytes\n");
 
                     delete file;
                 }
@@ -98,6 +96,10 @@ void Disk::process(const string& strArgs)
                 listDirectory(partIdx, partArray[partIdx].rootDirCluster);
             }
         }
+    }
+    else
+    {
+        print("Invalid arguments!\n");
     }
 
     vecArgs.dispose();
