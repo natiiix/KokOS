@@ -75,9 +75,9 @@ void Disk::process(const string& strArgs)
                 }
                 else
                 {
-                    print(file->fileName);
+                    print(file->name);
                     print(" - ");
-                    printint(file->fileSize);
+                    printint(file->size);
                     print(" Bytes\n");
 
                     delete file;

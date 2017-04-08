@@ -91,6 +91,11 @@ char* fileNameToString(const char* const fileName)
     return strName;
 }
 
+bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib)
+{
+    return ((entryAttrib & attribMask) == attrib);
+}
+
 void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
 {
     uint32_t* clusterChain = getClusterChain(partIdx, dirFirstClust);
@@ -138,6 +143,7 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
 
                     term_write(&filename[0], false);*/
                     char* strName = fileNameToString(&dirsec->entries[iEntry].fileName[0]);
+                    if ()
                     term_writeline(strName, true);
                 }
             }
@@ -255,7 +261,7 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
                 }
                 else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
                     dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME && // mustn't be a long name entry
-                    ((dirsec->entries[iEntry].attrib & attribMask) == attrib)) // check attributes
+                    attribCheck(dirsec->entries[iEntry].attrib, attribMask, attrib)) // check attributes
                 {
                     char* strName = fileNameToString(&dirsec->entries[iEntry].fileName[0]);
                     bool namesMatch = strcmp(name, strName);
@@ -374,11 +380,10 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
     }
 
     struct FILE* file = mem_alloc(sizeof(struct FILE));
-    mem_copy(&direntry->fileName[0], &file->fileName[0], 11);
-    file->fileName[11] = '\0';
+    file->name = fileNameToString(&direntry->fileName[0]);
     file->attrib = direntry->attrib;
     file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
-    file->fileSize = direntry->fileSize;
+    file->size = direntry->fileSize;
 
     mem_free(direntry);
 
