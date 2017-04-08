@@ -101,7 +101,7 @@ void Disk::process(const string& strArgs)
                 }
                 else
                 {
-                    print("Invalid path!\n");
+                    print("Invalid directory path!\n");
                 }
             }
         }

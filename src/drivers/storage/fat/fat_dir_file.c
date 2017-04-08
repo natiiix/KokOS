@@ -120,8 +120,8 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     endOfDir = true;
                 }
                 else if (entryFirstByte != DIR_ENTRY_UNUSED &&
-                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_VOLUME_ID &&
-                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME)
+                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME &&
+                    attribCheck(dirsec->entries[iEntry].attrib, FILE_ATTRIB_VOLUME_ID, 0))
                 {
                     /*char filename[14];
 
@@ -143,8 +143,17 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
 
                     term_write(&filename[0], false);*/
                     char* strName = fileNameToString(&dirsec->entries[iEntry].fileName[0]);
-                    if ()
-                    term_writeline(strName, true);
+                                        
+                    // Add a slash after the name if the entry is a directory to make it possible to differenciate them from ordinary files
+                    if (attribCheck(dirsec->entries[iEntry].attrib, FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY))
+                    {
+                        term_write(strName, true);
+                        term_writeline("/", false);
+                    }
+                    else
+                    {
+                        term_writeline(strName, true);
+                    }
                 }
             }
 
@@ -338,41 +347,30 @@ uint32_t resolvePath(const uint8_t partIdx, const char* const path)
 struct FILE* getFile(const uint8_t partIdx, const char* const path)
 {
     size_t pathsize = strlen(path);
+    char strsearch[16]; // contains file name only
+    char* pathDir = mem_alloc(pathsize + 1); // contains the directory part of the path
+    strcopy(path, pathDir, 0);
 
-    char strsearch[16];
-    size_t stridx = 0;
-
-    uint32_t searchCluster = partArray[partIdx].rootDirCluster;
-
+    // Remove the file name from the directory path
     for (size_t i = 0; i < pathsize; i++)
     {
-        if (path[i] == '/')
+        if (pathDir[pathsize - 1 - i] == '/')
         {
-            if (stridx > 0)
-            {
-                strsearch[stridx] = '\0';
-
-                struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY);
-                searchCluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
-                mem_free(direntry);
-
-                if (searchCluster == 0)
-                {
-                    return (struct FILE*)0;
-                }
-            }
-
-            strsearch[stridx = 0] = '\0';
+            strcopy(&pathDir[pathsize - i], &strsearch[0], 0); // extract the file name into separate string
+            pathDir[pathsize - 1 - i] = '\0';
+            break;
         }
-        else
+        // The path doesn't contain a directory part, it's just a file name
+        else if (i == pathsize - 1)
         {
-            strsearch[stridx++] = path[i];
+            strcopy(&pathDir[0], &strsearch[0], 0);
+            pathDir[0] = '\0';
         }
     }
 
-    strsearch[stridx] = '\0';
+    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
 
-    struct DIR_ENTRY* direntry = findEntry(partIdx, searchCluster, &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
+    mem_free(pathDir);
     
     if ((size_t)direntry == 0)
     {
