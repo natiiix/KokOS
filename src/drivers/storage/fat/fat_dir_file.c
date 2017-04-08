@@ -312,6 +312,7 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
     strcopy(strName, &file->name[0]);
     mem_free(strName);
     
+    file->partIdx = partIdx;
     file->attrib = direntry->attrib;
     file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
     file->size = direntry->fileSize;

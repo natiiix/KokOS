@@ -136,8 +136,8 @@ static const uint8_t FILE_ATTRIB_LONG_NAME  = 0x0F;
 
 struct FILE
 {
-    uint8_t partIdx;
     char name[13];
+    uint8_t partIdx;
     uint8_t attrib;
     uint32_t cluster;
     uint32_t size;
@@ -160,3 +160,6 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path);
 #if defined(__cplusplus)
 }
 #endif
+
+// ---- READ ----
+uint8_t* fatReadFile(const struct FILE file);
