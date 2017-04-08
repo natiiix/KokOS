@@ -4,7 +4,8 @@
 Features
 ====
 - text mode screen output
-- standard keyboard input (using port polling)
+- ~~standard keyboard input (using port polling)~~ (removed due to redundancy / obsolescence)
+- keyboard input using interrupts
 - simple memory management (malloc / free / ..)
 - basic cstring operations
 - partial C &lt;stdlib.h&gt; implementation
@@ -14,17 +15,24 @@ Features
 
 In progress
 ====
-- AHCI driver
 - FAT file system
 - shell
-- keyboard input using interrupts
+- shell commands
 
 TODO
 ====
 - file operations
-- shell commands
 - OS-specific programming language (something along the lines of bash script)
 - implement more C/C++ libraries
+- shell command history (using up arrow)
+- moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
+- fix hazardous user inputs
+- automatically convert paths to uppercase (because FAT doesn't seem to store lowercase names in basic directory entries)
+- basic text editor
+
+On Hold
+====
+- AHCI driver (I wasn't able to make it work and it's not of high importance to me)
 
 Links
 ====
