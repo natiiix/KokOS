@@ -25,7 +25,7 @@ public:
     { return m_ptrT; }
 
     // Capacity
-    inline size_t size(void)
+    inline size_t size(void) const
     { return m_size; }
     //
     inline void resize(const size_t newsize)
@@ -34,7 +34,7 @@ public:
     inline void clear(void)
     { updatePtr(realloc(m_ptr, m_size = 0)); }
     //
-    inline bool empty(void)
+    inline bool empty(void) const
     { return !m_size; }
 
     // Element access

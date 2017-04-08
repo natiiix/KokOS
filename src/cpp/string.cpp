@@ -396,6 +396,29 @@ string string::operator+(const string& str)
     vec.dispose();
 }*/
 
+string string::join(const vector<string>& vect, const char* cDelimiter, const bool removeEmpty)
+{
+    string strout;
+    strout.clear();
+
+    size_t vectsize = vect.size();
+
+    for (size_t i = 0; i < vectsize; i++)
+    {
+        if (!removeEmpty || vect.at(i).size() > 0)
+        {
+            if (strout.size() > 0)
+            {
+                strout.push_back(cDelimiter);
+            }
+
+            strout.push_back(vect.at(i));
+        }
+    }
+
+    return strout;
+}
+
 // Internal methods
 void string::updatePtr(void* ptr)
 {
