@@ -73,6 +73,11 @@ void Shell::initModules(void)
 
 void Shell::process(const string& strInput)
 {
+	// Command syntax explanation:
+	// Literal String
+	// <Required Argument>
+	// [Optional Argument]
+
 	// Extract command string from the input string
 	string strCmd;
 
@@ -86,33 +91,74 @@ void Shell::process(const string& strInput)
 	// Separate arguments from command string
 	string strArgs = strInput.substr(strCmd.size() + 1);
 
-	// Check internal shell commands
-	if (strCmd.compare("dir"))
+	// -- Check internal shell commands --
+	// Partition switch
+	// Syntax: <Partition Letter>:
+	if (strCmd.size() == 2 && strCmd[1] == ':')
 	{
-		/*uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
-		if (partIdx >= partCount)
+		char partLetter = strCmd[0];
+		uint8_t partIdx = 0xFF;
+
+		// Translate letter to index
+		if (partLetter >= 'A' && partLetter <= 'Z')
 		{
-			print("Invalid partition index!\n");
+			partIdx = partLetter - 'A';
+		}
+		else if (partLetter >= 'a' && partLetter <= 'z')
+		{
+			partIdx = partLetter - 'a';
+		}
+
+		// If it's a valid partition index switch the active partition
+		if (partIdx < partCount)
+		{
+			m_activePart = partIdx;
+			_update_prefix();
 		}
 		else
 		{
-			uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
-
-			if (pathCluster)
+			print("Invalid partitions letter!\n");
+		}
+	}
+	// Directory switch
+	// Syntax: cd <Directory Path>
+	else if (strCmd.compare("cd"))
+	{
+		// TODO
+	}
+	// List directory content
+	// Syntax: dir [Directory Path]
+	else if (strCmd.compare("dir") && vecArgs.size() < 2)
+	{
+		if (vecArgs.size() == 0)
+		{
+			listDirectory(m_activePart, m_activeDirectory);
+		}
+		else
+		{
+			/*uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
+			if (partIdx >= partCount)
 			{
-				listDirectory(partIdx, pathCluster);
+				print("Invalid partition index!\n");
 			}
 			else
 			{
-				print("Invalid directory path!\n");
-			}
-		}*/
-	}
-	else if (strCmd.compare("cd"))
-	{
+				uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
 
+				if (pathCluster)
+				{
+					listDirectory(partIdx, pathCluster);
+				}
+				else
+				{
+					print("Invalid directory path!\n");
+				}
+			}*/
+		}
 	}
-	// Compare the input string against each module command string
+	// -- Compare the input string against each module command string --
+	// Disk operation module
+	// Syntax: disk <Action> <Arguments>
 	else if (m_modDisk.compare(strCmd))
 	{
 		m_modDisk.process(strArgs);
