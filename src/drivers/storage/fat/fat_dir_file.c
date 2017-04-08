@@ -102,7 +102,9 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     filename[12] = '|';
                     filename[13] = '\0';
 
-                    term_writeline(&filename[0], false);
+                    term_write(&filename[0], false);
+                    term_write(" ", false);
+                    term_writeline_convert(dirsec->entries[iEntry].attrib, 2);
                 }
             }
 
@@ -111,6 +113,31 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
     }
 
     mem_free(clusterChain);
+}
+
+bool compareName(const char* const entryName, const char* const name)
+{
+    bool namesMatch = true;
+    bool nameEnd = false; // end of the name reached (entry name must contain only spaces after the terminator)
+
+    // Check if the name in the entry matches the name requested
+    for (size_t i = 0; i < 11; i++)
+    {
+        if (name[i] == '\0')
+        {
+            nameEnd = true;
+        }
+
+        if ((nameEnd && entryName[i] != ' ') ||
+            (!nameEnd && entryName[i] != name[i]))
+        {
+            // Names don't match, don't check further
+            namesMatch = false;
+            break;
+        }
+    }
+
+    return namesMatch;
 }
 
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib)
@@ -149,28 +176,8 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
                     dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME && // mustn't be a long name entry
                     ((dirsec->entries[iEntry].attrib & attribMask) == attrib)) // check attributes
                 {
-                    bool namesMatch = true;
-                    bool nameEnd = false; // end of the name reached (entry name must contain only spaces after the terminator)
-
-                    // Check if the name in the entry matches the name requested
-                    for (size_t i = 0; i < 11; i++)
-                    {
-                        if (name[i] == '\0')
-                        {
-                            nameEnd = true;
-                        }
-
-                        if ((nameEnd && dirsec->entries[iEntry].fileName[i] != ' ') ||
-                            (!nameEnd && dirsec->entries[iEntry].fileName[i] != name[i]))
-                        {
-                            // Names don't match, don't check further
-                            namesMatch = false;
-                            break;
-                        }
-                    }
-
                     // Names match, return the directory entry
-                    if (namesMatch)
+                    if (compareName(&dirsec->entries[iEntry].fileName[0], name))
                     {
                         struct DIR_ENTRY* direntry = mem_alloc(sizeof(struct DIR_ENTRY));
                         mem_copy(&dirsec->entries[iEntry], direntry, sizeof(struct DIR_ENTRY));
