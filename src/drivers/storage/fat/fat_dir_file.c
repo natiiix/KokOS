@@ -149,6 +149,7 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     {
                         term_write(strName, true);
                         term_writeline("/", false);
+                        term_writeline_convert(dirsec->entries[iEntry].clusterLow, 16);
                     }
                     else
                     {
@@ -348,22 +349,22 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
 {
     size_t pathsize = strlen(path);
     char strsearch[16]; // contains file name only
-    char* pathDir = mem_alloc(pathsize + 1); // contains the directory part of the path
-    strcopy(path, pathDir, 0);
+    char* pathDir = mem_alloc(pathsize + 0x100); // contains the directory part of the path
+    strcopy(path, pathDir);
 
     // Remove the file name from the directory path
     for (size_t i = 0; i < pathsize; i++)
     {
         if (pathDir[pathsize - 1 - i] == '/')
         {
-            strcopy(&pathDir[pathsize - i], &strsearch[0], 0); // extract the file name into separate string
+            strcopy(&pathDir[pathsize - i], &strsearch[0]); // extract the file name into separate string
             pathDir[pathsize - 1 - i] = '\0';
             break;
         }
         // The path doesn't contain a directory part, it's just a file name
         else if (i == pathsize - 1)
         {
-            strcopy(&pathDir[0], &strsearch[0], 0);
+            strcopy(&pathDir[0], &strsearch[0]);
             pathDir[0] = '\0';
         }
     }
@@ -378,7 +379,9 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
     }
 
     struct FILE* file = mem_alloc(sizeof(struct FILE));
-    file->name = fileNameToString(&direntry->fileName[0]);
+    char* strName = fileNameToString(&direntry->fileName[0]);
+    strcopy(strName, &file->name[0]);
+    mem_free(strName);
     file->attrib = direntry->attrib;
     file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
     file->size = direntry->fileSize;

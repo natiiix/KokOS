@@ -28,19 +28,19 @@ char* getHddInfoStr(const uint8_t hddIdx)
     if (hddArray[hddIdx].type == HDD_TYPE_IDE)
     {
         // Drive Type
-        strcopy("IDE", strInfo, strIdx);
+        strcopy("IDE", &strInfo[strIdx]);
         strIdx += 3;
 
         // BUS
         uint16_t bus = hddArray[hddIdx].addr >> 8;
         if (bus == BUS_PRIMARY)
         {
-            strcopy(" : Primary Bus", strInfo, strIdx);
+            strcopy(" : Primary Bus", &strInfo[strIdx]);
             strIdx += 14;
         }
         else if (bus == BUS_SECONDARY)
         {
-            strcopy(" : Secondary Bus", strInfo, strIdx);
+            strcopy(" : Secondary Bus", &strInfo[strIdx]);
             strIdx += 16;
         }
 
@@ -48,18 +48,18 @@ char* getHddInfoStr(const uint8_t hddIdx)
         uint8_t drive = hddArray[hddIdx].addr;
         if (drive == DRIVE_MASTER)
         {
-            strcopy(" : Master Drive", strInfo, strIdx);
+            strcopy(" : Master Drive", &strInfo[strIdx]);
             strIdx += 15;
         }
         else if (drive == DRIVE_SLAVE)
         {
-            strcopy(" : Slave Drive", strInfo, strIdx);
+            strcopy(" : Slave Drive", &strInfo[strIdx]);
             strIdx += 14;
         }
     }
     else if (hddArray[hddIdx].type == HDD_TYPE_AHCI)
     {
-        strcopy("AHCI", strInfo, strIdx);
+        strcopy("AHCI", &strInfo[strIdx]);
         strIdx += 4;
     }
 

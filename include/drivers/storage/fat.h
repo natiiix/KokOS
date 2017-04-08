@@ -137,7 +137,7 @@ static const uint8_t FILE_ATTRIB_LONG_NAME  = 0x0F;
 struct FILE
 {
     uint8_t partIdx;
-    char* name;
+    char name[13];
     uint8_t attrib;
     uint32_t cluster;
     uint32_t size;
