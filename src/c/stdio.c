@@ -46,6 +46,17 @@ void printint(const size_t i)
     term_write_convert(i, 10);
 }
 
+
+void printbin(const size_t i)
+{
+    term_write_convert(i, 2);
+}
+
+void printhex(const size_t i)
+{
+    term_write_convert(i, 16);
+}
+
 size_t getcol(void)
 {
     return term_getcol();
