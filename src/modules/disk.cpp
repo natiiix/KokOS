@@ -80,6 +80,19 @@ void Disk::process(const string& strArgs)
                     printint(file->size);
                     print(" Bytes\n");
 
+                    char* content = (char*)fatReadFile(file);
+
+                    if (content)
+                    {
+                        content[file->size] = '\0'; // WARNING: this is actually outside the allocated memory boundaries
+                        print(content);
+                        delete content;
+                    }
+                    else
+                    {
+                        print("Empty file.\n");
+                    }
+
                     delete file;
                 }
             }

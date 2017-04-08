@@ -162,4 +162,7 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path);
 #endif
 
 // ---- READ ----
+#if defined(__cplusplus)
+extern "C"
+#endif
 uint8_t* fatReadFile(const struct FILE* const file);
