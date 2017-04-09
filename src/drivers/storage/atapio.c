@@ -24,14 +24,14 @@ const uint8_t COMMAND_WRITE          = 0x30;
 const uint8_t COMMAND_WRITE_EXTENDED = 0x34;
 const uint8_t COMMAND_IDENTIFY       = 0xEC;
 
-const uint8_t STATUS_BSY  = 0x80; // Busy
-const uint8_t STATUS_DRDY = 0x40; // Drive ready
-const uint8_t STATUS_DWF  = 0x20; // Drive write fault
-const uint8_t STATUS_DSC  = 0x10; // Drive seek complete
-const uint8_t STATUS_DRQ  = 0x08; // Data request ready
-const uint8_t STATUS_CORR = 0x04; // Corrected data
-const uint8_t STATUS_IDX  = 0x02; // Index
-const uint8_t STATUS_ERR  = 0x01; // Error
+const uint8_t STATUS_BUSY           = 0x80;
+const uint8_t STATUS_READY          = 0x40;
+const uint8_t STATUS_WRITE_FAULT    = 0x20;
+const uint8_t STATUS_SEEK_COMPLETE  = 0x10;
+const uint8_t STATUS_REQUEST_READY  = 0x08;
+const uint8_t STATUS_CORRECTED_DATA = 0x04;
+const uint8_t STATUS_INDEX          = 0x02;
+const uint8_t STATUS_ERROR          = 0x01;
 
 const uint8_t PROBE_BYTE = 0xAB;
 
@@ -54,7 +54,7 @@ void switchDrive(const enum BUS bus, const enum DRIVE drive)
     uint8_t driveValue = 0xA0 + (drive << 4);
     outb(bus + REGISTER_DRIVE_HEAD, driveValue);
 
-    // 400ns wait
+    // The notorious ATAPIO 400ns wait
     inb(bus + REGISTER_STATUS);
     inb(bus + REGISTER_STATUS);
     inb(bus + REGISTER_STATUS);
@@ -75,13 +75,13 @@ bool ideIdentify(const enum BUS bus, const enum DRIVE drive)
 
     if (status)
     {
-        awaitStatusFalse(bus, STATUS_BSY);
+        awaitStatusFalse(bus, STATUS_BUSY);
 
         if (!inb(bus + REGISTER_LBA_MID) && !inb(bus + REGISTER_LBA_HIGH))
         {
-            awaitStatus(bus, STATUS_DRQ | STATUS_ERR);
+            awaitStatus(bus, STATUS_REQUEST_READY | STATUS_ERROR);
 
-            if (inb(bus + REGISTER_STATUS) & STATUS_DRQ)
+            if (inb(bus + REGISTER_STATUS) & STATUS_REQUEST_READY)
             {
                 // Read the indentification data from the drive
                 for (size_t idx = 0; idx < 256; idx++)
@@ -91,30 +91,6 @@ bool ideIdentify(const enum BUS bus, const enum DRIVE drive)
                     // because we don't need it for anything
                     inw(bus + REGISTER_DATA);
                 }
-
-                /*uint8_t* ptrBuff = (uint8_t*)mem_alloc(513);
-                ptrBuff[512] = '\0';
-                uint16_t tmpword = 0;
-
-                outb(bus + REGISTER_COMMAND, COMMAND_READ);
-                awaitStatus(bus, STATUS_DRQ);
-
-                for (size_t idx = 0; idx < 256; idx++)
-                {
-                    tmpword = inw(bus + REGISTER_DATA);
-                    ptrBuff[(idx << 1)] = (uint8_t)tmpword;
-                    ptrBuff[(idx << 1) + 1] = (uint8_t)(tmpword >> 8);
-                }
-
-                for (size_t i = 0; i < 512; i++)
-                {
-                    if (ptrBuff[i] == '\0')
-                    {
-                        ptrBuff[i] = '.';
-                    }
-                }
-
-                term_writeline((char*)ptrBuff, true);*/
 
                 return true;
             }
@@ -141,7 +117,7 @@ bool probeDrive(const enum BUS bus, const enum DRIVE drive)
     uint8_t status = inb(bus + REGISTER_STATUS);
 
     // Only returns true if the drive is an ATA storage device
-    return (status & STATUS_DRDY) && identified;
+    return (status & STATUS_READY) && identified;
 }
 
 void setupLBA28(const enum BUS bus, const enum DRIVE drive, const uint32_t addr)
@@ -176,11 +152,10 @@ void setupLBA48(const enum BUS bus, const enum DRIVE drive, const uint64_t addr)
 
 uint8_t* readLBA(const enum BUS bus)
 {
-    uint8_t* ptrBuff = (uint8_t*)mem_alloc(513);
-    ptrBuff[512] = '\0';
+    uint8_t* ptrBuff = (uint8_t*)mem_alloc(512);
     uint16_t tmpword = 0;
 
-    awaitStatus(bus, STATUS_DRQ);
+    awaitStatus(bus, STATUS_REQUEST_READY);
 
     for (size_t idx = 0; idx < 256; idx++)
     {
@@ -208,12 +183,14 @@ uint8_t* readLBA48(const enum BUS bus, const enum DRIVE drive, const uint64_t ad
 
 void writeLBA(const enum BUS bus, const uint8_t* const buffer)
 {
-    awaitStatus(bus, STATUS_DRQ);
+    awaitStatus(bus, STATUS_REQUEST_READY);
 
     for (size_t idx = 0; idx < 256; idx++)
     {
         outw(bus + REGISTER_DATA, ((uint16_t)buffer[idx << 1]) | (((uint16_t)buffer[(idx << 1) + 1]) << 8));
     }
+
+    awaitStatusFalse(bus, STATUS_BUSY);
 }
 
 void writeLBA28(const enum BUS bus, const enum DRIVE drive, const uint32_t addr, const uint8_t* const buffer)
