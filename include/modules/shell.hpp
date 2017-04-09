@@ -16,7 +16,7 @@ private:
     bool m_diskToolsEnabled; // false if there are no FAT partitions available
     uint8_t m_activePart;
     uint32_t m_activeDir; // first cluster of the active directory
-    vector<string> m_pathDirs;
+    vector<string> m_pathStructure;
 
     // Modules
     Disk m_modDisk;

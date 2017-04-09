@@ -35,7 +35,7 @@ void Shell::init(void)
 	{
 		m_activePart = 0;
 		m_activeDir = partArray[m_activePart].rootDirCluster;
-		m_pathDirs.clear();
+		m_pathStructure.clear();
 		_update_prefix();
 	}
 	else
@@ -90,6 +90,7 @@ void Shell::process(const string& strInput)
 
 	// Separate arguments from command string
 	string strArgs = strInput.substr(strCmd.size() + 1);
+	vector<string> vecArgs = strArgs.split(' ', true);
 
 	// -- Check internal shell commands --
 	// Partition switch
@@ -122,9 +123,41 @@ void Shell::process(const string& strInput)
 	}
 	// Directory switch
 	// Syntax: cd <Directory Path>
-	else if (strCmd.compare("cd"))
+	else if (strCmd.compare("cd") && vecArgs.size() == 1)
 	{
-		// TODO
+		uint32_t newDir = resolvePath(m_activePart, m_activeDir, vecArgs[0].c_str());
+
+		if (newDir)
+		{
+			m_activeDir = newDir;
+
+			vector<string> pathElements = vecArgs[0].split('/', true);
+			
+			for (size_t i = 0; i < pathElements.size(); i++)
+			{
+				// Ignore self-pointing path elements
+				if (pathElements[i] == ".")
+				{
+					continue;
+				}
+				// When going one directory up remove the last directory from the vector
+				else if (pathElements[i] == "..")
+				{
+					m_pathStructure.pop_back();
+				}
+				// When going one directory down append the directory to the vector
+				else
+				{
+					m_pathStructure.push_back(pathElements[i]);
+				}
+			}
+
+			pathElements.dispose();
+		}
+		else
+		{
+			print("Invalid directory path!\n");
+		}
 	}
 	// List directory content
 	// Syntax: dir [Directory Path]
@@ -132,7 +165,7 @@ void Shell::process(const string& strInput)
 	{
 		if (vecArgs.size() == 0)
 		{
-			listDirectory(m_activePart, m_activeDirectory);
+			listDirectory(m_activePart, m_activeDir);
 		}
 		else
 		{
@@ -161,7 +194,7 @@ void Shell::process(const string& strInput)
 	// Syntax: disk <Action> <Arguments>
 	else if (m_modDisk.compare(strCmd))
 	{
-		m_modDisk.process(strArgs);
+		m_modDisk.process(vecArgs);
 	}
 	else
 	{
@@ -172,6 +205,7 @@ void Shell::process(const string& strInput)
 
 	strCmd.dispose();
 	strArgs.dispose();
+	vecArgs.dispose();
 }
 
 char* Shell::_generate_spaces(const size_t count)
@@ -260,7 +294,7 @@ void Shell::_update_prefix(void)
 
 	if (m_diskToolsEnabled)
 	{
-		string activePath = string::join(m_pathDirs, '/', true);
+		string activePath = string::join(m_pathStructure, '/', true);
 
 		m_prefix.push_back('A' + m_activePart);
 		m_prefix.push_back(':');

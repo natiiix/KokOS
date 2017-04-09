@@ -154,7 +154,7 @@ char* fileNameToString(const char* const fileName);
 bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib);
 
 void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
-uint32_t resolvePath(const uint8_t partIdx, const char* const path);
+uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 struct FILE* getFile(const uint8_t partIdx, const char* const path);
 
 #if defined(__cplusplus)

@@ -214,14 +214,14 @@ uint32_t joinCluster(const uint16_t clusterHigh, const uint16_t clusterLow)
     return (((uint32_t)clusterHigh) << 16) | (uint32_t)clusterLow;
 }
 
-uint32_t resolvePath(const uint8_t partIdx, const char* const path)
+uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
 {
     size_t pathsize = strlen(path);
 
     char strsearch[16];
     size_t stridx = 0;
 
-    uint32_t searchCluster = partArray[partIdx].rootDirCluster;
+    uint32_t searchCluster = baseDir;
 
     for (size_t i = 0; i < pathsize; i++)
     {
@@ -297,7 +297,7 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
         }
     }
 
-    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
+    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, partArray[partIdx].rootDirCluster, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
 
     mem_free(pathDir);
     
