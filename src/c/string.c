@@ -269,7 +269,7 @@ size_t strfirst(const char* const str, const char c)
         }
     }
 
-    return -1;
+    return ~((size_t)0);
 }
 
 size_t strlast(const char* const str, const char c)
@@ -284,5 +284,5 @@ size_t strlast(const char* const str, const char c)
         }
     }
 
-    return -1;
+    return ~((size_t)0);
 }
