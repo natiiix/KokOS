@@ -446,6 +446,9 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                     // Write it to the disk
                     hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
 
+                    mem_free(dirsec);
+                    mem_free(clusterChain);
+
                     return unusedDirEntryIdx;
                 }
 
@@ -456,10 +459,12 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                 // Unused directory entry found
                 if (entryFirstByte == DIR_ENTRY_UNUSED)
                 {
+                    unusedDirEntryIdx = _generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
+
                     mem_free(dirsec);
                     mem_free(clusterChain);
 
-                    return _generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
+                    return unusedDirEntryIdx;
                 }
 
                 // End of directory reached before finding an unused entry
@@ -482,6 +487,9 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                     // This is the last entry of the last sector of the last cluster in the cluster chain that belongs to this directory
                     else
                     {
+                        mem_free(dirsec);
+                        mem_free(clusterChain);
+
                         prolongClusterChain(partIdx, baseDir);
                         return findUnusedDirEntry(partIdx, baseDir);
                     }
@@ -519,7 +527,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 
     if (!targetDir)
     {
-        term_writeline("STOP: TARGET DIR", false);
+        term_writeline("Invalid path!", false);
         return (struct FILE*)0;
     }
 
@@ -527,34 +535,27 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 
     if (!unusedIdx)
     {
-        term_writeline("STOP: UNUSED DIR ENTRY", false);
+        term_writeline("Couldn't find unused directory entry!", false);
         return (struct FILE*)0;
     }
 
-    size_t entryIdx = unusedIdx % 0x10;
-    unusedIdx /= 0x10;
-    size_t readSec = clusterToSector(partIdx, unusedIdx / partArray[partIdx].sectorsPerCluster) + unusedIdx % partArray[partIdx].sectorsPerCluster;
-
-    if (!readSec)
-    {
-        term_writeline("STOP: READ SECTOR", false);
-        return (struct FILE*)0;
-    }
+    size_t entryIdx = unusedIdx & 0xF;
+    size_t secIdx = clusterToSector(partIdx, 0) + (unusedIdx >> 4);
 
     // Find a cluster for the file
     size_t fileCluster = findEmptyCluster(partIdx);
     if (!fileCluster)
     {
-        term_writeline("STOP: FILE CLUSTER", false);
+        term_writeline("Invalid file cluster!", false);
         return (struct FILE*)0;
     }
     fatWrite(partIdx, fileCluster, CLUSTER_CHAIN_TERMINATOR);
 
     // Read old directory entries from the sector
-    struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], readSec);
+    struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
     if (!dirsec)
     {
-        term_writeline("STOP: DIRECTORY SECTOR", false);
+        term_writeline("Unable to read directory sector!", false);
         return (struct FILE*)0;
     }
 
@@ -565,7 +566,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
     dirsec->entries[entryIdx].clusterLow = (uint16_t)fileCluster;
     dirsec->entries[entryIdx].fileSize = 0;
 
-    hddWrite(hddArray[partArray[partIdx].hddIdx], readSec, (uint8_t*)dirsec);
+    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)dirsec);
 
     mem_free(dirsec);
 

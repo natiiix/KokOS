@@ -208,13 +208,7 @@ namespace Shell
 
 			if (file)
 			{
-				print(file->name);
-				print("\nCluster: ");
-				printint(file->cluster);
-				print("\nSize: ");
-				printint(file->size);
-				print("\n");
-
+				print("File creation was successful.\n");
 				delete file;
 			}
 		}
