@@ -20,6 +20,8 @@ char ctoupper(const char c);
 char ctolower(const char c);
 void strtoupper(char* const str);
 void strtolower(char* const str);
+size_t strfirst(const char* const str, const char c);
+size_t strlast(const char* const str, const char c);
 
 #if defined(__cplusplus)
 }

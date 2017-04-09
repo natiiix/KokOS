@@ -98,7 +98,7 @@ extern "C"
 #endif
 char* getPartInfoStr(const uint8_t partIdx);
 
-// ---- DIRECTORY / FILE ----
+// ---- DIRECTORY ----
 static const uint32_t CLUSTER_CHAIN_TERMINATOR = 0xFFFFFFFF;
 
 struct FAT_TABLE
@@ -155,7 +155,7 @@ bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint
 
 void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
 uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
-struct FILE* getFile(const uint8_t partIdx, const char* const path);
+struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 #if defined(__cplusplus)
 }
@@ -166,3 +166,9 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path);
 extern "C"
 #endif
 uint8_t* fatReadFile(const struct FILE* const file);
+
+// ---- NEW ----
+#if defined(__cplusplus)
+extern "C"
+#endif
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);

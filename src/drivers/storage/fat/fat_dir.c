@@ -14,8 +14,7 @@ uint64_t clusterToSector(const uint8_t partIdx, const uint32_t clust)
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
 {
     size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
-    size_t clusterbytes = partArray[partIdx].sectorsPerCluster * 0x200;
-    size_t clustercount = partArray[partIdx].fatSectors * 128;
+    size_t clusterCount = partArray[partIdx].fatSectors * 0x80;
 
     uint32_t* clusterChain = mem_dynalloc(0);
     size_t chainSize = 0;
@@ -23,13 +22,13 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
     // Follow the cluster chain
     uint32_t currClust = firstClust;
 
-    while (currClust < clustercount)
+    while (currClust < clusterCount)
     {
         clusterChain = mem_dynresize(clusterChain, ++chainSize * 4);
         clusterChain[chainSize - 1] = currClust;
 
-        size_t readsec = fatBegin + (currClust / clusterbytes);
-        size_t fatentry = currClust % clusterbytes;
+        size_t readsec = fatBegin + (currClust / 0x80);
+        size_t fatentry = currClust % 0x80;
 
         struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], readsec);
         currClust = fat->entries[fatentry];
@@ -40,6 +39,69 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
     clusterChain[chainSize - 1] = CLUSTER_CHAIN_TERMINATOR;
 
     return clusterChain;
+}
+
+size_t findEmptyCluster(const uint8_t partIdx)
+{
+    size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
+
+    for (size_t secIdx = 0; secIdx < partArray[partIdx].fatSectors; secIdx++)
+    {
+        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], fatBegin + secIdx);
+
+        for (size_t entryIdx = (secIdx ? 0 : 2); entryIdx < 0x80; entryIdx++)
+        {
+            if (!fat->entries[entryIdx])
+            {
+                mem_free(fat);
+                return (secIdx * 0x80) + entryIdx;
+            }
+        }       
+
+        mem_free(fat);
+    }
+
+    return 0;
+}
+
+void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t content)
+{
+    size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
+    size_t entriesPerSector = partArray[partIdx].sectorsPerCluster * 0x80;
+
+    size_t secIdx = fatBegin + (clustIdx / entriesPerSector);
+    size_t entryIdx = clustIdx % entriesPerSector;
+
+    // Read the old FAT sector
+    struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
+
+    // Change the content of a specified entry
+    fat->entries[entryIdx] = content;
+
+    // Write the new FAT sector with the modified entry
+    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)fat);
+
+    mem_free(fat);
+}
+
+void prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust)
+{
+    uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
+
+    // Get index of the last cluster in the chain
+    size_t clustIdx = 1;
+    while (clusterChain[clustIdx] < CLUSTER_CHAIN_TERMINATOR)
+    {
+        clustIdx++;
+    }
+
+    // Find an empty cluster to add to the chain
+    size_t emptyCluster = findEmptyCluster(partIdx);
+
+    fatWrite(partIdx, clusterChain[clustIdx - 1], emptyCluster);
+    fatWrite(partIdx, emptyCluster, CLUSTER_CHAIN_TERMINATOR);
+
+    mem_free(clusterChain);
 }
 
 char* fileNameToString(const char* const fileName)
@@ -89,6 +151,28 @@ char* fileNameToString(const char* const fileName)
     strName[totallen - 1] = '\0';
 
     return strName;
+}
+
+void stringToFileName(const char* const strSrc, char* const fileNameDst)
+{
+    size_t offset = 0;
+
+    for (size_t i = 0; i < 11; i++)
+    {
+        fileNameDst[i] = ' ';
+    }
+
+    for (size_t i = 0; strSrc[i]; i++)
+    {
+        if (strSrc[i] == '.')
+        {
+            offset = 8;
+        }
+        else
+        {
+            fileNameDst[offset++] = ctoupper(strSrc[i]);
+        }
+    }
 }
 
 bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib)
@@ -166,7 +250,7 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
             struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
 
             // Look through all the entries in the sector
-            for (size_t iEntry = 0; iEntry < 16 && !endOfDir; iEntry++)
+            for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir; iEntry++)
             {
                 // Get the first byte of the entry
                 // Used to find unused entries and the end of the directory
@@ -274,7 +358,7 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     return searchCluster;
 }
 
-struct FILE* getFile(const uint8_t partIdx, const char* const path)
+struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
 {
     size_t pathsize = strlen(path);
     char strsearch[16]; // contains file name only
@@ -300,7 +384,7 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
 
     strtoupper(&strsearch[0]);
 
-    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, partArray[partIdx].rootDirCluster, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
+    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, baseDir, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
 
     mem_free(pathDir);
     
@@ -323,4 +407,177 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
     mem_free(direntry);
 
     return (file);
+}
+
+size_t _generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, const size_t sectorIdx, const size_t entryIdx)
+{
+    return (((clusterIdx * partArray[partIdx].sectorsPerCluster) + sectorIdx) * 0x10) + entryIdx;
+}
+
+size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
+{
+    // Get cluster chain
+    uint32_t* clusterChain = getClusterChain(partIdx, baseDir);
+    size_t chainIdx = 0;
+
+    bool writeEndOfDir = false;
+    size_t unusedDirEntryIdx = 0;    
+
+    // Search through the cluster chain until the end of the directory is reached
+    while (clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR)
+    {
+        // Convert cluster to sector for LBA addressing
+        uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
+
+        // Look through each sector within the cluster
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster; iSec++)
+        {
+            // Read the sector from the drive
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+
+            // Look through all the entries in the sector
+            for (size_t iEntry = 0; iEntry < 0x10; iEntry++)
+            {
+                // The previous entry has been marked as unused, but it was the last entry of the sector
+                // so the end of directory entry must be set in the current iteration
+                if (writeEndOfDir)
+                {
+                    *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_END;
+                    // Write it to the disk
+                    hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+
+                    mem_free(dirsec);
+                    mem_free(clusterChain);
+
+                    return unusedDirEntryIdx;
+                }
+
+                // Get the first byte of the entry
+                // Used to find unused entries and the end of the directory
+                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[iEntry]);
+
+                // Unused directory entry found
+                if (entryFirstByte == DIR_ENTRY_UNUSED)
+                {
+                    unusedDirEntryIdx = _generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
+
+                    mem_free(dirsec);
+                    mem_free(clusterChain);
+
+                    return unusedDirEntryIdx;
+                }
+
+                // End of directory reached before finding an unused entry
+                if (entryFirstByte == DIR_ENTRY_END)
+                {
+                    if (iEntry + 1 < 0x10 || // not the last entry in the sector
+                        iSec + 1 < partArray[partIdx].sectorsPerCluster || // not the last sector in cluster
+                        clusterChain[chainIdx + 1] < CLUSTER_CHAIN_TERMINATOR) // not the last cluster in the cluster chain
+                    {
+                        // Mark this entry as unused
+                        *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_UNUSED;
+                        // Write it to the disk
+                        hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+
+                        // The next entry will be marked as the end of the directory
+                        writeEndOfDir = true;
+
+                        unusedDirEntryIdx = _generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
+                    }
+                    // This is the last entry of the last sector of the last cluster in the cluster chain that belongs to this directory
+                    else
+                    {
+                        mem_free(dirsec);
+                        mem_free(clusterChain);
+
+                        prolongClusterChain(partIdx, baseDir);
+                        return findUnusedDirEntry(partIdx, baseDir);
+                    }
+                }
+            }
+
+            mem_free(dirsec);
+        }
+    }
+
+    mem_free(clusterChain);
+
+    // Should be unreachable
+    return 0;
+}
+
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
+{
+    uint32_t targetDir = baseDir;
+    size_t nameBeginIdx = 0;
+
+    size_t lastSlashIdx = strlast(path, '/');
+    if (lastSlashIdx != ~((size_t)0))
+    {
+        char* pathDir = mem_alloc(lastSlashIdx + 2);
+        strcopy(path, pathDir);
+
+        pathDir[lastSlashIdx + 1] = '\0';
+        nameBeginIdx = lastSlashIdx + 1;
+
+        targetDir = resolvePath(partIdx, baseDir, pathDir);
+
+        mem_free(pathDir);
+    }
+
+    if (!targetDir)
+    {
+        term_writeline("Invalid path!", false);
+        return (struct FILE*)0;
+    }
+
+    size_t unusedIdx = findUnusedDirEntry(partIdx, targetDir);
+
+    if (!unusedIdx)
+    {
+        term_writeline("Couldn't find unused directory entry!", false);
+        return (struct FILE*)0;
+    }
+
+    size_t entryIdx = unusedIdx & 0xF;
+    size_t secIdx = clusterToSector(partIdx, 0) + (unusedIdx >> 4);
+
+    // Find a cluster for the file
+    size_t fileCluster = findEmptyCluster(partIdx);
+    if (!fileCluster)
+    {
+        term_writeline("Invalid file cluster!", false);
+        return (struct FILE*)0;
+    }
+    fatWrite(partIdx, fileCluster, CLUSTER_CHAIN_TERMINATOR);
+
+    // Read old directory entries from the sector
+    struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
+    if (!dirsec)
+    {
+        term_writeline("Unable to read directory sector!", false);
+        return (struct FILE*)0;
+    }
+
+    // Write the file information into the proper directory entry
+    stringToFileName(&path[nameBeginIdx], &dirsec->entries[entryIdx].fileName[0]);
+    dirsec->entries[entryIdx].attrib = FILE_ATTRIB_ARCHIVE; // I don't know why, but all the files seem to have this
+    dirsec->entries[entryIdx].clusterHigh = (uint16_t)(fileCluster >> 0x10);
+    dirsec->entries[entryIdx].clusterLow = (uint16_t)fileCluster;
+    dirsec->entries[entryIdx].fileSize = 0;
+
+    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)dirsec);
+
+    mem_free(dirsec);
+
+    // Generate the FILE structure
+    struct FILE* file = mem_alloc(sizeof(struct FILE));
+
+    strcopy(&path[nameBeginIdx], &file->name[0]);
+    file->partIdx = partIdx;
+    file->attrib = FILE_ATTRIB_ARCHIVE;
+    file->cluster = fileCluster;
+    file->size = 0;
+
+    return file;
 }
