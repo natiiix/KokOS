@@ -98,7 +98,7 @@ extern "C"
 #endif
 char* getPartInfoStr(const uint8_t partIdx);
 
-// ---- DIRECTORY / FILE ----
+// ---- DIRECTORY ----
 static const uint32_t CLUSTER_CHAIN_TERMINATOR = 0xFFFFFFFF;
 
 struct FAT_TABLE
