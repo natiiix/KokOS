@@ -4,6 +4,7 @@
 #include <cpp/vector.hpp>
 #include <c/stdio.h>
 #include <c/string.h>
+#include <modules/shell_global.hpp>
 
 void Disk::process(const vector<string>& vecArgs)
 {
@@ -56,43 +57,35 @@ void Disk::process(const vector<string>& vecArgs)
                 }
             }
         }
-        else if (vecArgs.at(0) == "check" && vecArgs.size() == 3)
+        else if (vecArgs.at(0) == "check" && vecArgs.size() == 2)
         {
-            uint8_t partIdx = (uint8_t)strparse(vecArgs.at(1).c_str(), 10);
-            if (partIdx >= partCount)
+            struct FILE* file = getFile(activePart, activeDir, vecArgs.at(1).c_str());
+
+            if (file == nullptr)
             {
-                print("Invalid partition index!\n");
+                print("Invalid file path!\n");
             }
             else
             {
-                struct FILE* file = getFile(partIdx, vecArgs.at(2).c_str());
+                print(file->name);
+                print(" - ");
+                printint(file->size);
+                print(" Bytes\n");
 
-                if (file == nullptr)
+                char* content = (char*)fatReadFile(file);
+
+                if (content)
                 {
-                    print("Invalid file path!\n");
+                    content[file->size] = '\0'; // WARNING: this is actually outside the allocated memory boundaries
+                    print(content);
+                    delete content;
                 }
                 else
                 {
-                    print(file->name);
-                    print(" - ");
-                    printint(file->size);
-                    print(" Bytes\n");
-
-                    char* content = (char*)fatReadFile(file);
-
-                    if (content)
-                    {
-                        content[file->size] = '\0'; // WARNING: this is actually outside the allocated memory boundaries
-                        print(content);
-                        delete content;
-                    }
-                    else
-                    {
-                        print("Empty file.\n");
-                    }
-
-                    delete file;
+                    print("Empty file.\n");
                 }
+
+                delete file;
             }
         }
         else

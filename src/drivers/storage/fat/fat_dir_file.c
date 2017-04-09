@@ -274,7 +274,7 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     return searchCluster;
 }
 
-struct FILE* getFile(const uint8_t partIdx, const char* const path)
+struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
 {
     size_t pathsize = strlen(path);
     char strsearch[16]; // contains file name only
@@ -300,7 +300,7 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
 
     strtoupper(&strsearch[0]);
 
-    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, partArray[partIdx].rootDirCluster, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
+    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, baseDir, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
 
     mem_free(pathDir);
     
@@ -323,4 +323,9 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
     mem_free(direntry);
 
     return (file);
+}
+
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
+{
+    
 }

@@ -3,23 +3,11 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
-#include <modules/disk.hpp>
+#include "shell_global.hpp"
 
-class Shell
+namespace Shell
 {
-public:
-    void init(void);
     void process(const string& strInput);
-
-private:
-    string m_prefix;
-    bool m_diskToolsEnabled; // false if there are no FAT partitions available
-    uint8_t m_activePart;
-    uint32_t m_activeDir; // first cluster of the active directory
-    vector<string> m_pathStructure;
-
-    // Modules
-    Disk m_modDisk;
 
     // Internal shell calls
     void initModules(void);
@@ -30,4 +18,4 @@ private:
     void _input_update(void);
     void _input_clean(void);
     void _update_prefix(void);
-};
+}

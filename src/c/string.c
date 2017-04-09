@@ -256,3 +256,33 @@ void strtolower(char* const str)
         str[i] = ctolower(str[i]);
     }
 }
+
+size_t strfirst(const char* const str, const char c)
+{
+    size_t strsize = strlen(str);
+
+    for (size_t i = 0; i < strsize; i++)
+    {
+        if (str[i] == c)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+size_t strlast(const char* const str, const char c)
+{
+    size_t strsize = strlen(str);
+
+    for (size_t i = 0; i < strsize; i++)
+    {
+        if (str[strsize - 1 - i] == c)
+        {
+            return strsize - 1 - i;
+        }
+    }
+
+    return -1;
+}
