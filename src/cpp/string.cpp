@@ -30,6 +30,16 @@ void string::dispose(void)
     delete m_ptrC;
 }
 
+string string::copy(void)
+{
+    string strout;
+    
+    strout.clear();
+    strout.push_back(m_ptrC);
+
+    return strout;
+}
+
 // Capacity
 size_t string::size(void) const
 {

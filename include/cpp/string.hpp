@@ -16,6 +16,8 @@ public:
     string(const char* const str);
 	// Frees the memory used by this string
     void dispose(void);
+	// Returns a copy of this string
+	string copy(void);
 
     // ---- CAPACITY ----
 	// Returns the length of the string

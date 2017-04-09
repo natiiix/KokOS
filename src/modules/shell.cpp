@@ -49,7 +49,7 @@ void Shell::init(void)
     while (true)
     {
 		#ifdef DEBUG
-			// Some memory is allocated for constant strings
+			// Keep in mind that some memory is always allocated by the shell instance itself
 			debug_memusage();
 			//pause();
 		#endif
@@ -148,11 +148,15 @@ void Shell::process(const string& strInput)
 				// When going one directory down append the directory to the vector
 				else
 				{
-					m_pathStructure.push_back(pathElements[i]);
+					// The directory name string must not be disposed
+					// Therefore we need to copy it into a separate string outside the vector
+					m_pathStructure.push_back(pathElements[i].copy());
 				}
 			}
 
 			pathElements.dispose();
+
+			_update_prefix();
 		}
 		else
 		{
@@ -168,25 +172,17 @@ void Shell::process(const string& strInput)
 			listDirectory(m_activePart, m_activeDir);
 		}
 		else
-		{
-			/*uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
-			if (partIdx >= partCount)
+		{			
+			uint32_t pathCluster = resolvePath(m_activePart, m_activeDir, vecArgs[0].c_str());
+
+			if (pathCluster)
 			{
-				print("Invalid partition index!\n");
+				listDirectory(m_activePart, pathCluster);
 			}
 			else
 			{
-				uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
-
-				if (pathCluster)
-				{
-					listDirectory(partIdx, pathCluster);
-				}
-				else
-				{
-					print("Invalid directory path!\n");
-				}
-			}*/
+				print("Invalid directory path!\n");
+			}
 		}
 	}
 	// -- Compare the input string against each module command string --

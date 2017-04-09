@@ -221,7 +221,8 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     char strsearch[16];
     size_t stridx = 0;
 
-    uint32_t searchCluster = baseDir;
+    // If the path begins with '/' it's absolute path, otherwise the path is relative to directory located at baseDir
+    uint32_t searchCluster = (path[0] == '/' ? partArray[partIdx].rootDirCluster : baseDir);
 
     for (size_t i = 0; i < pathsize; i++)
     {

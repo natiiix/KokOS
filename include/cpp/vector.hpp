@@ -32,7 +32,7 @@ public:
     { updatePtr(realloc(m_ptr, (m_size = newsize) * m_sizeofT)); }
     //
     inline void clear(void)
-    { updatePtr(realloc(m_ptr, m_size = 0)); }
+    { resize(0); }
     //
     inline bool empty(void) const
     { return !m_size; }
@@ -53,7 +53,7 @@ public:
     // Modifiers
     inline void push_back(const T& element)
     {
-        updatePtr(realloc(m_ptr, ++m_size * m_sizeofT));
+        resize(m_size + 1);
         m_ptrT[m_size - 1] = element;
     }
     //
@@ -61,7 +61,7 @@ public:
     {
         if (m_size > 0)
         {
-            updatePtr(realloc(m_ptr, --m_size * m_sizeofT));
+            resize(m_size - 1);
         }
     }
     
@@ -153,4 +153,25 @@ inline void vector<string>::dispose(void)
 	}
 
     delete m_ptrT;
+}
+
+template <>
+inline void vector<string>::pop_back(void)
+{
+    if (m_size > 0)
+    {
+        m_ptrT[m_size - 1].dispose();
+        resize(m_size - 1);
+    }
+}
+
+template <>
+inline void vector<string>::clear(void)
+{
+    for (size_t i = 0; i < m_size; i++)
+    {
+        m_ptrT[i].dispose();
+    }
+
+    resize(0);
 }
