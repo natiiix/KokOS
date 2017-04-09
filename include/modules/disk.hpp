@@ -5,5 +5,5 @@
 class Disk : public Module
 {
 public:
-    void process(const string& strArgs);
+    void process(const vector<string>& vecArgs);
 };

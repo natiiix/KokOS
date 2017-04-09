@@ -5,15 +5,13 @@
 #include <c/stdio.h>
 #include <c/string.h>
 
-void Disk::process(const string& strArgs)
+void Disk::process(const vector<string>& vecArgs)
 {
-    vector<string> vecArgs = strArgs.split(' ', true);
-
     if (vecArgs.size() > 0)
     {
-        if (vecArgs[0] == "list" && vecArgs.size() == 2)
+        if (vecArgs.at(0) == "list" && vecArgs.size() == 2)
         {
-            if (vecArgs[1] == "disks")
+            if (vecArgs.at(1) == "disks")
             {
                 if (hddCount == 0)
                 {
@@ -35,7 +33,7 @@ void Disk::process(const string& strArgs)
                     }
                 }
             }
-            else if (vecArgs[1] == "partitions")
+            else if (vecArgs.at(1) == "partitions")
             {
                 if (partCount == 0)
                 {
@@ -58,16 +56,16 @@ void Disk::process(const string& strArgs)
                 }
             }
         }
-        else if (vecArgs[0] == "check" && vecArgs.size() == 3)
+        else if (vecArgs.at(0) == "check" && vecArgs.size() == 3)
         {
-            uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
+            uint8_t partIdx = (uint8_t)strparse(vecArgs.at(1).c_str(), 10);
             if (partIdx >= partCount)
             {
                 print("Invalid partition index!\n");
             }
             else
             {
-                struct FILE* file = getFile(partIdx, vecArgs[2].c_str());
+                struct FILE* file = getFile(partIdx, vecArgs.at(2).c_str());
 
                 if (file == nullptr)
                 {
@@ -75,33 +73,25 @@ void Disk::process(const string& strArgs)
                 }
                 else
                 {
-                    print(file->fileName);
+                    print(file->name);
                     print(" - ");
-                    printint(file->fileSize);
+                    printint(file->size);
                     print(" Bytes\n");
 
-                    delete file;
-                }
-            }
-        }
-        else if (vecArgs[0] == "dir" && vecArgs.size() == 3)
-        {
-            uint8_t partIdx = (uint8_t)strparse(vecArgs[1].c_str(), 10);
-            if (partIdx >= partCount)
-            {
-                print("Invalid partition index!\n");
-            }
-            else
-            {
-                uint32_t pathCluster = resolvePath(partIdx, vecArgs[2].c_str());
+                    char* content = (char*)fatReadFile(file);
 
-                if (pathCluster)
-                {
-                    listDirectory(partIdx, pathCluster);
-                }
-                else
-                {
-                    print("Invalid path!\n");
+                    if (content)
+                    {
+                        content[file->size] = '\0'; // WARNING: this is actually outside the allocated memory boundaries
+                        print(content);
+                        delete content;
+                    }
+                    else
+                    {
+                        print("Empty file.\n");
+                    }
+
+                    delete file;
                 }
             }
         }
@@ -110,6 +100,4 @@ void Disk::process(const string& strArgs)
             print("Invalid arguments!\n");
         }
     }
-
-    vecArgs.dispose();
 }

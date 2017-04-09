@@ -209,14 +209,50 @@ char* strjoin(const char* const str1, const char* const str2)
     return strout;
 }
 
-void strcopy(const char* const strInput, char* const strOutput, const size_t outputIdx)
+void strcopy(const char* const strInput, char* const strOutput)
 {
     size_t len = strlen(strInput);
 
     for (size_t i = 0; i < len; i++)
     {
-        strOutput[outputIdx + i] = strInput[i];
+        strOutput[i] = strInput[i];
     }
 
-    strOutput[outputIdx + len] = '\0';
+    strOutput[len] = '\0';
+}
+
+char ctoupper(const char c)
+{
+    if (c >= 'a' && c <= 'z')
+    {
+        return 'A' + (c - 'a');
+    }
+
+    return c;
+}
+
+char ctolower(const char c)
+{
+    if (c >= 'A' && c <= 'Z')
+    {
+        return 'a' + (c - 'A');
+    }
+
+    return c;
+}
+
+void strtoupper(char* const str)
+{
+    for (size_t i = 0; str[i]; i++)
+    {
+        str[i] = ctoupper(str[i]);
+    }
+}
+
+void strtolower(char* const str)
+{
+    for (size_t i = 0; str[i]; i++)
+    {
+        str[i] = ctolower(str[i]);
+    }
 }

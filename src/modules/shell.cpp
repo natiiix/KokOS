@@ -2,6 +2,7 @@
 
 #include <c/stdlib.h>
 #include <c/stdio.h>
+#include <c/string.h>
 
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
@@ -9,6 +10,7 @@
 #include <kernel.h>
 
 #include <modules/disk.hpp>
+#include <drivers/storage/fat.h>
 
 extern "C"
 void shell_init(void)
@@ -28,28 +30,40 @@ void Shell::init(void)
 
     clear();
 
-	m_strPrefix.clear();
-    m_strPrefix.push_back(">");
+	m_diskToolsEnabled = (partCount > 0);
+
+	if (m_diskToolsEnabled)
+	{
+		m_activePart = 0;
+		m_activeDir = partArray[m_activePart].rootDirCluster;
+		m_pathStructure.clear();
+		_update_prefix();
+	}
+	else
+	{
+		m_prefix.clear();
+		m_prefix.push_back('>');
+	}
 
 	initModules();
 
     while (true)
     {
+		#ifdef DEBUG
+			// Keep in mind that some memory is always allocated by the shell instance itself
+			debug_memusage();
+			//pause();
+		#endif
+
         string strInput = readline();
 
-		sprint(m_strPrefix);
+		sprint(m_prefix);
         sprint(strInput);
 		newline();
 
 		process(strInput);
 		
 		strInput.dispose();
-
-		#ifdef DEBUG
-			// Some memory is allocated for constant strings
-			debug_memusage();
-			//pause();
-		#endif
     }
 }
 
@@ -60,6 +74,11 @@ void Shell::initModules(void)
 
 void Shell::process(const string& strInput)
 {
+	// Command syntax explanation:
+	// Literal String
+	// <Required Argument>
+	// [Optional Argument]
+
 	// Extract command string from the input string
 	string strCmd;
 
@@ -67,16 +86,118 @@ void Shell::process(const string& strInput)
 
 	for (size_t i = 0; i < strsize && strInput.at(i) != ' '; i++)
 	{
-		strCmd.push_back(strInput.at(i));
+		// Read the command word, automatically convert it to lowercase
+		strCmd.push_back(ctolower(strInput.at(i)));
 	}
 
 	// Separate arguments from command string
 	string strArgs = strInput.substr(strCmd.size() + 1);
+	vector<string> vecArgs = strArgs.split(' ', true);
 
-	// Compare the input string against each module command string
-	if (m_modDisk.compare(strCmd))
+	// -- Check internal shell commands --
+	// Displays all available commands and their proper syntax
+	if (strCmd == "help" && vecArgs.size() == 0)
 	{
-		m_modDisk.process(strArgs);
+		print("COMMAND <REQUIRED ARGUMENT> [OPTIONAL ARGUMENT]\n");
+		print("help - Displays available commands and their syntax\n");
+		print("<Partition Letter>: - Changes active partition\n");
+		print("cd <Directory Path> - Changed active directory\n");
+		print("dir [Directory Path] - Displays content of a directory\n");
+		print("disk <Action> <Arguments> - Performs a disk-related operation\n");
+	}
+	// Partition switch
+	// Syntax: <Partition Letter>:
+	else if (strCmd.size() == 2 && strCmd[1] == ':')
+	{
+		if (strCmd[0] >= 'a' && strCmd[0] <= 'z' && // letters represent partitions index
+			(strCmd[0] - 'a') < partCount) // check partition index validity
+		{
+			m_activePart = strCmd[0] - 'a'; // change the active partition
+			m_pathStructure.clear(); // clear the path because it doesn't exist on this partition
+			_update_prefix();
+		}
+		else
+		{
+			print("Invalid partition letter!\n");
+		}
+	}
+	// Directory switch
+	// Syntax: cd <Directory Path>
+	else if (strCmd.compare("cd") && vecArgs.size() == 1)
+	{
+		uint32_t newDir = resolvePath(m_activePart, m_activeDir, vecArgs[0].c_str());
+
+		if (newDir)
+		{
+			// If the directory path is absolute delete the old path
+			if (vecArgs[0][0] == '/')
+			{
+				m_pathStructure.clear();
+			}
+
+			m_activeDir = newDir;
+
+			vector<string> pathElements = vecArgs[0].split('/', true);
+			
+			for (size_t i = 0; i < pathElements.size(); i++)
+			{
+				// Ignore self-pointing path elements
+				if (pathElements[i] == ".")
+				{
+					continue;
+				}
+				// When going one directory up remove the last directory from the vector
+				else if (pathElements[i] == "..")
+				{
+					m_pathStructure.pop_back();
+				}
+				// When going one directory down append the directory to the vector
+				else
+				{
+					// The directory name string must not be disposed
+					// Therefore we need to copy it into a separate string outside the vector
+					// This is done automatically when converting the name to uppercase
+					m_pathStructure.push_back(pathElements[i].toupper());
+				}
+			}
+
+			pathElements.dispose();
+
+			_update_prefix();
+		}
+		else
+		{
+			print("Invalid directory path!\n");
+		}
+	}
+	// List directory content
+	// Syntax: dir [Directory Path]
+	else if (strCmd.compare("dir") && vecArgs.size() < 2)
+	{
+		if (vecArgs.size() == 0)
+		{
+			listDirectory(m_activePart, m_activeDir);
+		}
+		else
+		{			
+			uint32_t pathCluster = resolvePath(m_activePart, m_activeDir, vecArgs[0].c_str());
+
+			if (pathCluster)
+			{
+				listDirectory(m_activePart, pathCluster);
+			}
+			else
+			{
+				print("Invalid directory path!\n");
+			}
+		}
+	}
+	// -- Compare the input string against each module command string --
+	// Disk operation module
+	// Syntax: disk <Action> <Arguments>
+	else if (m_modDisk.compare(strCmd))
+	{
+		m_modDisk.process(vecArgs);
 	}
 	else
 	{
@@ -87,6 +208,7 @@ void Shell::process(const string& strInput)
 
 	strCmd.dispose();
 	strArgs.dispose();
+	vecArgs.dispose();
 }
 
 char* Shell::_generate_spaces(const size_t count)
@@ -111,7 +233,7 @@ string Shell::readline(void)
 
 	size_t row = getrow();
 
-	size_t preLen = m_strPrefix.size();
+	size_t preLen = m_prefix.size();
 	size_t inSpace = VGA_WIDTH - preLen - 1;
 
 	string strInput;
@@ -150,7 +272,7 @@ string Shell::readline(void)
 		size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
 		size_t inStartIdx = strInput.size() - inRenderLen;
 
-		sprintat(m_strPrefix, 0, row);
+		sprintat(m_prefix, 0, row);
 		string strInputRender = strInput.substr(inStartIdx, inRenderLen);
 		sprintat(strInputRender, preLen, row);
 		strInputRender.dispose();
@@ -167,4 +289,23 @@ string Shell::readline(void)
 
 		setcursor(rowend, row);
 	}
+}
+
+void Shell::_update_prefix(void)
+{
+	m_prefix.clear();
+
+	if (m_diskToolsEnabled)
+	{
+		string activePath = string::join(m_pathStructure, '/', true);
+
+		m_prefix.push_back('A' + m_activePart);
+		m_prefix.push_back(':');
+		m_prefix.push_back(activePath);
+		m_prefix.push_back('/');
+
+		activePath.dispose();
+	}
+
+	m_prefix.push_back('>');
 }

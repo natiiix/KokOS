@@ -25,16 +25,16 @@ public:
     { return m_ptrT; }
 
     // Capacity
-    inline size_t size(void)
+    inline size_t size(void) const
     { return m_size; }
     //
     inline void resize(const size_t newsize)
     { updatePtr(realloc(m_ptr, (m_size = newsize) * m_sizeofT)); }
     //
     inline void clear(void)
-    { updatePtr(realloc(m_ptr, m_size = 0)); }
+    { resize(0); }
     //
-    inline bool empty(void)
+    inline bool empty(void) const
     { return !m_size; }
 
     // Element access
@@ -53,12 +53,17 @@ public:
     // Modifiers
     inline void push_back(const T& element)
     {
-        updatePtr(realloc(m_ptr, ++m_size * m_sizeofT));
+        resize(m_size + 1);
         m_ptrT[m_size - 1] = element;
     }
     //
     inline void pop_back(void)
-    { updatePtr(realloc(m_ptr, --m_size * m_sizeofT)); }
+    {
+        if (m_size > 0)
+        {
+            resize(m_size - 1);
+        }
+    }
     
 	// Removes an element / multiple elements from a specified position in the vector
 	inline void remove(const size_t pos, const size_t len = 1)
@@ -148,4 +153,25 @@ inline void vector<string>::dispose(void)
 	}
 
     delete m_ptrT;
+}
+
+template <>
+inline void vector<string>::pop_back(void)
+{
+    if (m_size > 0)
+    {
+        m_ptrT[m_size - 1].dispose();
+        resize(m_size - 1);
+    }
+}
+
+template <>
+inline void vector<string>::clear(void)
+{
+    for (size_t i = 0; i < m_size; i++)
+    {
+        m_ptrT[i].dispose();
+    }
+
+    resize(0);
 }

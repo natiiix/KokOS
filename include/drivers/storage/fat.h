@@ -136,25 +136,33 @@ static const uint8_t FILE_ATTRIB_LONG_NAME  = 0x0F;
 
 struct FILE
 {
-    char fileName[12]; // += '\0'
+    char name[13];
+    uint8_t partIdx;
     uint8_t attrib;
     uint32_t cluster;
-    uint32_t fileSize;
+    uint32_t size;
 };
 
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+
+uint64_t clusterToSector(const uint8_t partIdx, const uint32_t clust);
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+char* fileNameToString(const char* const fileName);
+bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib);
 
-#if defined(__cplusplus)
-extern "C"
-#endif
 void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
-
-#if defined(__cplusplus)
-extern "C"
-#endif
-uint32_t resolvePath(const uint8_t partIdx, const char* const path);
-
-#if defined(__cplusplus)
-extern "C"
-#endif
+uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 struct FILE* getFile(const uint8_t partIdx, const char* const path);
+
+#if defined(__cplusplus)
+}
+#endif
+
+// ---- READ ----
+#if defined(__cplusplus)
+extern "C"
+#endif
+uint8_t* fatReadFile(const struct FILE* const file);

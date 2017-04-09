@@ -30,6 +30,16 @@ void string::dispose(void)
     delete m_ptrC;
 }
 
+string string::copy(void)
+{
+    string strout;
+    
+    strout.clear();
+    strout.push_back(m_ptrC);
+
+    return strout;
+}
+
 // Capacity
 size_t string::size(void) const
 {
@@ -110,14 +120,24 @@ void string::push_back(const string& str)
 //
 void string::pop_back(void)
 {
-    string::resize(m_size - 1);
+    if (m_size > 0)
+    {
+        string::resize(m_size - 1);
+    }
 }
 //
 void string::pop_back(const size_t popcount)
 {
 	if (popcount > 0)
 	{
-		string::resize(m_size - popcount);
+        if (popcount < m_size)
+        {
+		    string::resize(m_size - popcount);
+        }
+        else
+        {
+            string::resize(0);
+        }
 	}
 }
 
@@ -194,15 +214,11 @@ bool string::compare(const char* const str) const
 //
 string string::tolower(void) const
 {
-    string strout(m_ptrC);
+    string strout;
 
-    for (size_t i = 0; i < strout.m_size; i++)
+    for (size_t i = 0; i < m_size; i++)
     {
-        if (strout.m_ptrC[i] >= 'A' &&
-            strout.m_ptrC[i] <= 'Z')
-        {
-            strout.m_ptrC[i] += 'a' - 'A';
-        }
+        strout.push_back(ctolower(m_ptrC[i]));
     }
 
     return strout;
@@ -210,15 +226,11 @@ string string::tolower(void) const
 //
 string string::toupper(void) const
 {
-    string strout(m_ptrC);
+    string strout;
 
-    for (size_t i = 0; i < strout.m_size; i++)
+    for (size_t i = 0; i < m_size; i++)
     {
-        if (strout.m_ptrC[i] >= 'a' &&
-            strout.m_ptrC[i] <= 'z')
-        {
-            strout.m_ptrC[i] += 'A' - 'a';
-        }
+        strout.push_back(ctoupper(m_ptrC[i]));
     }
 
     return strout;
@@ -395,6 +407,29 @@ string string::operator+(const string& str)
 
     vec.dispose();
 }*/
+
+string string::join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty)
+{
+    string strout;
+    strout.clear();
+
+    size_t vectsize = vect.size();
+
+    for (size_t i = 0; i < vectsize; i++)
+    {
+        if (!removeEmpty || vect.at(i).size() > 0)
+        {
+            if (strout.size() > 0)
+            {
+                strout.push_back(cDelimiter);
+            }
+
+            strout.push_back(vect.at(i));
+        }
+    }
+
+    return strout;
+}
 
 // Internal methods
 void string::updatePtr(void* ptr)
