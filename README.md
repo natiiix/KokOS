@@ -14,14 +14,17 @@
 - basic shell commands (help, cd, dir,..)
 - automatically converts paths to uppercase (because FAT doesn't seem to store lowercase names in basic directory entries)
 - automatically converts commands to lowercase
+- shell supports both absolute and relative path addressing
 
 ## In progress
 - FAT file system support
 - shell
 - shell commands
+- file operations (currently working on reading and creation, writing and deletion are yet to be worked on)
 
 ## TODO
-- file operations
+- directory operations
+- improve the shell help command
 - OS-specific programming language (something along the lines of bash script)
 - implement more C/C++ libraries
 - shell command history (using up arrow)
