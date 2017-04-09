@@ -113,7 +113,8 @@ void Shell::process(const string& strInput)
 		// If it's a valid partition index switch the active partition
 		if (partIdx < partCount)
 		{
-			m_activePart = partIdx;
+			m_activePart = partIdx; // change the active partition
+			m_pathStructure.clear(); // delete the path because it doesn't exist on this partition
 			_update_prefix();
 		}
 		else
@@ -129,6 +130,12 @@ void Shell::process(const string& strInput)
 
 		if (newDir)
 		{
+			// If the directory path is absolute delete the old path
+			if (vecArgs[0][0] == '/')
+			{
+				m_pathStructure.clear();
+			}
+
 			m_activeDir = newDir;
 
 			vector<string> pathElements = vecArgs[0].split('/', true);
