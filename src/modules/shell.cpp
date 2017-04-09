@@ -98,7 +98,12 @@ void Shell::process(const string& strInput)
 	// Displays all available commands and their proper syntax
 	if (strCmd == "help" && vecArgs.size() == 0)
 	{
-		// TODO
+		print("COMMAND <REQUIRED ARGUMENT> [OPTIONAL ARGUMENT]\n");
+		print("help - Displays available commands and their syntax\n");
+		print("<Partition Letter>: - Changes active partition\n");
+		print("cd <Directory Path> - Changed active directory\n");
+		print("dir [Directory Path] - Displays content of a directory\n");
+		print("disk <Action> <Arguments> - Performs a disk-related operation\n");
 	}
 	// Partition switch
 	// Syntax: <Partition Letter>:
