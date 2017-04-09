@@ -228,7 +228,7 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     {
         if (path[i] != '/')
         {
-            strsearch[stridx++] = path[i];
+            strsearch[stridx++] = ctoupper(path[i]);
         }
 
         if (path[i] == '/' || i == pathsize - 1)
@@ -297,6 +297,8 @@ struct FILE* getFile(const uint8_t partIdx, const char* const path)
             pathDir[0] = '\0';
         }
     }
+
+    strtoupper(&strsearch[0]);
 
     struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, partArray[partIdx].rootDirCluster, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
 

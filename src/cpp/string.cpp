@@ -214,15 +214,11 @@ bool string::compare(const char* const str) const
 //
 string string::tolower(void) const
 {
-    string strout(m_ptrC);
+    string strout;
 
-    for (size_t i = 0; i < strout.m_size; i++)
+    for (size_t i = 0; i < m_size; i++)
     {
-        if (strout.m_ptrC[i] >= 'A' &&
-            strout.m_ptrC[i] <= 'Z')
-        {
-            strout.m_ptrC[i] += 'a' - 'A';
-        }
+        strout.push_back(ctolower(m_ptrC[i]));
     }
 
     return strout;
@@ -230,15 +226,11 @@ string string::tolower(void) const
 //
 string string::toupper(void) const
 {
-    string strout(m_ptrC);
+    string strout;
 
-    for (size_t i = 0; i < strout.m_size; i++)
+    for (size_t i = 0; i < m_size; i++)
     {
-        if (strout.m_ptrC[i] >= 'a' &&
-            strout.m_ptrC[i] <= 'z')
-        {
-            strout.m_ptrC[i] += 'A' - 'a';
-        }
+        strout.push_back(ctoupper(m_ptrC[i]));
     }
 
     return strout;

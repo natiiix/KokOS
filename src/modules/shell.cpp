@@ -2,6 +2,7 @@
 
 #include <c/stdlib.h>
 #include <c/stdio.h>
+#include <c/string.h>
 
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
@@ -85,7 +86,8 @@ void Shell::process(const string& strInput)
 
 	for (size_t i = 0; i < strsize && strInput.at(i) != ' '; i++)
 	{
-		strCmd.push_back(strInput.at(i));
+		// Read the command word, automatically convert it to lowercase
+		strCmd.push_back(ctolower(strInput.at(i)));
 	}
 
 	// Separate arguments from command string
@@ -93,33 +95,25 @@ void Shell::process(const string& strInput)
 	vector<string> vecArgs = strArgs.split(' ', true);
 
 	// -- Check internal shell commands --
+	// Displays all available commands and their proper syntax
+	if (strCmd == "help" && vecArgs.size() == 0)
+	{
+		// TODO
+	}
 	// Partition switch
 	// Syntax: <Partition Letter>:
-	if (strCmd.size() == 2 && strCmd[1] == ':')
+	else if (strCmd.size() == 2 && strCmd[1] == ':')
 	{
-		char partLetter = strCmd[0];
-		uint8_t partIdx = 0xFF;
-
-		// Translate letter to index
-		if (partLetter >= 'A' && partLetter <= 'Z')
+		if (strCmd[0] >= 'a' && strCmd[0] <= 'z' && // letters represent partitions index
+			(strCmd[0] - 'a') < partCount) // check partition index validity
 		{
-			partIdx = partLetter - 'A';
-		}
-		else if (partLetter >= 'a' && partLetter <= 'z')
-		{
-			partIdx = partLetter - 'a';
-		}
-
-		// If it's a valid partition index switch the active partition
-		if (partIdx < partCount)
-		{
-			m_activePart = partIdx; // change the active partition
-			m_pathStructure.clear(); // delete the path because it doesn't exist on this partition
+			m_activePart = strCmd[0] - 'a'; // change the active partition
+			m_pathStructure.clear(); // clear the path because it doesn't exist on this partition
 			_update_prefix();
 		}
 		else
 		{
-			print("Invalid partitions letter!\n");
+			print("Invalid partition letter!\n");
 		}
 	}
 	// Directory switch
@@ -157,7 +151,8 @@ void Shell::process(const string& strInput)
 				{
 					// The directory name string must not be disposed
 					// Therefore we need to copy it into a separate string outside the vector
-					m_pathStructure.push_back(pathElements[i].copy());
+					// This is done automatically when converting the name to uppercase
+					m_pathStructure.push_back(pathElements[i].toupper());
 				}
 			}
 
