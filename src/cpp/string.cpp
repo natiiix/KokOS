@@ -110,14 +110,24 @@ void string::push_back(const string& str)
 //
 void string::pop_back(void)
 {
-    string::resize(m_size - 1);
+    if (m_size > 0)
+    {
+        string::resize(m_size - 1);
+    }
 }
 //
 void string::pop_back(const size_t popcount)
 {
 	if (popcount > 0)
 	{
-		string::resize(m_size - popcount);
+        if (popcount < m_size)
+        {
+		    string::resize(m_size - popcount);
+        }
+        else
+        {
+            string::resize(0);
+        }
 	}
 }
 

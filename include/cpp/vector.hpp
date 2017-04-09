@@ -58,7 +58,12 @@ public:
     }
     //
     inline void pop_back(void)
-    { updatePtr(realloc(m_ptr, --m_size * m_sizeofT)); }
+    {
+        if (m_size > 0)
+        {
+            updatePtr(realloc(m_ptr, --m_size * m_sizeofT));
+        }
+    }
     
 	// Removes an element / multiple elements from a specified position in the vector
 	inline void remove(const size_t pos, const size_t len = 1)
