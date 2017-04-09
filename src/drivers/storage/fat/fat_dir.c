@@ -527,18 +527,46 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
         mem_free(pathDir);
     }
 
+    if (!targetDir)
+    {
+        term_writeline("STOP: TARGET DIR", false);
+        return (struct FILE*)0;
+    }
+
     size_t unusedIdx = findUnusedDirEntry(partIdx, targetDir);
+
+    if (!unusedIdx)
+    {
+        term_writeline("STOP: UNUSED DIR ENTRY", false);
+        return (struct FILE*)0;
+    }
 
     size_t entryIdx = unusedIdx % 0x10;
     unusedIdx /= 0x10;
     size_t readSec = clusterToSector(partIdx, unusedIdx / partArray[partIdx].sectorsPerCluster) + unusedIdx % partArray[partIdx].sectorsPerCluster;
 
+    if (!readSec)
+    {
+        term_writeline("STOP: READ SECTOR", false);
+        return (struct FILE*)0;
+    }
+
     // Find a cluster for the file
     size_t fileCluster = findEmptyCluster(partIdx);
+    if (!fileCluster)
+    {
+        term_writeline("STOP: FILE CLUSTER", false);
+        return (struct FILE*)0;
+    }
     fatWrite(partIdx, fileCluster, CLUSTER_CHAIN_TERMINATOR);
 
     // Read old directory entries from the sector
     struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], readSec);
+    if (!dirsec)
+    {
+        term_writeline("STOP: DIRECTORY SECTOR", false);
+        return (struct FILE*)0;
+    }
 
     // Write the file information into the proper directory entry
     stringToFileName(&path[nameBeginIdx], &dirsec->entries[entryIdx].fileName[0]);

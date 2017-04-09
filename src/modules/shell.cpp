@@ -34,6 +34,9 @@ void shell_init(void)
 
     clear();
 
+	shellPrefix = string();
+	pathStructure = vector<string>();
+
 	diskToolsEnabled = (partCount > 0);
 
 	if (diskToolsEnabled)
@@ -75,6 +78,7 @@ namespace Shell
 {
 	void initModules(void)
 	{
+		modDisk = Disk();
 		modDisk.init("disk");
 	}
 
@@ -196,6 +200,22 @@ namespace Shell
 				{
 					print("Invalid directory path!\n");
 				}
+			}
+		}
+		else if (strCmd.compare("new") && vecArgs.size() == 1)
+		{
+			struct FILE* file = newFile(activePart, activeDir, vecArgs[0].c_str());
+
+			if (file)
+			{
+				print(file->name);
+				print("\nCluster: ");
+				printint(file->cluster);
+				print("\nSize: ");
+				printint(file->size);
+				print("\n");
+
+				delete file;
 			}
 		}
 		// -- Compare the input string against each module command string --

@@ -166,3 +166,9 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 extern "C"
 #endif
 uint8_t* fatReadFile(const struct FILE* const file);
+
+// ---- NEW ----
+#if defined(__cplusplus)
+extern "C"
+#endif
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
