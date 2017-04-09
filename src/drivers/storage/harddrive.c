@@ -104,7 +104,7 @@ void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* con
 {
     if (hdd.type == HDD_TYPE_IDE)
     {
-        writeLBA48((uint8_t)(hdd.addr >> 8), (uint8_t)hdd.addr, lba, data);
+        writeLBA48((uint16_t)(hdd.addr >> 8), (uint8_t)hdd.addr, lba, data);
     }
     else if (hdd.type == HDD_TYPE_AHCI)
     {

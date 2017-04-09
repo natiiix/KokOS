@@ -14,8 +14,7 @@ uint64_t clusterToSector(const uint8_t partIdx, const uint32_t clust)
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
 {
     size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
-    size_t entriesPerSector = partArray[partIdx].sectorsPerCluster * 0x80;
-    size_t clusterCount = partArray[partIdx].fatSectors * 128;
+    size_t clusterCount = partArray[partIdx].fatSectors * 0x80;
 
     uint32_t* clusterChain = mem_dynalloc(0);
     size_t chainSize = 0;
@@ -28,8 +27,8 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
         clusterChain = mem_dynresize(clusterChain, ++chainSize * 4);
         clusterChain[chainSize - 1] = currClust;
 
-        size_t readsec = fatBegin + (currClust / entriesPerSector);
-        size_t fatentry = currClust % entriesPerSector;
+        size_t readsec = fatBegin + (currClust / 0x80);
+        size_t fatentry = currClust % 0x80;
 
         struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], readsec);
         currClust = fat->entries[fatentry];
@@ -45,30 +44,21 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
 size_t findEmptyCluster(const uint8_t partIdx)
 {
     size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
-    size_t entriesPerSector = partArray[partIdx].sectorsPerCluster * 0x80;
 
-    size_t clustIdx = 2;
-
-    size_t secIdx = fatBegin + (clustIdx / entriesPerSector);
-    size_t entryIdx = clustIdx % entriesPerSector;
-
-    while (secIdx < partArray[partIdx].fatSectors)
+    for (size_t secIdx = 0; secIdx < partArray[partIdx].fatSectors; secIdx++)
     {
-        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
+        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], fatBegin + secIdx);
 
-        while (entryIdx < 128)
+        for (size_t entryIdx = (secIdx ? 0 : 2); entryIdx < 0x80; entryIdx++)
         {
             if (!fat->entries[entryIdx])
             {
-                return clustIdx;
+                mem_free(fat);
+                return (secIdx * 0x80) + entryIdx;
             }
-            entryIdx++;
-        }
-        entryIdx = 0;
+        }       
 
         mem_free(fat);
-
-        secIdx++;
     }
 
     return 0;
