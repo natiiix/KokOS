@@ -20,6 +20,7 @@ void debug_print(const char* const str)
 {
     #ifdef DEBUG
 
+    term_write("DEBUG: ", false);
     term_writeline(str, false);
 
     #endif

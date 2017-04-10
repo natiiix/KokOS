@@ -56,7 +56,6 @@ void shell_init(void)
     {
 		// Keep in mind that some memory is always allocated by the shell instance itself
 		debug_memusage();
-		debug_pause();
 
         string strInput = Shell::readline();
 
@@ -220,7 +219,14 @@ namespace Shell
 		}
 		else if (strCmd.compare("delete") && vecArgs.size() == 1)
 		{
-			deleteEntry(activePart, activeDir, vecArgs[0].c_str());
+			if (deleteEntry(activePart, activeDir, vecArgs[0].c_str()))
+			{
+				print("Entry deleted successfully.\n");
+			}
+			else
+			{
+				print("Failed to delete the entry!\n");
+			}
 		}
 		// -- Compare the input string against each module command string --
 		// Disk operation module

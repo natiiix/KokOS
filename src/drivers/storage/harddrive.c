@@ -96,8 +96,11 @@ uint8_t* hddRead(const struct HARDDRIVE hdd, const uint64_t lba)
         ahci_read((HBA_PORT*)hdd.addr, lba, 1, (uint16_t*)buff);
         return buff;
     }
-
-    return (uint8_t*)0;
+    else
+    {
+        debug_print("Invalid disk type");
+        return (uint8_t*)0;
+    }
 }
 
 void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* const data)
@@ -108,6 +111,11 @@ void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* con
     }
     else if (hdd.type == HDD_TYPE_AHCI)
     {
+        debug_print("Writing to an AHCI device is not yet implemented!");
         // TODO
+    }
+    else
+    {
+        debug_print("Invalid disk type");
     }
 }

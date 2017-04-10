@@ -3,6 +3,7 @@
 #include <drivers/storage/harddrive.h>
 #include <c/string.h>
 #include <drivers/io/terminal.h>
+#include <kernel.h>
 
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib)
 {
@@ -64,50 +65,44 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
     mem_free(clusterChain);
 
     // Entry not found, return nullptr
+    debug_print("Entry couldn't be found!");
     return (struct DIR_ENTRY*)0;
 }
 
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
 {
-    size_t pathsize = strlen(path);
-    char strsearch[16]; // contains file name only
-    char* pathDir = mem_alloc(pathsize + 0x100); // contains the directory part of the path
-    strcopy(path, pathDir);
+    uint32_t targetDir = 0;
+    char* pathName = (char*)0;
 
-    // Remove the file name from the directory path
-    for (size_t i = 0; i < pathsize; i++)
+    // Extract the directory and the file name from the path string
+    extractPath(partIdx, baseDir, path, &targetDir, &pathName);
+
+    if (!targetDir || !pathName)
     {
-        if (pathDir[pathsize - 1 - i] == '/')
-        {
-            strcopy(&pathDir[pathsize - i], &strsearch[0]); // extract the file name into separate string
-            pathDir[pathsize - 1 - i] = '\0';
-            break;
-        }
-        // The path doesn't contain a directory part, it's just a file name
-        else if (i == pathsize - 1)
-        {
-            strcopy(&pathDir[0], &strsearch[0]);
-            pathDir[0] = '\0';
-        }
-    }
-
-    strtoupper(&strsearch[0]);
-
-    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, baseDir, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
-
-    mem_free(pathDir);
-    
-    if ((size_t)direntry == 0)
-    {
+        debug_print("Couldn't retrieve the file structure due to invalid path!");
         return (struct FILE*)0;
     }
 
+    // Find the entry using the extracted directory and file name
+    struct DIR_ENTRY* direntry = findEntry(partIdx, targetDir, pathName, FILE_ATTRIB_DIRECTORY, 0);
+
+    mem_free(pathName);
+    
+    if (!direntry)
+    {
+        debug_print("Can't read the directory entry if it can't be found!");
+        return (struct FILE*)0;
+    }
+
+    // Allocate memory space to store the file structure
     struct FILE* file = mem_alloc(sizeof(struct FILE));
 
+    // Convert the file name to a cstring
     char* strName = fileNameToString(&direntry->fileName[0]);
     strcopy(strName, &file->name[0]);
     mem_free(strName);
     
+    // Copy all the properties of the file
     file->partIdx = partIdx;
     file->attrib = direntry->attrib;
     file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
@@ -123,10 +118,19 @@ uint8_t* readFile(const struct FILE* const file)
     // It's impossible to read the contents of an empty file
     if (file->size == 0)
     {
+        debug_print("Can't read from an empty file!");
         return (uint8_t*)0;
     }
 
     uint32_t* clusterChain = getClusterChain(file->partIdx, file->cluster);
+
+    if (!clusterChain)
+    {
+        debug_print("Couldn't get the cluster chain!");
+        return (uint8_t*)0;
+    }
+
+    // Allocate memory space for the file content
     uint8_t* fileContent = mem_alloc(file->size); // used to store the contents of the file
     size_t contentIdx = 0;
     bool fileEnd = false;
@@ -134,11 +138,13 @@ uint8_t* readFile(const struct FILE* const file)
     // Reach all clusters that belong to this file
     for (size_t i = 0; clusterChain[i] < CLUSTER_CHAIN_TERMINATOR && !fileEnd; i++)
     {
+        // Calculate the index of the first sector of the cluster
         uint64_t clusterBase = clusterToSector(file->partIdx, clusterChain[i]);
 
         // Go through all the sectors in the cluster
         for (size_t j = 0; j < partArray[file->partIdx].sectorsPerCluster && !fileEnd; j++)
         {
+            // Read a sector of the file content from the disk
             uint8_t* data = hddRead(hddArray[partArray[file->partIdx].hddIdx], clusterBase + j);
 
             // If the file does not occupy the whole sector copy only as much as necessary
@@ -182,7 +188,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     size_t unusedIdx = findUnusedDirEntry(partIdx, baseDir);
     if (!unusedIdx)
     {
-        term_writeline("Couldn't find unused directory entry!", false);
+        debug_print("Couldn't find unused directory entry!");
         return (struct FILE*)0;
     }
 
@@ -205,7 +211,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
 		uint32_t nextCluster = findEmptyCluster(partIdx);
 		if (!nextCluster)
 		{
-			term_writeline("Couldn't find an empty cluster!", false);
+			debug_print("Couldn't find an empty cluster!");
 			return (struct FILE*)0;
 		}
 		
@@ -230,7 +236,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
     if (!dirsec)
     {
-        term_writeline("Unable to read directory sector!", false);
+        debug_print("Unable to read directory sector!");
         return (struct FILE*)0;
     }
 
@@ -262,6 +268,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 	uint32_t targetDir = 0;
 	char* pathName = (char*)0;
 	
+    // Extract the directory and the file name from the path
 	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 	
 	if (!pathName)
@@ -277,6 +284,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 		return (struct FILE*)0;
 	}
 	
+    // Create a new directory entry
 	struct FILE* file = newEntry(partIdx, targetDir, pathName, FILE_ATTRIB_ARCHIVE, 0);
 	
 	mem_free(pathName);
@@ -288,7 +296,8 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 {
 	uint32_t targetDir = 0;
 	char* pathName = (char*)0;
-	
+
+    // Extract the target directory and the directory name from the path
 	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 	
 	if (!pathName)
@@ -312,7 +321,7 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	
 	if (!dir)
 	{
-		term_writeline("Failed to create new entry!", false);
+		debug_print("Failed to create new entry!");
 		return (struct FILE*)0;
 	}
 	
@@ -417,15 +426,16 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	// Get the directory path and entry name from the full path
 	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 	
-	if (!targetDir)
-	{
-		term_writeline("Invalid directory path!", false);
-		return false;
-	}
-	
 	if (!pathName)
 	{
 		term_writeline("Invalid entry name!", false);
+		return false;
+	}
+	
+	if (!targetDir)
+	{
+        mem_free(pathName);
+		term_writeline("Invalid directory path!", false);
 		return false;
 	}
 	
@@ -511,13 +521,13 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 		mem_free(dircc);
 		mem_free(pathName);
 		
-		term_writeline("Entry could not be found in the directory!", false);
+		term_writeline("Entry couldn't be found in the directory!", false);
 		return false;
 	}
 	
 	if (!entryCluster)
 	{
-		term_writeline("Entry had an invalid begin cluster!", false);
+		debug_print("Entry had an invalid begin cluster!");
 		return false;
 	}
 	
