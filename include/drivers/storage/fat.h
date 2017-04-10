@@ -181,6 +181,7 @@ void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 // ---- ENTRY ----
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust);
 
 // Read
 uint8_t* readFile(const struct FILE* const file);
@@ -190,7 +191,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Delete
-void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 #if defined(__cplusplus)
 }

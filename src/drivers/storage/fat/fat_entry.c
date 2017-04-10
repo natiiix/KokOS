@@ -348,7 +348,68 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	return dir;
 }
 
-void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
+bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust)
+{
+    // Get cluster chain
+    uint32_t* clusterChain = getClusterChain(partIdx, dirFirstClust);
+
+    bool endOfDir = false;
+
+    // Search through the cluster chain until the end of the directory is reached
+    for (size_t chainIdx = 0; clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR && !endOfDir; chainIdx++)
+    {
+        // Convert cluster to sector for LBA addressing
+        uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
+
+        // Look through each sector within the cluster
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
+        {
+            // Read the sector from the drive
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+
+            // Look through all the entries in the sector
+            for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir; iEntry++)
+            {
+                // Get the first byte of the entry
+                // Used to find unused entries and the end of the directory
+                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[iEntry]);
+
+                // End of directory reached
+                if (entryFirstByte == DIR_ENTRY_END)
+                {
+                    endOfDir = true;
+                }
+                else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
+                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME) // mustn't be a long name entry
+                {
+                    char* strName = fileNameToString(&dirsec->entries[iEntry].fileName[0]);
+                    bool validEntry = !strcmp(".", strName) && !strcmp("..", strName); // "." and ".." aren't real entries
+                    mem_free(strName);
+
+                    // This directory contains a valid entry
+                    // That means it can't be safely deleted
+                    if (validEntry)
+                    {
+                        mem_free(dirsec);
+                        mem_free(clusterChain);
+
+                        // Directory is not empty
+                        return false;
+                    }
+                }
+            }
+
+            mem_free(dirsec);
+        }
+    }
+
+    mem_free(clusterChain);
+
+    // Directory is empty
+    return true;
+}
+
+bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
 {
 	uint32_t targetDir = 0;
 	char* pathName = (char*)0;
@@ -359,13 +420,13 @@ void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	if (!targetDir)
 	{
 		term_writeline("Invalid directory path!", false);
-		return;
+		return false;
 	}
 	
 	if (!pathName)
 	{
 		term_writeline("Invalid entry name!", false);
-		return;
+		return false;
 	}
 	
 	// -- Delete the directory entry
@@ -412,6 +473,17 @@ void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
                     // Names match, we've found the entry
                     if (namesMatch)
                     {
+                        if (dirsec->entries[iEntry].attrib & FILE_ATTRIB_DIRECTORY &&
+                            !dirIsEmpty(partIdx, joinCluster(dirsec->entries[iEntry].clusterHigh, dirsec->entries[iEntry].clusterLow)))
+                        {
+                            mem_free(dirsec);
+                            mem_free(dircc);
+                            mem_free(pathName);
+
+                            term_writeline("Can't delete a non-empty directory!", false);
+                            return false;
+                        }
+
 						entryCluster = joinCluster(dirsec->entries[iEntry].clusterHigh, dirsec->entries[iEntry].clusterLow);
 						
 						// Mark this entry as unused
@@ -440,13 +512,13 @@ void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 		mem_free(pathName);
 		
 		term_writeline("Entry could not be found in the directory!", false);
-		return;
+		return false;
 	}
 	
 	if (!entryCluster)
 	{
 		term_writeline("Entry had an invalid begin cluster!", false);
-		return;
+		return false;
 	}
 	
 	// -- Free all the cluster in the cluster chain
@@ -462,4 +534,6 @@ void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
     }
 
     mem_free(entrycc);
+    
+    return true;
 }

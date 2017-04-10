@@ -31,14 +31,21 @@ typedef struct tagFIS_DEV_BITS
 	DWORD s_active;
 } FIS_DEV_BITS;
 
-enum ahci_dev
+/*enum ahci_dev
 {
 	AHCI_DEV_NULL = 0,
 	AHCI_DEV_SATA = 0x101,
 	AHCI_DEV_SATAPI = 0xeb140101,
 	AHCI_DEV_SEMB = 0xc33c0101,
 	AHCI_DEV_PM = 0x96690101,
-};
+};*/
+
+// ISO C doesn't allow non-int enumerations, therefore I've had to use #define instead
+#define AHCI_DEV_NULL 	0
+#define AHCI_DEV_SATA 	0x101
+#define AHCI_DEV_SATAPI 0xeb140101
+#define AHCI_DEV_SEMB 	0xc33c0101
+#define AHCI_DEV_PM 	0x96690101
 
 #define HBA_PORT_DET_PRESENT 3
 #define HBA_PORT_IPM_ACTIVE 1

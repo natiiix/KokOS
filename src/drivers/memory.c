@@ -119,7 +119,7 @@ size_t mem_used(void)
             while (tmpused > 0)
             {
                 // Get the last bit
-                count += (tmpused & 0b1);
+                count += (tmpused & 0x1);
                 tmpused = tmpused >> 1;
             }
         }
@@ -143,7 +143,7 @@ size_t mem_empty(void)
             while (tmpused > 0)
             {
                 // Get the last bit
-                count -= (tmpused & 0b1);
+                count -= (tmpused & 0x1);
                 tmpused = tmpused >> 1;
             }
         }
