@@ -264,17 +264,17 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 	
 	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 	
-	if (!targetDir)
-	{
-		term_writeline("Invalid directory path!", false);
-		return (struct FILE*)0;
-	}
-	
 	if (!pathName)
 	{
 		term_writeline("Invalid file name!", false);
+		return (struct FILE*)0;		
+	}
+	
+	if (!targetDir)
+	{
+        mem_free(pathName);
+		term_writeline("Invalid directory path!", false);
 		return (struct FILE*)0;
-		
 	}
 	
 	struct FILE* file = newEntry(partIdx, targetDir, pathName, FILE_ATTRIB_ARCHIVE, 0);
@@ -291,15 +291,16 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	
 	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 	
-	if (!targetDir)
-	{
-		term_writeline("Invalid directory path!", false);
-		return (struct FILE*)0;
-	}
-	
 	if (!pathName)
 	{
 		term_writeline("Invalid directory name!", false);
+		return (struct FILE*)0;
+	}
+	
+	if (!targetDir)
+	{
+        mem_free(pathName);
+		term_writeline("Invalid directory path!", false);        
 		return (struct FILE*)0;
 	}
 	
@@ -331,7 +332,6 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	
 	// Second entry points to the base directory
 	stringToFileNameNoExt("..", &dirsec->entries[1].fileName[0]);
-    dirsec->entries[0].fileName[1] = dirsec->entries[0].fileName[0] = '.';
 	dirsec->entries[1].attrib = FILE_ATTRIB_DIRECTORY;
 	dirsec->entries[1].clusterHigh = (uint16_t)(targetDir >> 0x10);
 	dirsec->entries[1].clusterLow = (uint16_t)targetDir;
