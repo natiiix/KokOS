@@ -4,6 +4,7 @@
 #include <drivers/memory.h>
 #include <drivers/storage/fat.h>
 #include <c/string.h>
+#include <kernel.h>
 
 struct HARDDRIVE hddArray[0x10];
 uint8_t hddCount = 0;
