@@ -202,15 +202,29 @@ namespace Shell
 				}
 			}
 		}
-		else if (strCmd.compare("new") && vecArgs.size() == 1)
+		else if (strCmd.compare("mkfile") && vecArgs.size() == 1)
 		{
 			struct FILE* file = newFile(activePart, activeDir, vecArgs[0].c_str());
 
 			if (file)
 			{
-				print("File creation was successful.\n");
+				print("File creation successful.\n");
 				delete file;
 			}
+		}
+		else if (strCmd.compare("mkdir") && vecArgs.size() == 1)
+		{
+			struct FILE* dir = newDir(activePart, activeDir, vecArgs[0].c_str());
+
+			if (dir)
+			{
+				print("Directory creation successful.\n");
+				delete dir;
+			}
+		}
+		else if (strCmd.compare("delete") && vecArgs.size() == 1)
+		{
+			deleteEntry(activePart, activeDir, vecArgs[0].c_str());
 		}
 		// -- Compare the input string against each module command string --
 		// Disk operation module

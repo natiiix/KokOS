@@ -72,16 +72,15 @@ bool hdd_init(const uint8_t hddIdx);
 // ---- PARTITION ----
 struct PARTITION
 {
-    // cstrings here are explicitly terminated by '\0'
-    char oemname[0x9];
+    char oemname[0x8];
     uint8_t sectorsPerCluster;
     uint16_t reservedSectors;
     uint32_t fatSectors;
     uint32_t rootDirCluster;
     uint8_t extBootSignature;
     uint32_t volumeID;
-    char label[0xC];
-    char fsType[0x9];
+    char label[0xB];
+    char fsType[0x8];
 
     uint8_t hddIdx;
     uint32_t lbaBegin;
@@ -148,27 +147,51 @@ extern "C"
 {
 #endif
 
+// Converts a cluster index to disk sector
 uint64_t clusterToSector(const uint8_t partIdx, const uint32_t clust);
+// Returns an array of clusters chained after a specified cluster
 uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+// Finds a first empty cluster on a specified partition
+uint32_t findEmptyCluster(const uint8_t partIdx);
+// Writes an entry to the FAT table
+void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t content);
+// Inserts an empty cluster (found by findEmptyCluster()) to the cluster chain beginning with a specified cluster
+void prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+// Convert a FAT file name to a standard cstring format ("NAME    EXT" to "NAME.EXT")
 char* fileNameToString(const char* const fileName);
+// Converts a cstring file name to a FAT file name ("NAME.EXT" to "NAME    EXT")
+void stringToFileName(const char* const strSrc, char* const fileNameDst);
+// Version of the stringToFileName() function which ignores dots and therefore doesn't handle extensions
+void stringToFileNameNoExt(const char* const strSrc, char* const fileNameDst);
+// Checks directory entry attributes using mask
 bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib);
-
+// Lists the content of a directory to the terminal
 void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust);
+// Returns high 16 bits and low 16 bits of a cluster index joined into a single 32 bit cluster index
+uint32_t joinCluster(const uint16_t clusterHigh, const uint16_t clusterLow);
+// Returns cluster index of the directory pointed to by the path string
 uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+// Generates an absolute entry index from mulitple relative indexes (used when returning entry index from a function)
+size_t generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, const size_t sectorIdx, const size_t entryIdx);
+// Find the first unused directory entry in a specified directory, shift the end of the directory if there is no unused entry
+size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir);
+// Extracts directory cluster and name from a full path
+void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr);
+
+// ---- ENTRY ----
+struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+
+// Read
+uint8_t* readFile(const struct FILE* const file);
+
+// New
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+
+// Delete
+void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 #if defined(__cplusplus)
 }
 #endif
-
-// ---- READ ----
-#if defined(__cplusplus)
-extern "C"
-#endif
-uint8_t* fatReadFile(const struct FILE* const file);
-
-// ---- NEW ----
-#if defined(__cplusplus)
-extern "C"
-#endif
-struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);

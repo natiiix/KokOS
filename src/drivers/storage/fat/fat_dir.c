@@ -41,7 +41,7 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
     return clusterChain;
 }
 
-size_t findEmptyCluster(const uint8_t partIdx)
+uint32_t findEmptyCluster(const uint8_t partIdx)
 {
     size_t fatBegin = partArray[partIdx].lbaBegin + partArray[partIdx].reservedSectors;
 
@@ -175,6 +175,24 @@ void stringToFileName(const char* const strSrc, char* const fileNameDst)
     }
 }
 
+void stringToFileNameNoExt(const char* const strSrc, char* const fileNameDst)
+{
+    size_t i = 0;
+
+    // We're assuming there is no extension, therefore we shouldn't write to the extension part
+    while (i < 8 && strSrc[i])
+    {
+        fileNameDst[i] = ctoupper(strSrc[i]);
+        i++;
+    }
+
+    // Fill the rest of the file name with spaces
+    while (i < 11)
+    {
+        fileNameDst[i++] = ' ';
+    }
+}
+
 bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib)
 {
     return ((entryAttrib & attribMask) == attrib);
@@ -227,70 +245,6 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
     }
 
     mem_free(clusterChain);
-}
-
-struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib)
-{
-    // Get cluster chain
-    uint32_t* clusterChain = getClusterChain(partIdx, baseDirCluster);
-
-    bool endOfDir = false;
-    size_t chainIdx = 0;
-
-    // Search through the cluster chain until the end of the directory is reached
-    while (clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR && !endOfDir)
-    {
-        // Convert cluster to sector for LBA addressing
-        uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
-
-        // Look through each sector within the cluster
-        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
-        {
-            // Read the sector from the drive
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
-
-            // Look through all the entries in the sector
-            for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir; iEntry++)
-            {
-                // Get the first byte of the entry
-                // Used to find unused entries and the end of the directory
-                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[iEntry]);
-
-                // End of directory reached
-                if (entryFirstByte == DIR_ENTRY_END)
-                {
-                    endOfDir = true;
-                }
-                else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
-                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME && // mustn't be a long name entry
-                    attribCheck(dirsec->entries[iEntry].attrib, attribMask, attrib)) // check attributes
-                {
-                    char* strName = fileNameToString(&dirsec->entries[iEntry].fileName[0]);
-                    bool namesMatch = strcmp(name, strName);
-                    mem_free(strName);
-
-                    // Names match, return the directory entry
-                    if (namesMatch)
-                    {
-                        struct DIR_ENTRY* direntry = mem_alloc(sizeof(struct DIR_ENTRY));
-                        mem_copy(&dirsec->entries[iEntry], direntry, sizeof(struct DIR_ENTRY));
-
-                        mem_free(dirsec);
-                        mem_free(clusterChain);
-
-                        return direntry;
-                    }
-                }
-            }
-
-            mem_free(dirsec);
-        }
-    }
-
-    mem_free(clusterChain);
-
-    // Entry not found, return nullptr
-    return (struct DIR_ENTRY*)0;
 }
 
 uint32_t joinCluster(const uint16_t clusterHigh, const uint16_t clusterLow)
@@ -358,58 +312,7 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     return searchCluster;
 }
 
-struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
-{
-    size_t pathsize = strlen(path);
-    char strsearch[16]; // contains file name only
-    char* pathDir = mem_alloc(pathsize + 0x100); // contains the directory part of the path
-    strcopy(path, pathDir);
-
-    // Remove the file name from the directory path
-    for (size_t i = 0; i < pathsize; i++)
-    {
-        if (pathDir[pathsize - 1 - i] == '/')
-        {
-            strcopy(&pathDir[pathsize - i], &strsearch[0]); // extract the file name into separate string
-            pathDir[pathsize - 1 - i] = '\0';
-            break;
-        }
-        // The path doesn't contain a directory part, it's just a file name
-        else if (i == pathsize - 1)
-        {
-            strcopy(&pathDir[0], &strsearch[0]);
-            pathDir[0] = '\0';
-        }
-    }
-
-    strtoupper(&strsearch[0]);
-
-    struct DIR_ENTRY* direntry = findEntry(partIdx, resolvePath(partIdx, baseDir, pathDir), &strsearch[0], FILE_ATTRIB_DIRECTORY, 0);
-
-    mem_free(pathDir);
-    
-    if ((size_t)direntry == 0)
-    {
-        return (struct FILE*)0;
-    }
-
-    struct FILE* file = mem_alloc(sizeof(struct FILE));
-
-    char* strName = fileNameToString(&direntry->fileName[0]);
-    strcopy(strName, &file->name[0]);
-    mem_free(strName);
-    
-    file->partIdx = partIdx;
-    file->attrib = direntry->attrib;
-    file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
-    file->size = direntry->fileSize;
-
-    mem_free(direntry);
-
-    return (file);
-}
-
-size_t _generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, const size_t sectorIdx, const size_t entryIdx)
+size_t generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, const size_t sectorIdx, const size_t entryIdx)
 {
     return (((clusterIdx * partArray[partIdx].sectorsPerCluster) + sectorIdx) * 0x10) + entryIdx;
 }
@@ -459,7 +362,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                 // Unused directory entry found
                 if (entryFirstByte == DIR_ENTRY_UNUSED)
                 {
-                    unusedDirEntryIdx = _generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
+                    unusedDirEntryIdx = generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
 
                     mem_free(dirsec);
                     mem_free(clusterChain);
@@ -482,7 +385,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                         // The next entry will be marked as the end of the directory
                         writeEndOfDir = true;
 
-                        unusedDirEntryIdx = _generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
+                        unusedDirEntryIdx = generateDirEntryIndex(partIdx, clusterChain[chainIdx], iSec, iEntry);
                     }
                     // This is the last entry of the last sector of the last cluster in the cluster chain that belongs to this directory
                     else
@@ -506,78 +409,59 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
     return 0;
 }
 
-struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
-{
-    uint32_t targetDir = baseDir;
-    size_t nameBeginIdx = 0;
-
-    size_t lastSlashIdx = strlast(path, '/');
-    if (lastSlashIdx != ~((size_t)0))
+void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr)
+{	
+	size_t pathlen = strlen(pathFull);
+    size_t lastSlashIdx = strlast(pathFull, '/');
+	
+	// If there is no slash the whole path is a name
+	// This value is overriden if a slash is found
+	size_t nameBeginIdx = 0;
+	
+	// There is no slash in the path, the whole path is just a name
+    if (lastSlashIdx == ~((size_t)0))
     {
-        char* pathDir = mem_alloc(lastSlashIdx + 2);
-        strcopy(path, pathDir);
-
+		*targetDir = baseDir;
+    }
+	// The path contains not only the name, but also a directory path
+	else
+	{
+		// Allocate space for the directory path
+		char* pathDir = mem_alloc(lastSlashIdx + 2);
+		
+		// Copy the directory path
+        mem_copy(pathFull, pathDir, lastSlashIdx + 1);
+		// Terminate the directory path string
         pathDir[lastSlashIdx + 1] = '\0';
+		
+		// Name begins after the last slash
         nameBeginIdx = lastSlashIdx + 1;
 
-        targetDir = resolvePath(partIdx, baseDir, pathDir);
+		// Resolve the directory path
+        *targetDir = resolvePath(partIdx, baseDir, pathDir);
 
         mem_free(pathDir);
-    }
-
-    if (!targetDir)
-    {
-        term_writeline("Invalid path!", false);
-        return (struct FILE*)0;
-    }
-
-    size_t unusedIdx = findUnusedDirEntry(partIdx, targetDir);
-
-    if (!unusedIdx)
-    {
-        term_writeline("Couldn't find unused directory entry!", false);
-        return (struct FILE*)0;
-    }
-
-    size_t entryIdx = unusedIdx & 0xF;
-    size_t secIdx = clusterToSector(partIdx, 0) + (unusedIdx >> 4);
-
-    // Find a cluster for the file
-    size_t fileCluster = findEmptyCluster(partIdx);
-    if (!fileCluster)
-    {
-        term_writeline("Invalid file cluster!", false);
-        return (struct FILE*)0;
-    }
-    fatWrite(partIdx, fileCluster, CLUSTER_CHAIN_TERMINATOR);
-
-    // Read old directory entries from the sector
-    struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
-    if (!dirsec)
-    {
-        term_writeline("Unable to read directory sector!", false);
-        return (struct FILE*)0;
-    }
-
-    // Write the file information into the proper directory entry
-    stringToFileName(&path[nameBeginIdx], &dirsec->entries[entryIdx].fileName[0]);
-    dirsec->entries[entryIdx].attrib = FILE_ATTRIB_ARCHIVE; // I don't know why, but all the files seem to have this
-    dirsec->entries[entryIdx].clusterHigh = (uint16_t)(fileCluster >> 0x10);
-    dirsec->entries[entryIdx].clusterLow = (uint16_t)fileCluster;
-    dirsec->entries[entryIdx].fileSize = 0;
-
-    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)dirsec);
-
-    mem_free(dirsec);
-
-    // Generate the FILE structure
-    struct FILE* file = mem_alloc(sizeof(struct FILE));
-
-    strcopy(&path[nameBeginIdx], &file->name[0]);
-    file->partIdx = partIdx;
-    file->attrib = FILE_ATTRIB_ARCHIVE;
-    file->cluster = fileCluster;
-    file->size = 0;
-
-    return file;
+	}
+	
+	size_t namelen = pathlen - nameBeginIdx;
+	// Name has a non-zero length, it can be worked with
+	if (namelen)
+	{
+		// Allocate space for the name string
+		char* pathName = mem_alloc(namelen + 1);
+		// Copy the name from the original path to the name string
+        for (size_t i = 0; i < namelen; i++)
+        {
+            pathName[i] = ctoupper(pathFull[nameBeginIdx + i]);
+        }
+		// Terminate the name string
+		pathName[namelen] = '\0';
+		// Set the name string pointer
+		*pathNamePtr = pathName;
+	}
+	// The name string must not be empty, set the name string pointer to nullptr
+	else
+	{
+		*pathNamePtr = (char*)0;
+	}
 }
