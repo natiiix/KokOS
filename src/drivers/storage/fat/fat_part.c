@@ -30,21 +30,18 @@ bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
         {
             partArray[partCount].oemname[i] = volid->oemname[i];
         }
-        partArray[partCount].oemname[0x8] = '\0';
 
         // Partition Label
         for (size_t i = 0; i < 0xB; i++)
         {
             partArray[partCount].label[i] = volid->label[i];
         }
-        partArray[partCount].label[0xB] = '\0';
 
         // Partition File System Type
         for (size_t i = 0; i < 0x8; i++)
         {
             partArray[partCount].fsType[i] = volid->fsType[i];
         }
-        partArray[partCount].fsType[0x8] = '\0';
 
         partCount++;        
     }

@@ -72,7 +72,7 @@ void Disk::process(const vector<string>& vecArgs)
                 printint(file->size);
                 print(" Bytes\n");
 
-                char* content = (char*)fatReadFile(file);
+                char* content = (char*)readFile(file);
 
                 if (content)
                 {

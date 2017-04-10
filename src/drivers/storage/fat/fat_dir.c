@@ -403,7 +403,7 @@ void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	// There is no slash in the path, the whole path is just a name
     if (lastSlashIdx == ~((size_t)0))
     {
-		targetDir = baseDir;
+		*targetDir = baseDir;
     }
 	// The path contains not only the name, but also a directory path
 	else
@@ -420,7 +420,7 @@ void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
         nameBeginIdx = lastSlashIdx + 1;
 
 		// Resolve the directory path
-        targetDir = resolvePath(partIdx, baseDir, pathDir);
+        *targetDir = resolvePath(partIdx, baseDir, pathDir);
 
         mem_free(pathDir);
 	}

@@ -177,6 +177,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir);
 void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr);
 
 // ---- ENTRY ----
+struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Read

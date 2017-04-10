@@ -192,7 +192,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
 	// How many clusters are used by the entry
 	size_t clusterCount = (size / partArray[partIdx].sectorsPerCluster) + (size % partArray[partIdx].sectorsPerCluster);
 	// Each entry must use at least one cluster
-	if (clusterCount = 0)
+	if (!clusterCount)
 	{
 		clusterCount = 1;
 	}
@@ -352,7 +352,7 @@ void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	char* pathName = (char*)0;
 	
 	// Get the directory path and entry name from the full path
-	extractPath(pathIdx, baseDir, path, &targetDir, &pathName);
+	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 	
 	if (!targetDir)
 	{
