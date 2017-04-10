@@ -25,12 +25,10 @@ Disk modDisk;
 extern "C"
 void shell_init(void)
 {
-	#ifdef DEBUG
-		// Used to make sure there is no memory leaking during kernel initialization
-		debug_memusage();
-		// Give the user a chance to see kernel initialization messages
-		//pause();
-	#endif
+	// Used to make sure there is no memory leaking during kernel initialization
+	debug_memusage();
+	// Give the user a chance to see kernel initialization messages
+	debug_pause();
 
     clear();
 
@@ -56,11 +54,9 @@ void shell_init(void)
 
     while (true)
     {
-		#ifdef DEBUG
-			// Keep in mind that some memory is always allocated by the shell instance itself
-			debug_memusage();
-			//pause();
-		#endif
+		// Keep in mind that some memory is always allocated by the shell instance itself
+		debug_memusage();
+		debug_pause();
 
         string strInput = Shell::readline();
 
