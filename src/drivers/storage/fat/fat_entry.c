@@ -502,7 +502,6 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 						// Write the modified directory sector to disk
 						hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
 
-                        mem_free(dirsec);
                         mem_free(dircc);
 						mem_free(pathName);
 
