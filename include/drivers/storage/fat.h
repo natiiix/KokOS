@@ -161,6 +161,8 @@ void prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust);
 char* fileNameToString(const char* const fileName);
 // Converts a cstring file name to a FAT file name ("NAME.EXT" to "NAME    EXT")
 void stringToFileName(const char* const strSrc, char* const fileNameDst);
+// Version of the stringToFileName() function which ignores dots and therefore doesn't handle extensions
+void stringToFileNameNoExt(const char* const strSrc, char* const fileNameDst);
 // Checks directory entry attributes using mask
 bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib);
 // Lists the content of a directory to the terminal

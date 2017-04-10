@@ -322,14 +322,16 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)mem_alloc(0x200);
 	
 	// First entry points to the directory itself
-	stringToFileName(".", &dirsec->entries[0].fileName[0]);
+    // Standard stringToFileName() wouldn't allow us to write dots in the file name
+	stringToFileNameNoExt(".", &dirsec->entries[0].fileName[0]);
 	dirsec->entries[0].attrib = FILE_ATTRIB_DIRECTORY;
 	dirsec->entries[0].clusterHigh = (uint16_t)(firstDirSector >> 0x10);
 	dirsec->entries[0].clusterLow = (uint16_t)firstDirSector;
 	dirsec->entries[0].fileSize = dirSize;
 	
 	// Second entry points to the base directory
-	stringToFileName("..", &dirsec->entries[1].fileName[0]);
+	stringToFileNameNoExt("..", &dirsec->entries[1].fileName[0]);
+    dirsec->entries[0].fileName[1] = dirsec->entries[0].fileName[0] = '.';
 	dirsec->entries[1].attrib = FILE_ATTRIB_DIRECTORY;
 	dirsec->entries[1].clusterHigh = (uint16_t)(targetDir >> 0x10);
 	dirsec->entries[1].clusterLow = (uint16_t)targetDir;

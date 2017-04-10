@@ -175,6 +175,24 @@ void stringToFileName(const char* const strSrc, char* const fileNameDst)
     }
 }
 
+void stringToFileNameNoExt(const char* const strSrc, char* const fileNameDst)
+{
+    size_t i = 0;
+
+    // We're assuming there is no extension, therefore we shouldn't write to the extension part
+    while (i < 8 && strSrc[i])
+    {
+        fileNameDst[i] = ctoupper(strSrc[i]);
+        i++;
+    }
+
+    // Fill the rest of the file name with spaces
+    while (i < 11)
+    {
+        fileNameDst[i++] = ' ';
+    }
+}
+
 bool attribCheck(const uint8_t entryAttrib, const uint8_t attribMask, const uint8_t attrib)
 {
     return ((entryAttrib & attribMask) == attrib);
@@ -432,7 +450,10 @@ void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 		// Allocate space for the name string
 		char* pathName = mem_alloc(namelen + 1);
 		// Copy the name from the original path to the name string
-		mem_copy(&pathFull[nameBeginIdx], pathName, namelen);
+        for (size_t i = 0; i < namelen; i++)
+        {
+            pathName[i] = ctoupper(pathFull[nameBeginIdx + i]);
+        }
 		// Terminate the name string
 		pathName[namelen] = '\0';
 		// Set the name string pointer
