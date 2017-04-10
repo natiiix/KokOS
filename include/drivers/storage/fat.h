@@ -156,7 +156,7 @@ uint32_t findEmptyCluster(const uint8_t partIdx);
 // Writes an entry to the FAT table
 void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t content);
 // Inserts an empty cluster (found by findEmptyCluster()) to the cluster chain beginning with a specified cluster
-void prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust);
 // Convert a FAT file name to a standard cstring format ("NAME    EXT" to "NAME.EXT")
 char* fileNameToString(const char* const fileName);
 // Converts a cstring file name to a FAT file name ("NAME.EXT" to "NAME    EXT")
@@ -176,11 +176,12 @@ size_t generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, con
 // Find the first unused directory entry in a specified directory, shift the end of the directory if there is no unused entry
 size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir);
 // Extracts directory cluster and name from a full path
-void extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr);
+bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr);
 
 // ---- ENTRY ----
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust);
 
 // Read
 uint8_t* readFile(const struct FILE* const file);
@@ -190,7 +191,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Delete
-void deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 #if defined(__cplusplus)
 }

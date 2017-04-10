@@ -133,7 +133,7 @@ struct keyevent keyEventBuffer[KEB_SIZE];
 size_t kebWriteIdx; // Where should the next key event be stored
 size_t kebReadIdx; // From where should the next key event be read
 
-const uint16_t PORT_KEYBOARD = 0x60;
+static const uint16_t PORT_KEYBOARD = 0x60;
 bool keyPressed[KEYS_COUNT];
 
 void keybd_init(void)
@@ -161,7 +161,7 @@ void keyboard_handler(void)
     // Lowest bit of status will be set if buffer is not empty
     if (status & 0x01)
     {
-        keycode = inb(0x60);
+        keycode = inb(PORT_KEYBOARD);
 
         struct keyevent ke;
 
@@ -170,17 +170,35 @@ void keyboard_handler(void)
 
         keyPressed[ke.scancode] = ke.state;
 
-        ke.shift = (keyPressed[KEY_SHIFT_LEFT] || keyPressed[KEY_SHIFT_RIGHT]);
-        ke.ctrl = keyPressed[KEY_CTRL];
-        ke.alt = keyPressed[KEY_ALT];
+        // Set up modifiers
+        ke.modifiers = 0;
 
-        if (ke.scancode > 57 || !ke.state || ke.ctrl || ke.alt)
+        if (keyPressed[KEY_SHIFT_LEFT] || keyPressed[KEY_SHIFT_RIGHT])
+        {
+            ke.modifiers |= MODIFIER_SHIFT;
+        }
+
+        if (keyPressed[KEY_CTRL])
+        {
+            ke.modifiers |= MODIFIER_CTRL;
+        }
+
+        if (keyPressed[KEY_ALT])
+        {
+            ke.modifiers |= MODIFIER_ALT;
+        }
+
+        // Get the character
+        // There are no characters above the scancode 57
+        // No character is generated at key up event
+        // If CTRL or ALT is pressed no character is generated
+        if (ke.scancode > 57 || !ke.state || ke.modifiers & (MODIFIER_CTRL | MODIFIER_ALT))
         {
             ke.keychar = 0;
         }
         else
         {
-            ke.keychar = (ke.shift ? asciiShift[ke.scancode] : asciiDefault[ke.scancode]);
+            ke.keychar = (ke.modifiers & MODIFIER_SHIFT ? asciiShift[ke.scancode] : asciiDefault[ke.scancode]);
         }
 
         // Store the key event into the buffer

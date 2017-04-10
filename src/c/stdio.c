@@ -1,5 +1,6 @@
 #include <drivers/io/terminal.h>
 #include <drivers/io/keyboard.h>
+#include <kernel.h>
 
 void clear(void)
 {
@@ -45,7 +46,6 @@ void printint(const size_t i)
 {
     term_write_convert(i, 10);
 }
-
 
 void printbin(const size_t i)
 {

@@ -1,6 +1,7 @@
 #include <drivers/memory.h>
 #include <c/string.h>
 #include <drivers/io/terminal.h>
+#include <kernel.h>
 
 /*// Memory size constants
 const size_t MEMORY_SIZE_BYTES = 4 << 20;
@@ -78,7 +79,10 @@ void mem_init(void)
 bool _getused(const size_t relbyte)
 {
     if (relbyte > MEMORY_SIZE_BYTES)
+    {
+        debug_print("Bytes is outside of memory boundaries!");
         return false;
+    }
 
     size_t usedbyte = relbyte / MEMORY_USED_BYTES_PER_ELEMENT;
     size_t usedbit = relbyte % MEMORY_USED_BYTES_PER_ELEMENT;
@@ -89,7 +93,10 @@ bool _getused(const size_t relbyte)
 void _setused(const size_t relbyte, const bool isused)
 {
     if (relbyte > MEMORY_SIZE_BYTES)
+    {
+        debug_print("Bytes is outside of memory boundaries!");
         return;
+    }
 
     size_t usedbyte = relbyte / MEMORY_USED_BYTES_PER_ELEMENT;
     size_t usedbit = relbyte % MEMORY_USED_BYTES_PER_ELEMENT;
@@ -119,7 +126,7 @@ size_t mem_used(void)
             while (tmpused > 0)
             {
                 // Get the last bit
-                count += (tmpused & 0b1);
+                count += (tmpused & 0x1);
                 tmpused = tmpused >> 1;
             }
         }
@@ -143,7 +150,7 @@ size_t mem_empty(void)
             while (tmpused > 0)
             {
                 // Get the last bit
-                count -= (tmpused & 0b1);
+                count -= (tmpused & 0x1);
                 tmpused = tmpused >> 1;
             }
         }
@@ -197,6 +204,7 @@ bool _statsegstore(const size_t beginrel, const size_t length)
 
     // The static segment storage is already full
     // Couldn't store another segment
+    debug_print("Couldn't store another static memory segment!");
     return false;
 }
 
@@ -217,6 +225,7 @@ bool _dynsegstore(const size_t beginrel, const size_t length)
 
     // The dynamic segment storage is already full
     // Couldn't store another segment
+    debug_print("Couldn't store another dynamic memory segment!");
     return false;
 }
 
@@ -246,6 +255,7 @@ size_t _seglen(const size_t beginrel)
     }
 
     // Segment not found
+    debug_print("Memory segment couldn't be found!");
     return 0;
 }
 
@@ -258,6 +268,7 @@ void* _alloc(const size_t length)
     // Empty space cannot be allocated
     if (length == 0)
     {
+        debug_print("Can't allocate an empty space!");
         return (void*)0;
     }
 
@@ -295,6 +306,7 @@ void* _alloc(const size_t length)
     }
 
     // There isn't enough space in the memory to allocate the desired amout of bytes
+    debug_print("Not enough space in the memory to perform the allocation!");
     return (void*)0;
 }
 
@@ -327,7 +339,10 @@ void mem_free(const void* const ptr)
 
     // If the pointer points outside the memory boundaries it should be ignored
     if (!_inmemory(ptrbyte))
+    {
+        debug_print("Can't free a pointer outside of memory boundaries!");
         return;
+    }
 
     // Calculate the relative address of the beginning of the segment
     size_t beginrel = _toreladdress(ptrbyte);
@@ -363,6 +378,8 @@ void mem_free(const void* const ptr)
             return;
         }
     }
+
+    debug_print("Pointer couldn't be freed because it wasn't found as allocated!");
 }
 
 // Unsafe local extension of copy() that allows copying bytes from outside of the memory boundaries
@@ -420,6 +437,7 @@ bool _unallocated(const size_t beginrel, const size_t length)
     // requested range is outside availible memory's boundaries
     if (beginrel + length >= MEMORY_SIZE_BYTES)
     {
+        debug_print("Requested range is outside of memory boundaries!");
         return false;
     }
 
@@ -438,7 +456,10 @@ bool _unallocated(const size_t beginrel, const size_t length)
 void* mem_dynresize(void* const ptr, const size_t newsize)
 {
     if (!_inmemoryptr(ptr))
+    {
+        debug_print("Pointer is outside of memory boundaries!");
         return (void*)0;
+    }
 
     size_t beginrel = _toreladdressptr(ptr);
     size_t newallocsize = _dynfindsize(newsize);
@@ -509,6 +530,7 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
         }
     }
 
+    debug_print("Failed to resize a dynamic memory segment!");
     return (void*)0;
 }
 

@@ -9,7 +9,7 @@ COMMON_RUN="${BASH_SOURCE%/*}/../crosscompiler/bin"
 GCC_RUN="$COMMON_RUN/i686-elf-gcc"
 GPP_RUN="$COMMON_RUN/i686-elf-g++"
 
-COMMON_PARAMS="-ffreestanding -O2 -Wall -Wextra -D DEBUG"
+COMMON_PARAMS="-ffreestanding -O2 -Wall -Wextra -Wpedantic -Werror -D DEBUG"
 GCC_PARAMS="-std=gnu99 $COMMON_PARAMS"
 GPP_PARAMS="-std=c++11 $COMMON_PARAMS"
 

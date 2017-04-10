@@ -21,12 +21,14 @@ enum KEYS_SPECIAL
 #define KEY_DOWN true
 #define KEY_UP false
 
+#define MODIFIER_SHIFT 	0x01
+#define MODIFIER_CTRL 	0x02
+#define MODIFIER_ALT 	0x04
+
 struct keyevent
 {
 	uint8_t scancode;
 	bool state; // true = key has been pressed, false = key has been released
-	bool shift;
-	bool ctrl;
-	bool alt;
+	uint8_t modifiers;
 	char keychar;
 };
