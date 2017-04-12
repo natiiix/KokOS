@@ -346,14 +346,13 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
                 if (direntry)
                 {
                     searchCluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+                    mem_free(direntry);
                 }
                 // No such entry could be found
                 else
                 {
                     searchCluster = 0;
                 }
-
-                mem_free(direntry);
 
                 // Invalid cluster occurred
                 if (searchCluster == 0)
