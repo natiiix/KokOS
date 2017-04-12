@@ -4,6 +4,8 @@
 #include <drivers/storage/harddrive.h>
 #include <c/string.h>
 
+#include <kernel.h>
+
 bool hdd_init(const uint8_t hddIdx)
 {
     bool isValidFat = false;
@@ -63,4 +65,12 @@ bool hdd_init(const uint8_t hddIdx)
 
     mem_free(mbr);
     return isValidFat;
+}
+
+void hdd_init_last(void)
+{
+    if (hdd_init(hddCount))
+    {
+        hddCount++;
+    }
 }

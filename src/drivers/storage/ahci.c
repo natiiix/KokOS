@@ -191,7 +191,7 @@ int find_cmdslot(HBA_PORT *port)
 		slots >>= 1;
 	}
 
-	debug_print("Cannot find free command list entry");
+	debug_print("ahci.c | find_cmdslot() | Cannot find free command list entry");
 	return -1;
 }
  
@@ -257,7 +257,7 @@ BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 	}
 	if (spin == 1000000)
 	{
-		debug_print("Port is hung");
+		debug_print("ahci.c | ahci_read() | Port is hung");
 		return FALSE;
 	}
  
@@ -272,7 +272,7 @@ BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 			break;
 		if (port->is & HBA_PxIS_TFES)	// Task file error
 		{
-			debug_print("Read disk error");
+			debug_print("ahci.c | ahci_read() | Read disk error");
 			return FALSE;
 		}
 	}
@@ -280,7 +280,7 @@ BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 	// Check again
 	if (port->is & HBA_PxIS_TFES)
 	{
-		debug_print("Read disk error");
+		debug_print("ahci.c | ahci_read() | Read disk error");
 		return FALSE;
 	}
  

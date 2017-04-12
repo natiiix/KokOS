@@ -67,7 +67,7 @@ struct VOLUMEID
     uint16_t signature;         // 0x1FE
 } __attribute__((packed));
 
-bool hdd_init(const uint8_t hddIdx);
+void hdd_init_last(void);
 
 // ---- PARTITION ----
 struct PARTITION

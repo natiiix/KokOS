@@ -1,17 +1,15 @@
 #include <c/string.h>
 #include <drivers/memory.h>
 #include <drivers/io/terminal.h>
+#include <kernel.h>
 
 size_t strlen(const char* const strinput)
 {
     size_t length = 0;
-    
-    while (strinput[length])
-    {
-        length++;
-    }
 
-    return length;
+    while (strinput[length++]);
+
+    return --length;
 }
 
 bool strcmp(const char* str1, const char* str2)
@@ -86,6 +84,7 @@ size_t strparse(const char* const str, const size_t base)
 {
     if (base < 2 || base > 16)
     {
+        debug_print("string.c | strparse() | Base out of range!");
         return 0;
     }
 
@@ -269,6 +268,7 @@ size_t strfirst(const char* const str, const char c)
         }
     }
 
+    debug_print("string.c | strfirst() | String doesn't contain specified character!");
     return ~((size_t)0);
 }
 
@@ -284,5 +284,6 @@ size_t strlast(const char* const str, const char c)
         }
     }
 
+    debug_print("string.c | strlast() | String doesn't contain specified character!");
     return ~((size_t)0);
 }

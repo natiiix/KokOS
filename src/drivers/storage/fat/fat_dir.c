@@ -32,7 +32,7 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
         // Clusters in a chain should never point to a cluster 0 or cluster 1, because those are never used
         if (currClust < 2)
         {
-            debug_print("Found an error in the cluster chain!");
+            debug_print("fat_dir.c | getClusterChain() | Found an error in the cluster chain!");
 
             // Terminate the cluster chain so that it only contains valid clusters and return it
             clusterChain = mem_dynresize(clusterChain, ++chainSize * 4);
@@ -89,7 +89,7 @@ uint32_t findEmptyCluster(const uint8_t partIdx)
     }
 
     // No empty cluster found, return 0
-    debug_print("Couldn't find an empty cluster!");
+    debug_print("fat_dir.c | findEmptyCluster() | Couldn't find an empty cluster!");
     return 0;
 }
 
@@ -132,7 +132,7 @@ bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust)
     // Valid clusters always have an index of 2 or higher
     if (emptyCluster < 2)
     {
-        debug_print("Invalid empty cluster index!");
+        debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
         return false;
     }
 
@@ -176,7 +176,7 @@ char* fileNameToString(const char* const fileName)
     // Copy the file name to the output string
     for (size_t i = 0; i < namelen; i++)
     {
-        strName[i] = fileName[i];
+        strName[i] = ctolower(fileName[i]);
     }
 
     // If there is an extension copy the extension as well
@@ -186,7 +186,7 @@ char* fileNameToString(const char* const fileName)
 
         for (size_t i = 0; i < extlen; i++)
         {
-            strName[namelen + 1 + i] = fileName[8 + i];
+            strName[namelen + 1 + i] = ctolower(fileName[8 + i]);
         }
     }
 
@@ -329,8 +329,8 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     {
         if (path[i] != '/')
         {
-            // Copy each directory name in the path in uppercase
-            strsearch[stridx++] = ctoupper(path[i]);
+            // Copy each directory name in the path in lowercase
+            strsearch[stridx++] = ctolower(path[i]);
         }
 
         // End of a directory name
@@ -346,14 +346,13 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
                 if (direntry)
                 {
                     searchCluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+                    mem_free(direntry);
                 }
                 // No such entry could be found
                 else
                 {
                     searchCluster = 0;
                 }
-
-                mem_free(direntry);
 
                 // Invalid cluster occurred
                 if (searchCluster == 0)
@@ -368,7 +367,7 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
                     }
                     else
                     {
-                        debug_print("Unable to resolve the path!");
+                        debug_print("fat_dir.c | resolvePath() | Unable to resolve the path!");
                         return 0;
                     }
                 }
@@ -470,7 +469,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                         // Failed to prolong the cluster chain
                         else
                         {
-                            debug_print("Can't find an unused directory entry due to a failed attempt to prolong the cluster chain!");
+                            debug_print("fat_dir.c | findUnusedDirEntry() | Can't find an unused directory entry due to a failed attempt to prolong the cluster chain!");
                             // Return 0 as a sign of failure
                             return 0;
                         }
@@ -485,7 +484,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
     mem_free(clusterChain);
 
     // Should be unreachable
-    debug_print("Couldn't find an unused directory entry!");
+    debug_print("fat_dir.c | findUnusedDirEntry() | Couldn't find an unused directory entry!");
     return 0;
 }
 
@@ -546,7 +545,7 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	// The name string must not be empty, set the name string pointer to nullptr
 	else
 	{
-        debug_print("Path contains an empty entry name!");
+        debug_print("fat_dir.c | extractPath() | Path contains an empty entry name!");
 		*pathNamePtr = (char*)0;
         
         return false;

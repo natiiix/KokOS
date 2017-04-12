@@ -175,3 +175,15 @@ inline void vector<string>::clear(void)
 
     resize(0);
 }
+
+template <>
+inline void vector<string>::remove(const size_t pos, const size_t len)
+{
+    // Dispose those vector elements that are going to be removed from the vector
+    for (size_t i = 0; i < len; i++)
+    {
+        m_ptrT[pos + i].dispose();
+    }
+
+    shiftElementsLeft(pos, len);
+}

@@ -2,6 +2,9 @@
 #include <drivers/memory.h>
 #include <drivers/storage/harddrive.h>
 #include <c/string.h>
+#include <kernel.h>
+
+#include <drivers/io/terminal.h>
 
 struct PARTITION partArray[0x10];
 uint8_t partCount = 0;
