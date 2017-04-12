@@ -65,17 +65,41 @@ bool string::empty(void) const
 // Element access
 char string::at(const size_t idx) const
 {
-    return m_ptrC[idx];
+    if (idx <= m_size) // m_ptrC[m_size] is a string terminator
+    {
+        return m_ptrC[idx];
+    }
+    else
+    {
+        debug_print("string.cpp | string::at() | Index out of string boundaries!");
+        return '\0';
+    }
 }
 //
 char& string::front(void)
 {
-    return m_ptrC[0];
+    if (m_size > 0)
+    {
+        return m_ptrC[0];
+    }
+    else
+    {
+        debug_print("string.cpp | string::front() | String is empty!");
+        return m_ptrC[m_size]; // return reference to the string terminator
+    }
 }
 //
 char& string::back(void)
 {
-    return m_ptrC[m_size - 1];
+    if (m_size > 0)
+    {
+        return m_ptrC[m_size - 1];
+    }
+    else
+    {
+        debug_print("string.cpp | string::back() | String is empty!");
+        return m_ptrC[m_size]; // return reference to the string terminator
+    }
 }
 
 // Modifiers
@@ -124,6 +148,10 @@ void string::pop_back(void)
     {
         string::resize(m_size - 1);
     }
+    else
+    {
+        debug_print("string.cpp | string::pop_back() | String is empty!");
+    }
 }
 //
 void string::pop_back(const size_t popcount)
@@ -136,9 +164,14 @@ void string::pop_back(const size_t popcount)
         }
         else
         {
+            debug_print("string.cpp | string::pop_back() | Pop count is higher than the string length!");
             string::resize(0);
         }
 	}
+    else
+    {
+        debug_print("string.cpp | string::pop_back() | String is empty!");
+    }
 }
 
 // String operations
@@ -158,6 +191,7 @@ string string::substr(const size_t pos, const size_t len) const
 
     if (pos >= m_size)
     {
+        debug_print("string.cpp | string::substr() | Position index is out of string boundaries!");
         return strout;
     }
 
@@ -168,6 +202,7 @@ string string::substr(const size_t pos, const size_t len) const
 
     if (len > remainchar)
     {
+        debug_print("string.cpp | string::substr() | Length is higher than the remaining size of the string!");
         copylen = remainchar;
     }
 
@@ -263,6 +298,7 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 	
 	if (delimlen == 0)
 	{
+        debug_print("string.cpp | string::split() | Delimiter string is empty!");
 		vectout.push_back(string(m_ptrC));
 		return vectout;
 	}
@@ -368,7 +404,15 @@ bool string::operator==(const char* const str) const
 //
 char& string::operator[](const size_t idx)
 {
-	return m_ptrC[idx];
+	if (idx <= m_size) // m_ptrC[m_size] is a string terminator
+    {
+        return m_ptrC[idx];
+    }
+    else
+    {
+        debug_print("string.cpp | string::operator[]() | Index out of string boundaries!");
+        return m_ptrC[m_size]; // return reference to the string terminator
+    }
 }
 //
 string& string::operator+=(const string& str)
@@ -395,18 +439,6 @@ string string::operator+(const string& str)
     strout.push_back(str.m_ptrC);
     return strout;
 }
-
-/*void string::disposeVector(vector<string>& vec)
-{
-    size_t vecsize = vec.size();
-
-    for (size_t i = 0; i < vecsize; i++)
-    {
-        vec[i].dispose();
-    }
-
-    vec.dispose();
-}*/
 
 string string::join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty)
 {
@@ -447,6 +479,7 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 {
 	if (end < start)
 	{
+        debug_print("string.cpp | string::splitVectorAdd() | Start index is higher than end index!");
 		return;
 	}	
 	else if (end == start)
@@ -457,7 +490,9 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 		}
 		else
 		{
-			vectsplit.push_back(string());
+            // The string object must be constructed
+            string strEmpty;
+			vectsplit.push_back(strEmpty);
 		}
 	}
 	else
@@ -470,6 +505,7 @@ void string::shiftCharsRight(const size_t pos, const size_t offset)
 {
     if (pos >= m_size)
     {
+        debug_print("string.cpp | string::shiftCharsRight() | Position index is out of string boundaries!");
         return;
     }
 
@@ -488,6 +524,7 @@ void string::shiftCharsLeft(const size_t pos, const size_t offset)
 {
     if (pos >= m_size || m_size - pos < offset)
     {
+        debug_print("string.cpp | string::shiftCharsLeft() | Can't shift character out of the string!");
         return;
     }
     

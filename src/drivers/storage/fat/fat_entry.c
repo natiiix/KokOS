@@ -65,7 +65,7 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
     mem_free(clusterChain);
 
     // Entry not found, return nullptr
-    debug_print("Entry couldn't be found!");
+    debug_print("fat_entry.c | findEntry() | Entry couldn't be found!");
     return (struct DIR_ENTRY*)0;
 }
 
@@ -79,7 +79,7 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 
     if (!targetDir || !pathName)
     {
-        debug_print("Couldn't retrieve the file structure due to invalid path!");
+        debug_print("fat_entry.c | getFile() | Couldn't retrieve the file structure due to invalid path!");
         return (struct FILE*)0;
     }
 
@@ -90,7 +90,7 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
     
     if (!direntry)
     {
-        debug_print("Can't read the directory entry if it can't be found!");
+        debug_print("fat_entry.c | getFile() | Can't read the directory entry if it can't be found!");
         return (struct FILE*)0;
     }
 
@@ -118,7 +118,7 @@ uint8_t* readFile(const struct FILE* const file)
     // It's impossible to read the contents of an empty file
     if (file->size == 0)
     {
-        debug_print("Can't read from an empty file!");
+        debug_print("fat_entry.c | readFile() | Can't read from an empty file!");
         return (uint8_t*)0;
     }
 
@@ -126,7 +126,7 @@ uint8_t* readFile(const struct FILE* const file)
 
     if (!clusterChain)
     {
-        debug_print("Couldn't get the cluster chain!");
+        debug_print("fat_entry.c | readFile() | Couldn't get the cluster chain!");
         return (uint8_t*)0;
     }
 
@@ -188,7 +188,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     size_t unusedIdx = findUnusedDirEntry(partIdx, baseDir);
     if (!unusedIdx)
     {
-        debug_print("Couldn't find unused directory entry!");
+        debug_print("fat_entry.c | newEntry() | Couldn't find unused directory entry!");
         return (struct FILE*)0;
     }
 
@@ -211,7 +211,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
 		uint32_t nextCluster = findEmptyCluster(partIdx);
 		if (!nextCluster)
 		{
-			debug_print("Couldn't find an empty cluster!");
+			debug_print("fat_entry.c | newEntry() | Couldn't find an empty cluster!");
 			return (struct FILE*)0;
 		}
 		
@@ -236,7 +236,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
     if (!dirsec)
     {
-        debug_print("Unable to read directory sector!");
+        debug_print("fat_entry.c | newEntry() | Unable to read directory sector!");
         return (struct FILE*)0;
     }
 
@@ -321,7 +321,7 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	
 	if (!dir)
 	{
-		debug_print("Failed to create new entry!");
+		debug_print("fat_entry.c | newDir() | Failed to create new entry!");
 		return (struct FILE*)0;
 	}
 	
@@ -526,7 +526,7 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	
 	if (!entryCluster)
 	{
-		debug_print("Entry had an invalid begin cluster!");
+		debug_print("fat_entry.c | deleteEntry() | Entry had an invalid begin cluster!");
 		return false;
 	}
 	

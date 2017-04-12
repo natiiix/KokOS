@@ -99,7 +99,7 @@ uint8_t* hddRead(const struct HARDDRIVE hdd, const uint64_t lba)
     }
     else
     {
-        debug_print("Invalid disk type");
+        debug_print("harddrive.c | hddRead() | Invalid disk type");
         return (uint8_t*)0;
     }
 }
@@ -112,11 +112,11 @@ void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* con
     }
     else if (hdd.type == HDD_TYPE_AHCI)
     {
-        debug_print("Writing to an AHCI device is not yet implemented!");
+        debug_print("harddrive.c | hddWrite() | Writing to an AHCI device is not yet implemented!");
         // TODO
     }
     else
     {
-        debug_print("Invalid disk type");
+        debug_print("harddrive.c | hddWrite() | Invalid disk type");
     }
 }
