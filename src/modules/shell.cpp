@@ -12,6 +12,9 @@
 #include <modules/disk.hpp>
 #include <drivers/storage/fat.h>
 
+extern "C"
+void term_writeline_convert(const size_t, const size_t);
+
 uint8_t activePart; // index of the active partition
 uint32_t activeDir; // first cluster of the active directory
 
@@ -21,6 +24,14 @@ vector<string> pathStructure;
 
 // Modules
 Disk modDisk;
+
+vector<string> cmdHistory;
+uint8_t historyIdx;
+
+// The maximum amount of command strings saved in history
+static const uint8_t HISTORY_LIMIT = 0x10;
+// This value is present in historyIdx whenever history isn't being browsed
+static const uint8_t HISTORY_INDEX_DEFAULT = 0xFF;
 
 extern "C"
 void shell_init(void)
@@ -34,6 +45,9 @@ void shell_init(void)
 
 	shellPrefix = string();
 	pathStructure = vector<string>();
+
+	cmdHistory = vector<string>();
+	historyIdx = HISTORY_INDEX_DEFAULT;
 
 	diskToolsEnabled = (partCount > 0);
 
@@ -96,9 +110,20 @@ namespace Shell
 			strCmd.push_back(ctolower(strInput.at(i)));
 		}
 
-		// Separate arguments from command string
-		string strArgs = strInput.substr(strCmd.size() + 1);
-		vector<string> vecArgs = strArgs.split(' ', true);
+		string strArgs;
+		vector<string> vecArgs;
+
+		// If the command itself isn't the entire content of the input string
+		if (strCmd.size() + 1 < strsize)
+		{
+			// The old objects must be properly disposed
+			strArgs.dispose();
+			vecArgs.dispose();
+
+			// Separate arguments from command string
+			strArgs = strInput.substr(strCmd.size() + 1);
+			vecArgs = strArgs.split(' ', true);
+		}
 
 		// -- Check internal shell commands --
 		// Displays all available commands and their proper syntax
@@ -110,6 +135,11 @@ namespace Shell
 			print("cd <Directory Path> - Changed active directory\n");
 			print("dir [Directory Path] - Displays content of a directory\n");
 			print("disk <Action> <Arguments> - Performs a disk-related operation\n");
+		}
+		// Clears the terminal
+		else if (strCmd == "clear" && vecArgs.size() == 0)
+		{
+			clear();
 		}
 		// Partition switch
 		// Syntax: <Partition Letter>:
@@ -269,6 +299,104 @@ namespace Shell
 		return strspaces;
 	}
 
+	void historyAppend(const string& strInput)
+	{
+		// Don't append empty string to the history vector
+		if (!strInput.size())
+		{
+			return;
+		}
+
+		// Don't append the command to the history vector if it's equal to the last entry
+		if (cmdHistory.size() && cmdHistory.back().compare(strInput))
+		{
+			return;
+		}
+
+		// Prepare the command string
+		string strHistoryEntry;
+
+		strHistoryEntry.clear();
+		strHistoryEntry.push_back(strInput);
+
+		// If the history vector size limit has been reached delete the oldest entry
+		if (cmdHistory.size() >= HISTORY_LIMIT)
+		{
+			cmdHistory.remove(0);
+		}
+
+		// Push the command string to the history vector
+		cmdHistory.push_back(strHistoryEntry);
+	}
+
+	void historyUp(string& strInput)
+	{
+		size_t cmdsize = cmdHistory.size();
+
+		// There are no commands in the history vector
+		if (!cmdsize)
+		{
+			return;
+		}
+
+		// Shell is in writing mode
+		if (historyIdx == HISTORY_INDEX_DEFAULT)
+		{
+			// Move to the first history entry
+			historyIdx = cmdsize - 1;
+		}
+		// If it's possible to go further in the history vector
+		else if (historyIdx > 0)
+		{
+			// Move to an older history entry
+			historyIdx--;
+		}
+		// The history index is already pointing at the oldest entry in the history vector
+		else
+		{
+			return;
+		}
+
+		// Replace the current input string with the one from the history vector
+		strInput.clear();
+		strInput.push_back(cmdHistory.at(historyIdx));
+	}
+
+	void historyDown(string& strInput)
+	{
+		size_t cmdsize = cmdHistory.size();
+
+		// There are no commands in the history vector
+		if (!cmdsize)
+		{
+			return;
+		}
+
+		if (historyIdx == HISTORY_INDEX_DEFAULT)
+		{
+			return;
+		}
+
+		strInput.clear();
+
+		// There's a more recent command entry in the history vector than the current one,
+		// move the history index forward
+		if (historyIdx < cmdsize - 1)
+		{
+			// Move to an more recent history entry
+			historyIdx++;
+		}
+		// The currently selected history entry is the latest, switch to writing mode
+		else
+		{
+			historyIdx = HISTORY_INDEX_DEFAULT;
+			return;
+		}
+
+		// Display the currently selected command from the history vector
+		strInput.push_back(cmdHistory.at(historyIdx));
+	}
+
 	string readline(void)
 	{
 		if (getcol() > 0)
@@ -291,26 +419,48 @@ namespace Shell
 			{			
 				if (ke.keychar > 0)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Append a character to the input string
 					strInput += ke.keychar;
 				}
-				else if (ke.scancode == KEY_ENTER)
+				else if (ke.scancode == KEY_ENTER && !ke.modifiers)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Generate spaces to clear the input line on the screen
 					char* strspaces = _generate_spaces(VGA_WIDTH);
 					printat(strspaces, 0, row);
 					delete strspaces;
 
+					// Append the command string to the command history vector
+					historyAppend(strInput);
 					return strInput;
 				}
-				else if (ke.scancode == KEY_BACKSPACE)
+				else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Delete the last character in the input string
 					if (strInput.size() > 0)
 					{
 						strInput.pop_back();
 					}
 				}
-				else if (ke.scancode == KEY_ESCAPE)
+				else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Clear the input string
 					strInput.clear();
+				}
+				else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
+				{
+					historyUp(strInput);
+				}
+				else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
+				{
+					historyDown(strInput);
 				}
 			}
 
