@@ -12,6 +12,8 @@
 #include <modules/disk.hpp>
 #include <drivers/storage/fat.h>
 
+#include <modules/commands.hpp>
+
 extern "C"
 void term_writeline_convert(const size_t, const size_t);
 
@@ -28,11 +30,6 @@ Disk modDisk;
 vector<string> cmdHistory;
 uint8_t historyIdx;
 
-// The maximum amount of command strings saved in history
-static const uint8_t HISTORY_LIMIT = 0x10;
-// This value is present in historyIdx whenever history isn't being browsed
-static const uint8_t HISTORY_INDEX_DEFAULT = 0xFF;
-
 extern "C"
 void shell_init(void)
 {
@@ -47,7 +44,7 @@ void shell_init(void)
 	pathStructure = vector<string>();
 
 	cmdHistory = vector<string>();
-	historyIdx = HISTORY_INDEX_DEFAULT;
+	historyIdx = Shell::HISTORY_INDEX_DEFAULT;
 
 	diskToolsEnabled = (partCount > 0);
 
@@ -94,11 +91,6 @@ namespace Shell
 
 	void process(const string& strInput)
 	{
-		// Command syntax explanation:
-		// Literal String
-		// <Required Argument>
-		// [Optional Argument]
-
 		// Extract command string from the input string
 		string strCmd;
 
@@ -111,38 +103,24 @@ namespace Shell
 		}
 
 		string strArgs;
-		vector<string> vecArgs;
 
 		// If the command itself isn't the entire content of the input string
 		if (strCmd.size() + 1 < strsize)
 		{
-			// The old objects must be properly disposed
+			// The old string must be properly disposed
 			strArgs.dispose();
-			vecArgs.dispose();
 
 			// Separate arguments from command string
 			strArgs = strInput.substr(strCmd.size() + 1);
-			vecArgs = strArgs.split(' ', true);
 		}
 
 		// -- Check internal shell commands --
-		// Displays all available commands and their proper syntax
-		if (strCmd == "help" && vecArgs.size() == 0)
+		// Displays available commands and their proper syntax
+		if (strCmd == "help")
 		{
-			print("COMMAND <REQUIRED ARGUMENT> [OPTIONAL ARGUMENT]\n");
-			print("help - Displays available commands and their syntax\n");
-			print("<Partition Letter>: - Changes active partition\n");
-			print("cd <Directory Path> - Changed active directory\n");
-			print("dir [Directory Path] - Displays content of a directory\n");
-			print("disk <Action> <Arguments> - Performs a disk-related operation\n");
-		}
-		// Clears the terminal
-		else if (strCmd == "clear" && vecArgs.size() == 0)
-		{
-			clear();
+			cmd_help(strArgs);
 		}
 		// Partition switch
-		// Syntax: <Partition Letter>:
 		else if (strCmd.size() == 2 && strCmd[1] == ':')
 		{
 			if (strCmd[0] >= 'a' && strCmd[0] <= 'z' && // letters represent partitions index
@@ -157,122 +135,42 @@ namespace Shell
 				print("Invalid partition letter!\n");
 			}
 		}
-		// Directory switch
-		// Syntax: cd <Directory Path>
-		else if (strCmd.compare("cd") && vecArgs.size() == 1)
+		// Clears the terminal
+		else if (strCmd == "clear" && strArgs.size() == 0)
 		{
-			uint32_t newDir = resolvePath(activePart, activeDir, vecArgs[0].c_str());
-
-			if (newDir)
-			{
-				// If the directory path is absolute delete the old path
-				if (vecArgs[0][0] == '/')
-				{
-					pathStructure.clear();
-				}
-
-				activeDir = newDir;
-
-				vector<string> pathElements = vecArgs[0].split('/', true);
-				
-				for (size_t i = 0; i < pathElements.size(); i++)
-				{
-					// Ignore self-pointing path elements
-					if (pathElements[i] == ".")
-					{
-						continue;
-					}
-					// When going one directory up remove the last directory from the vector
-					else if (pathElements[i] == "..")
-					{
-						pathStructure.pop_back();
-					}
-					// When going one directory down append the directory to the vector
-					else
-					{
-						// The directory name string must not be disposed
-						// Therefore we need to copy it into a separate string outside the vector
-						// This is done automatically when converting the name to uppercase
-						pathStructure.push_back(pathElements[i].toupper());
-					}
-				}
-
-				pathElements.dispose();
-
-				_update_prefix();
-			}
-			else
-			{
-				print("Invalid directory path!\n");
-			}
+			clear();
+		}
+		// Directory switch
+		else if (strCmd.compare("cd"))
+		{
+			cmd_cd(strArgs);
 		}
 		// List directory content
-		// Syntax: dir [Directory Path]
-		else if (strCmd.compare("dir") && vecArgs.size() < 2)
+		else if (strCmd.compare("dir"))
 		{
-			if (vecArgs.size() == 0)
-			{
-				listDirectory(activePart, activeDir);
-			}
-			else
-			{			
-				uint32_t pathCluster = resolvePath(activePart, activeDir, vecArgs[0].c_str());
-
-				if (pathCluster)
-				{
-					listDirectory(activePart, pathCluster);
-				}
-				else
-				{
-					print("Invalid directory path!\n");
-				}
-			}
+			cmd_dir(strArgs);
 		}
-		else if (strCmd.compare("mkfile") && vecArgs.size() == 1)
+		// Create a new file
+		else if (strCmd.compare("mkfile"))
 		{
-			struct FILE* file = newFile(activePart, activeDir, vecArgs[0].c_str());
-
-			if (file)
-			{
-				debug_print("shell.cpp | Shell::process() | File has been created successfully!");
-				delete file;
-			}
-			else
-			{
-				debug_print("shell.cpp | Shell::process() | Failed to create the file!");
-			}
+			cmd_mkfile(strArgs);
 		}
-		else if (strCmd.compare("mkdir") && vecArgs.size() == 1)
+		// Create a new directory
+		else if (strCmd.compare("mkdir"))
 		{
-			struct FILE* dir = newDir(activePart, activeDir, vecArgs[0].c_str());
-
-			if (dir)
-			{
-				debug_print("shell.cpp | Shell::process() | Directory has been created successfully!");
-				delete dir;
-			}
-			else
-			{
-				debug_print("shell.cpp | Shell::process() | Failed to create the directory!");
-			}
+			cmd_mkdir(strArgs);
 		}
-		else if (strCmd.compare("delete") && vecArgs.size() == 1)
+		// Delete a file/directory
+		else if (strCmd.compare("delete"))
 		{
-			if (deleteEntry(activePart, activeDir, vecArgs[0].c_str()))
-			{
-				debug_print("shell.cpp | Shell::process() | Entry has been deleted successfully!");
-			}
-			else
-			{
-				debug_print("shell.cpp | Shell::process() | Failed to delete the entry!");
-			}
+			cmd_delete(strArgs);
 		}
 		// -- Compare the input string against each module command string --
 		// Disk operation module
 		// Syntax: disk <Action> <Arguments>
 		else if (modDisk.compare(strCmd))
 		{
-			modDisk.process(vecArgs);
+			modDisk.process(strArgs);
 		}
 		else
 		{
@@ -283,7 +181,6 @@ namespace Shell
 
 		strCmd.dispose();
 		strArgs.dispose();
-		vecArgs.dispose();
 	}
 
 	char* _generate_spaces(const size_t count)

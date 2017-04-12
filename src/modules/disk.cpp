@@ -6,8 +6,10 @@
 #include <c/string.h>
 #include <modules/shell_global.hpp>
 
-void Disk::process(const vector<string>& vecArgs)
+void Disk::process(const string& strArgs)
 {
+    vector<string> vecArgs = strArgs.split(' ', true);
+
     if (vecArgs.size() > 0)
     {
         if (vecArgs.at(0) == "list" && vecArgs.size() == 2)
@@ -93,4 +95,6 @@ void Disk::process(const vector<string>& vecArgs)
             print("Invalid arguments!\n");
         }
     }
+
+    vecArgs.dispose();
 }
