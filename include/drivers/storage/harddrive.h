@@ -24,10 +24,8 @@ extern "C"
 #endif
 char* getHddInfoStr(const uint8_t hddIdx);
 
-#define HDD_INVALID 0xFF
-
-uint8_t hddAddIDE(const uint16_t bus, const uint8_t drive);
-uint8_t hddAddAHCI(const HBA_PORT* const port);
+void hddAddIDE(const uint16_t bus, const uint8_t drive);
+void hddAddAHCI(const HBA_PORT* const port);
 
 uint8_t* hddRead(const struct HARDDRIVE hdd, const uint64_t lba);
 void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* const data);

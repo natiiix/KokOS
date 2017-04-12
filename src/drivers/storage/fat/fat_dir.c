@@ -176,7 +176,7 @@ char* fileNameToString(const char* const fileName)
     // Copy the file name to the output string
     for (size_t i = 0; i < namelen; i++)
     {
-        strName[i] = fileName[i];
+        strName[i] = ctolower(fileName[i]);
     }
 
     // If there is an extension copy the extension as well
@@ -186,7 +186,7 @@ char* fileNameToString(const char* const fileName)
 
         for (size_t i = 0; i < extlen; i++)
         {
-            strName[namelen + 1 + i] = fileName[8 + i];
+            strName[namelen + 1 + i] = ctolower(fileName[8 + i]);
         }
     }
 

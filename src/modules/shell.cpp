@@ -318,9 +318,14 @@ namespace Shell
 			size_t inStartIdx = strInput.size() - inRenderLen;
 
 			sprintat(shellPrefix, 0, row);
-			string strInputRender = strInput.substr(inStartIdx, inRenderLen);
-			sprintat(strInputRender, preLen, row);
-			strInputRender.dispose();
+
+			// Don't attempt to print input if there is none
+			if (strInput.size())
+			{
+				string strInputRender = strInput.substr(inStartIdx, inRenderLen);
+				sprintat(strInputRender, preLen, row);
+				strInputRender.dispose();
+			}
 
 			size_t emptySpace = inSpace - inRenderLen;
 			size_t rowend = preLen + inRenderLen;

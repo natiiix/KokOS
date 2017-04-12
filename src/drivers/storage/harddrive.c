@@ -9,18 +9,6 @@
 struct HARDDRIVE hddArray[0x10];
 uint8_t hddCount = 0;
 
-uint8_t hddTestLast(void)
-{
-    if (hdd_init(hddCount))
-    {
-        return hddCount++;
-    }
-    else
-    {
-        return HDD_INVALID;
-    }
-}
-
 char* getHddInfoStr(const uint8_t hddIdx)
 {
     char* strInfo = mem_alloc(128);
@@ -69,20 +57,20 @@ char* getHddInfoStr(const uint8_t hddIdx)
     return strInfo;
 }
 
-uint8_t hddAddIDE(const uint16_t bus, const uint8_t drive)
+void hddAddIDE(const uint16_t bus, const uint8_t drive)
 {
     hddArray[hddCount].type = HDD_TYPE_IDE;
     hddArray[hddCount].addr = (bus << 8) + drive;
 
-    return hddTestLast();
+    hdd_init_last();
 }
 
-uint8_t hddAddAHCI(const HBA_PORT* const port)
+void hddAddAHCI(const HBA_PORT* const port)
 {
     hddArray[hddCount].type = HDD_TYPE_AHCI;
     hddArray[hddCount].addr = (size_t)port;
 
-    return hddTestLast();
+    hdd_init_last();
 }
 
 uint8_t* hddRead(const struct HARDDRIVE hdd, const uint64_t lba)

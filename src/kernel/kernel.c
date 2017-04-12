@@ -22,11 +22,11 @@ void load_gdt(void);
 void kernel_main(void)
 {
 	// Initialize basic components
-    load_gdt();
-	term_init();
-	mem_init();
-	dev_init();
-	interrupts_init();
+    load_gdt(); 		// Global Descriptor Table
+	term_init(); 		// Terminal
+	mem_init(); 		// Memory Management
+	dev_init(); 		// Devices
+	interrupts_init(); 	// Interrupts
 
 	// Start the Shell module
 	shell_init();

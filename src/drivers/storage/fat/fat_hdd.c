@@ -4,6 +4,8 @@
 #include <drivers/storage/harddrive.h>
 #include <c/string.h>
 
+#include <kernel.h>
+
 bool hdd_init(const uint8_t hddIdx)
 {
     bool isValidFat = false;
@@ -21,7 +23,11 @@ bool hdd_init(const uint8_t hddIdx)
             // and it must occupy at least one disk sector
             if (mbr->part[i].lbabegin > 0 && mbr->part[i].sectors > 0)
             {
+                debug_print("Start");
+
                 partValid[i] = checkVolumeID(hddIdx, mbr->part[i].lbabegin);
+
+                debug_print("Stop");
                 
                 if (partValid[i])
                 {
@@ -63,4 +69,12 @@ bool hdd_init(const uint8_t hddIdx)
 
     mem_free(mbr);
     return isValidFat;
+}
+
+void hdd_init_last(void)
+{
+    if (hdd_init(hddCount))
+    {
+        hddCount++;
+    }
 }
