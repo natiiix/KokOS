@@ -329,8 +329,8 @@ uint32_t resolvePath(const uint8_t partIdx, const uint32_t baseDir, const char* 
     {
         if (path[i] != '/')
         {
-            // Copy each directory name in the path in uppercase
-            strsearch[stridx++] = ctoupper(path[i]);
+            // Copy each directory name in the path in lowercase
+            strsearch[stridx++] = ctolower(path[i]);
         }
 
         // End of a directory name
