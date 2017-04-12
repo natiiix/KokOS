@@ -334,6 +334,12 @@ void _free(const size_t beginrel, const size_t length)
 // Unallocates memory segment starting at address stored in ptr
 void mem_free(const void* const ptr)
 {
+    if (!ptr)
+    {
+        debug_print("memory.c | mem_free() | Can't free a nullptr!");
+        return;
+    }
+
     // Convert from pointer to size_t to make mathematical operations possible
     size_t ptrbyte = (size_t)ptr;
 

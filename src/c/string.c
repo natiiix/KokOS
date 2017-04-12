@@ -9,7 +9,7 @@ size_t strlen(const char* const strinput)
 
     while (strinput[length++]);
 
-    return length;
+    return --length;
 }
 
 bool strcmp(const char* str1, const char* str2)

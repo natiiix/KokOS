@@ -23,11 +23,7 @@ bool hdd_init(const uint8_t hddIdx)
             // and it must occupy at least one disk sector
             if (mbr->part[i].lbabegin > 0 && mbr->part[i].sectors > 0)
             {
-                debug_print("Start");
-
                 partValid[i] = checkVolumeID(hddIdx, mbr->part[i].lbabegin);
-
-                debug_print("Stop");
                 
                 if (partValid[i])
                 {
