@@ -16,6 +16,7 @@ void debug_memusage(void)
     #endif
 }
 
+// Proper debug string format: "<file> | <function> | <message>"
 void debug_print(const char* const str)
 {
     #ifdef DEBUG

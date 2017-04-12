@@ -1,6 +1,7 @@
 #include <c/string.h>
 #include <drivers/memory.h>
 #include <drivers/io/terminal.h>
+#include <kernel.h>
 
 size_t strlen(const char* const strinput)
 {

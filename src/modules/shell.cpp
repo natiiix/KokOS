@@ -46,6 +46,7 @@ void shell_init(void)
 	}
 	else
 	{
+		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
 		shellPrefix.clear();
 		shellPrefix.push_back('>');
 	}
@@ -203,8 +204,12 @@ namespace Shell
 
 			if (file)
 			{
-				print("File creation successful.\n");
+				debug_print("shell.cpp | Shell::process() | File has been created successfully!");
 				delete file;
+			}
+			else
+			{
+				debug_print("shell.cpp | Shell::process() | Failed to create the file!");
 			}
 		}
 		else if (strCmd.compare("mkdir") && vecArgs.size() == 1)
@@ -213,19 +218,23 @@ namespace Shell
 
 			if (dir)
 			{
-				print("Directory creation successful.\n");
+				debug_print("shell.cpp | Shell::process() | Directory has been created successfully!");
 				delete dir;
+			}
+			else
+			{
+				debug_print("shell.cpp | Shell::process() | Failed to create the directory!");
 			}
 		}
 		else if (strCmd.compare("delete") && vecArgs.size() == 1)
 		{
 			if (deleteEntry(activePart, activeDir, vecArgs[0].c_str()))
 			{
-				print("Entry deleted successfully.\n");
+				debug_print("shell.cpp | Shell::process() | Entry has been deleted successfully!");
 			}
 			else
 			{
-				print("Failed to delete the entry!\n");
+				debug_print("shell.cpp | Shell::process() | Failed to delete the entry!");
 			}
 		}
 		// -- Compare the input string against each module command string --

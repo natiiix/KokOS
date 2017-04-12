@@ -5,6 +5,8 @@
 #include <c/stdio.h>
 #include <c/string.h>
 
+#include <kernel.h>
+
 string::string(void) :
     m_ptr(malloc(1)),
     m_ptrC((char*)m_ptr),
