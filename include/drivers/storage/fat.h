@@ -155,8 +155,10 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
 uint32_t findEmptyCluster(const uint8_t partIdx);
 // Writes an entry to the FAT table
 void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t content);
-// Inserts an empty cluster (found by findEmptyCluster()) to the cluster chain beginning with a specified cluster
-bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust);
+// Adds a specified amount of empty clusters to the end of a cluster chain
+bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount);
+// Removes a specified amount of sectors from the end of a cluster chain
+bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount);
 // Convert a FAT file name to a standard cstring format ("NAME    EXT" to "NAME.EXT")
 char* fileNameToString(const char* const fileName);
 // Converts a cstring file name to a FAT file name ("NAME.EXT" to "NAME    EXT")

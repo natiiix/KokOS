@@ -114,34 +114,81 @@ void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t con
     mem_free(fat);
 }
 
-bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust)
+bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount)
 {
     // Get the cluster chain beginning at the specified cluster
     uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
 
-    // Get index of the last cluster in the chain
-    size_t clustIdx = 1;
-    while (clusterChain[clustIdx] < CLUSTER_CHAIN_TERMINATOR)
+    // Get the last cluster in the chain
+    uint32_t lastCluster = 0;
+    for (size_t i = 0; clusterChain[i] < CLUSTER_CHAIN_TERMINATOR; i++)
     {
-        clustIdx++;
+        lastCluster = clusterChain[i];
     }
-
-    // Find an empty cluster to add to the chain
-    size_t emptyCluster = findEmptyCluster(partIdx);
-
-    // Valid clusters always have an index of 2 or higher
-    if (emptyCluster < 2)
-    {
-        debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
-        return false;
-    }
-
-    // Append the empty cluster to the end of the cluster chain
-    fatWrite(partIdx, clusterChain[clustIdx - 1], emptyCluster);
-    // Mark the end of the cluster chain terminator
-    fatWrite(partIdx, emptyCluster, CLUSTER_CHAIN_TERMINATOR);
 
     mem_free(clusterChain);
+
+    for (size_t i = 0; i < clustCount; i++)
+    {
+        // Find an empty cluster to add to the chain
+        size_t emptyCluster = findEmptyCluster(partIdx);
+
+        // Valid clusters always have an index of 2 or higher
+        if (emptyCluster < 2)
+        {
+            debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
+            mem_free(clusterChain);
+            return false;
+        }
+
+        // Append the empty cluster to the end of the cluster chain
+        fatWrite(partIdx, lastCluster, emptyCluster);
+
+        lastCluster = emptyCluster;
+    }
+
+    // Mark the end of the chain by writing the terminator to the last entry in the chain
+    fatWrite(partIdx, lastCluster, CLUSTER_CHAIN_TERMINATOR);
+
+    return true;
+}
+
+bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount)
+{
+    // Get the cluster chain beginning at the specified cluster
+    uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
+
+    // Get the length of the cluster chain
+    uint32_t chainlen = 0;
+    for (size_t i = 0; clusterChain[i] < CLUSTER_CHAIN_TERMINATOR; i++)
+    {
+        chainlen++;
+    }
+
+    mem_free(clusterChain);
+
+    for (size_t i = 0; i < clustCount; i++)
+    {
+        // Find an empty cluster to add to the chain
+        size_t emptyCluster = findEmptyCluster(partIdx);
+
+        // Valid clusters always have an index of 2 or higher
+        if (emptyCluster < 2)
+        {
+            debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
+            mem_free(clusterChain);
+            return false;
+        }
+
+        // Append the empty cluster to the end of the cluster chain
+        fatWrite(partIdx, lastCluster, emptyCluster);
+
+        lastCluster = emptyCluster;
+    }
+
+    // Mark the end of the chain by writing the terminator to the last entry in the chain
+    fatWrite(partIdx, lastCluster, CLUSTER_CHAIN_TERMINATOR);
+
     return true;
 }
 
