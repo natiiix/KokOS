@@ -116,6 +116,12 @@ void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t con
 
 bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount)
 {
+    if (!clustCount)
+    {
+        debug_print("fat_dir.c | prolongClusterChain() | It's redundant to prolong a cluster chain by 0 clusters!");
+        return true; // It was technically successful despite not doing anything
+    }
+
     // Get the cluster chain beginning at the specified cluster
     uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
 
@@ -155,6 +161,12 @@ bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const
 
 bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount)
 {
+    if (!clustCount)
+    {
+        debug_print("fat_dir.c | shortenClusterChain() | It's redundant to shorten a cluster chain by 0 clusters!");
+        return true; // It was technically successful despite not doing anything
+    }
+
     // Get the cluster chain beginning at the specified cluster
     uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
 
@@ -165,30 +177,25 @@ bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const
         chainlen++;
     }
 
-    mem_free(clusterChain);
+    // Make sure we're not trying to shorten the chain by too much
+    if (clustCount >= chainlen)
+    {
+        debug_print("fat_dir.c | shortenClusterChain() | Can't shorten a cluster chain below 1 cluster!");
+        mem_free(clusterChain);
+        return false;
+    }
 
+    // Count down clusters starting from the end
     for (size_t i = 0; i < clustCount; i++)
     {
-        // Find an empty cluster to add to the chain
-        size_t emptyCluster = findEmptyCluster(partIdx);
-
-        // Valid clusters always have an index of 2 or higher
-        if (emptyCluster < 2)
-        {
-            debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
-            mem_free(clusterChain);
-            return false;
-        }
-
-        // Append the empty cluster to the end of the cluster chain
-        fatWrite(partIdx, lastCluster, emptyCluster);
-
-        lastCluster = emptyCluster;
+        // Set the cluster as unused
+        fatWrite(partIdx, clusterChain[chainlen - i], 0);
     }
 
     // Mark the end of the chain by writing the terminator to the last entry in the chain
-    fatWrite(partIdx, lastCluster, CLUSTER_CHAIN_TERMINATOR);
+    fatWrite(partIdx, clusterChain[chainlen - clustCount], CLUSTER_CHAIN_TERMINATOR);
 
+    mem_free(clusterChain);
     return true;
 }
 
@@ -509,7 +516,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                         mem_free(dirsec);
                         mem_free(clusterChain);
 
-                        if (prolongClusterChain(partIdx, baseDir))
+                        if (prolongClusterChain(partIdx, baseDir, 1))
                         {
                             return findUnusedDirEntry(partIdx, baseDir);
                         }

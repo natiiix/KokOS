@@ -159,9 +159,9 @@ void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t con
 bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount);
 // Removes a specified amount of sectors from the end of a cluster chain
 bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount);
-// Convert a FAT file name to a standard cstring format ("NAME    EXT" to "NAME.EXT")
+// Convert a FAT file name to a standard cstring format ("NAME    EXT" to "name.ext")
 char* fileNameToString(const char* const fileName);
-// Converts a cstring file name to a FAT file name ("NAME.EXT" to "NAME    EXT")
+// Converts a cstring file name to a FAT file name ("name.ext" to "NAME    EXT")
 void stringToFileName(const char* const strSrc, char* const fileNameDst);
 // Version of the stringToFileName() function which ignores dots and therefore doesn't handle extensions
 void stringToFileNameNoExt(const char* const strSrc, char* const fileNameDst);
