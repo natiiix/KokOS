@@ -172,6 +172,24 @@ namespace Shell
 		{
 			modDisk.process(strArgs);
 		}
+		else if (strCmd.compare("write"))
+		{
+			vector<string> vecArgs = strArgs.split(' ', true);
+    
+			if (vecArgs.size() != 2)
+			{
+				print("Invalid arguments!\n");
+				print("Syntax: write <File Path> <Data>\n");
+				
+				vecArgs.dispose();
+				return;
+			}
+
+			struct FILE* file = writeFile(activePart, activeDir, vecArgs[0].c_str(), (uint8_t*)vecArgs[1].c_str(), strlen(vecArgs[1].c_str()));
+
+			vecArgs.dispose();
+			delete file;
+		}
 		else
 		{
 			print("Invalid command: \"");

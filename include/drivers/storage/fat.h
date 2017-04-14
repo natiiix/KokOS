@@ -179,6 +179,8 @@ size_t generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, con
 size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir);
 // Extracts directory cluster and name from a full path
 bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr);
+// Calculates how many clusters are required to store a specified amount of bytes
+size_t bytesToClusterCount(const uint8_t partIdx, const uint32_t sizeInBytes);
 
 // ---- ENTRY ----
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);

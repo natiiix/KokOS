@@ -605,3 +605,9 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
         return false;
 	}
 }
+
+size_t bytesToClusterCount(const uint8_t partIdx, const uint32_t sizeInBytes)
+{
+    size_t clusterSize = 0x200 * partArray[partIdx].sectorsPerCluster;
+    return (sizeInBytes / clusterSize) + !!(sizeInBytes % clusterSize);
+}

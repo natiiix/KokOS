@@ -634,6 +634,20 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
             return (struct FILE*)0;
         }
 
+        size_t clustCountOld = bytesToClusterCount(partIdx, file->size);
+        size_t clustCountNew = bytesToClusterCount(partIdx, dataSize);
+
+        // The cluster chain must be prolonged
+        if (clustCountNew > clustCountOld)
+        {
+            prolongClusterChain(partIdx, file->cluster, clustCountNew - clustCountOld);
+        }
+        // The cluster chain must be shortened
+        else if (clustCountNew < clustCountOld)
+        {
+            shortenClusterChain(partIdx, file->cluster, clustCountOld - clustCountNew);
+        }
+
         // Update the file size in the directory entry
         dirsec->entries[entryIdx].fileSize = dataSize;
 
