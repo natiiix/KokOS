@@ -202,42 +202,18 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     size_t entryIdx = unusedIdx & 0xF;
     size_t secIdx = clusterToSector(partIdx, 0) + (unusedIdx >> 4);
 
-	// How many clusters are used by the entry
-	size_t clusterCount = (size / partArray[partIdx].sectorsPerCluster) + (size % partArray[partIdx].sectorsPerCluster);
-	// Each entry must use at least one cluster
-	if (!clusterCount)
-	{
-		clusterCount = 1;
-	}
-	
-	// Find a cluster for the file
+    // How many clusters are used by the entry
+	size_t clusterCount = bytesToClusterCount(partIdx, size);	
+	// Find the first cluster for the file
 	uint32_t firstCluster = findEmptyCluster(partIdx);
-	uint32_t prevCluster = 0;
-	for (size_t i = 0; i < clusterCount; i++)
-	{
-		uint32_t nextCluster = findEmptyCluster(partIdx);
-		if (!nextCluster)
-		{
-			debug_print("fat_entry.c | newEntry() | Couldn't find an empty cluster!");
-			return (struct FILE*)0;
-		}
-		
-		if (i)
-		{
-			// The first cluster is later on used when the information about the file itself is being generated
-			firstCluster = nextCluster;
-		}
-		else
-		{
-			// Write the cluster index of this cluster to the previous cluster
-			// This creates the desired cluster chain
-			fatWrite(partIdx, prevCluster, nextCluster);
-		}
-		
-		prevCluster = nextCluster;
-	}
-	// Write the cluster chain terminator to the last cluster in the chain
-	fatWrite(partIdx, prevCluster, CLUSTER_CHAIN_TERMINATOR);
+    // Set the first cluster as the last cluster
+    fatWrite(partIdx, firstCluster, CLUSTER_CHAIN_TERMINATOR);
+
+    // Prolong the cluster chain if necessary
+    if (clusterCount > 1)
+    {
+        prolongClusterChain(partIdx, firstCluster, clusterCount - 1);
+    }
 
     // Read old directory entries from the sector
     struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, secIdx);
@@ -627,6 +603,15 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
                         dirsec->entries[entryIdx].clusterHigh == existingEntry->clusterHigh && // compare this entry with the entry we're looking for
                         dirsec->entries[entryIdx].clusterLow == existingEntry->clusterLow)
                     {
+                        char* strName = fileNameToString(dirsec->entries[entryIdx].fileName);
+                        bool match = strcmp(strName, pathName);
+                        mem_free(strName);
+
+                        if (!match)
+                        {
+                            continue;
+                        }
+
                         // Get the number of clusters used by the file before the overwrite
                         size_t clustCountOld = bytesToClusterCount(partIdx, existingEntry->fileSize);
                         if (!clustCountOld)

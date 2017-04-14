@@ -150,11 +150,14 @@ bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const
         // Append the empty cluster to the end of the cluster chain
         fatWrite(partIdx, lastCluster, emptyCluster);
 
+        // Mark the end of the chain by writing the terminator to the last cluster entry in the chain
+        // This must be done every time, otherwise the last cluster entry will contain 0 and thus it will be considered as empty
+        // and the findEmptyCluster() function will keep finding it over and over and it won't know it's already in the chain
+        fatWrite(partIdx, emptyCluster, CLUSTER_CHAIN_TERMINATOR);
+
+        // The cluster we've just appended to the chain is now the last cluster in the chain
         lastCluster = emptyCluster;
     }
-
-    // Mark the end of the chain by writing the terminator to the last entry in the chain
-    fatWrite(partIdx, lastCluster, CLUSTER_CHAIN_TERMINATOR);
 
     return true;
 }
