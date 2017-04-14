@@ -9,10 +9,8 @@
 
 #include <kernel.h>
 
-#include <modules/disk.hpp>
-#include <drivers/storage/fat.h>
-
 #include <modules/commands.hpp>
+#include <drivers/storage/fat.h>
 
 extern "C"
 void term_writeline_convert(const size_t, const size_t);
@@ -23,9 +21,6 @@ uint32_t activeDir; // first cluster of the active directory
 string shellPrefix;
 bool diskToolsEnabled; // false if there are no FAT partitions available
 vector<string> pathStructure;
-
-// Modules
-Disk modDisk;
 
 vector<string> cmdHistory;
 uint8_t historyIdx;
@@ -62,8 +57,6 @@ void shell_init(void)
 		shellPrefix.push_back('>');
 	}
 
-	Shell::initModules();
-
     while (true)
     {
 		// Keep in mind that some memory is always allocated by the shell instance itself
@@ -83,12 +76,6 @@ void shell_init(void)
 
 namespace Shell
 {
-	void initModules(void)
-	{
-		modDisk = Disk();
-		modDisk.init("disk");
-	}
-
 	void process(const string& strInput)
 	{
 		// Extract command string from the input string
@@ -168,9 +155,9 @@ namespace Shell
 		// -- Compare the input string against each module command string --
 		// Disk operation module
 		// Syntax: disk <Action> <Arguments>
-		else if (modDisk.compare(strCmd))
+		else if (strCmd.compare("disk"))
 		{
-			modDisk.process(strArgs);
+			cmd_disk(strArgs);
 		}
 		else if (strCmd.compare("read"))
 		{
