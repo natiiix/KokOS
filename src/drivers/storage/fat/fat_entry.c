@@ -583,10 +583,13 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
     // File already exists
     if (existingEntry)
     {
+        debug_print("fat_entry.c | writeFile() | File already exists! Updating file information!");
+
         // Check if the found entry is a directory
         if (attribCheck(existingEntry->attrib, FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY))
         {
             term_writeline("Can't overwrite a directory with a file!", false);
+            mem_free(existingEntry);
 		    return (struct FILE*)0;
         }
 
@@ -624,8 +627,6 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
                         dirsec->entries[entryIdx].clusterHigh == existingEntry->clusterHigh && // compare this entry with the entry we're looking for
                         dirsec->entries[entryIdx].clusterLow == existingEntry->clusterLow)
                     {
-                        entryFound = true;
-
                         // Get the number of clusters used by the file before the overwrite
                         size_t clustCountOld = bytesToClusterCount(partIdx, existingEntry->fileSize);
                         if (!clustCountOld)
@@ -660,7 +661,11 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
                         hddWrite(partArray[partIdx].hddIdx, dirClusterBase + secIdx, (uint8_t*)dirsec);
 
                         // Generate the FILE structure with the updated size
-                        file = generateFileStruct(partIdx, &dirsec->entries[entryIdx]);
+                        file = generateFileStruct(partIdx, existingEntry);
+
+                        mem_free(existingEntry);
+
+                        entryFound = true;
                     }
                 }
 
@@ -680,6 +685,8 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
     // File doesn't exist
     else
     {
+        debug_print("fat_entry.c | writeFile() | File doesn't exist! Creating new file!");
+
         // Create a new file
         file = newFile(partIdx, baseDir, path, dataSize);
 
@@ -716,6 +723,8 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
     }
 
     mem_free(clusterChain);
+
+    debug_print("fat_entry.c | writeFile() | File has been written successfully!");
 
     return file;
 }
