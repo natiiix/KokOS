@@ -676,7 +676,11 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
         mem_free(dircc);
         mem_free(pathName);
 
-        if (!entryFound)
+        if (entryFound)
+        {
+            debug_print("fat_entry.c | writeFile() | The file information has been updated successfully!");
+        }
+        else
         {
             debug_print("fat_entry.c | writeFile() | Unable to find file in the directory even though getFile() found it!");
             mem_free(existingEntry);
@@ -716,16 +720,18 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
     size_t dataIdx = 0;
 
     // Write all the clusters
-    for (size_t chainIdx = 0; clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR; chainIdx++)
+    for (size_t chainIdx = 0; clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR && dataIdx < dataSize; chainIdx++)
     {
         // Get the first sector of the cluster
         uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
 
         // Write all the sectors in a cluster
-        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster; iSec++)
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && dataIdx < dataSize; iSec++)
         {
             // Write the data to the disk
             hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, &data[dataIdx]);
+
+            dataIdx += 0x200;
         }
     }
 
