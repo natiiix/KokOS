@@ -679,6 +679,7 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
         if (!entryFound)
         {
             debug_print("fat_entry.c | writeFile() | Unable to find file in the directory even though getFile() found it!");
+            mem_free(existingEntry);
             return (struct FILE*)0;
         }
     }
@@ -688,12 +689,17 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
         debug_print("fat_entry.c | writeFile() | File doesn't exist! Creating new file!");
 
         // Create a new file
-        file = newFile(partIdx, baseDir, path, dataSize);
+        file = newFile(partIdx, targetDir, pathName, dataSize);
+        mem_free(pathName);
 
         if (!file)
         {
             term_writeline("Failed to create the file!", false);
 		    return (struct FILE*)0;
+        }
+        else
+        {
+            debug_print("fat_entry.c | writeFile() | File created successfully!");
         }
     }
 
@@ -703,6 +709,7 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
     if (!clusterChain)
     {
         term_writeline("The cluster chain of the file is broken!", false);
+        mem_free(file);
         return (struct FILE*)0;
     }
 
