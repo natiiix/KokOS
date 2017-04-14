@@ -21,7 +21,7 @@ void cmd_mkfile(const string& strArgs)
         return;
     }
 
-    struct FILE* file = newFile(activePart, activeDir, vecArgs[0].c_str());
+    struct FILE* file = newFile(activePart, activeDir, vecArgs[0].c_str(), 0);
 
     if (file)
     {

@@ -73,38 +73,42 @@ void hddAddAHCI(const HBA_PORT* const port)
     hdd_init_last();
 }
 
-uint8_t* hddRead(const struct HARDDRIVE hdd, const uint64_t lba)
+uint8_t* hddRead(const uint8_t hddIdx, const uint64_t lba)
 {
-    if (hdd.type == HDD_TYPE_IDE)
+    struct HARDDRIVE* hdd = &hddArray[hddIdx];
+
+    if (hdd->type == HDD_TYPE_IDE)
     {
-        return readLBA48((uint16_t)(hdd.addr >> 8), (uint8_t)hdd.addr, lba);
+        return readLBA48((uint16_t)(hdd->addr >> 8), (uint8_t)hdd->addr, lba);
     }
-    else if (hdd.type == HDD_TYPE_AHCI)
+    else if (hdd->type == HDD_TYPE_AHCI)
     {
         uint8_t* buff = (uint8_t*)mem_alloc(0x200);
-        ahci_read((HBA_PORT*)hdd.addr, lba, 1, (uint16_t*)buff);
+        ahci_read((HBA_PORT*)hdd->addr, lba, 1, (uint16_t*)buff);
         return buff;
     }
     else
     {
-        debug_print("harddrive.c | hddRead() | Invalid disk type");
+        debug_print("harddrive.c | hddRead() | Invalid disk type!");
         return (uint8_t*)0;
     }
 }
 
-void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* const data)
+void hddWrite(const uint8_t hddIdx, const uint64_t lba, const uint8_t* const data)
 {
-    if (hdd.type == HDD_TYPE_IDE)
+    struct HARDDRIVE* hdd = &hddArray[hddIdx];
+
+    if (hdd->type == HDD_TYPE_IDE)
     {
-        writeLBA48((uint16_t)(hdd.addr >> 8), (uint8_t)hdd.addr, lba, data);
+        writeLBA48((uint16_t)(hdd->addr >> 8), (uint8_t)hdd->addr, lba, data);
     }
-    else if (hdd.type == HDD_TYPE_AHCI)
+    else if (hdd->type == HDD_TYPE_AHCI)
     {
         debug_print("harddrive.c | hddWrite() | Writing to an AHCI device is not yet implemented!");
         // TODO
     }
     else
     {
-        debug_print("harddrive.c | hddWrite() | Invalid disk type");
+        debug_print("harddrive.c | hddWrite() | Invalid disk type!");
     }
 }

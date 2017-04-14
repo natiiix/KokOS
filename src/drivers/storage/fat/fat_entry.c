@@ -22,7 +22,7 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
         {
             // Read the sector from the drive
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Look through all the entries in the sector
             for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir; iEntry++)
@@ -145,7 +145,7 @@ uint8_t* readFile(const struct FILE* const file)
         for (size_t j = 0; j < partArray[file->partIdx].sectorsPerCluster && !fileEnd; j++)
         {
             // Read a sector of the file content from the disk
-            uint8_t* data = hddRead(hddArray[partArray[file->partIdx].hddIdx], clusterBase + j);
+            uint8_t* data = hddRead(partArray[file->partIdx].hddIdx, clusterBase + j);
 
             // If the file does not occupy the whole sector copy only as much as necessary
             // This also means the end of file has been reached
@@ -169,7 +169,7 @@ uint8_t* readFile(const struct FILE* const file)
 }
 
 struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const name, const uint8_t attrib, const uint32_t size)
-{	
+{
 	struct DIR_ENTRY* existingEntry = findEntry(partIdx, baseDir, name, 0, 0);
 	if (existingEntry)
 	{
@@ -233,7 +233,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
 	fatWrite(partIdx, prevCluster, CLUSTER_CHAIN_TERMINATOR);
 
     // Read old directory entries from the sector
-    struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
+    struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, secIdx);
     if (!dirsec)
     {
         debug_print("fat_entry.c | newEntry() | Unable to read directory sector!");
@@ -247,7 +247,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     dirsec->entries[entryIdx].clusterLow = (uint16_t)firstCluster;
     dirsec->entries[entryIdx].fileSize = size;
 
-    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)dirsec);
+    hddWrite(partArray[partIdx].hddIdx, secIdx, (uint8_t*)dirsec);
 
     mem_free(dirsec);
 
@@ -263,7 +263,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     return file;
 }
 
-struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const size_t fileSize)
 {
 	uint32_t targetDir = 0;
 	char* pathName = (char*)0;
@@ -285,7 +285,7 @@ struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 	}
 	
     // Create a new directory entry
-	struct FILE* file = newEntry(partIdx, targetDir, pathName, FILE_ATTRIB_ARCHIVE, 0);
+	struct FILE* file = newEntry(partIdx, targetDir, pathName, FILE_ATTRIB_ARCHIVE, fileSize);
 	
 	mem_free(pathName);
 	
@@ -350,7 +350,7 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	*(uint8_t*)&(dirsec->entries[2]) = DIR_ENTRY_END;
 	
 	// Write the newly created directory sector to the disk
-	hddWrite(hddArray[partArray[partIdx].hddIdx], firstDirSector, (uint8_t*)dirsec);
+	hddWrite(partArray[partIdx].hddIdx, firstDirSector, (uint8_t*)dirsec);
 	
 	mem_free(dirsec);
 	
@@ -374,7 +374,7 @@ bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust)
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
         {
             // Read the sector from the drive
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Look through all the entries in the sector
             for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir; iEntry++)
@@ -459,7 +459,7 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir && !entryFound; iSec++)
         {
             // Read the sector from the drive
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Look through all the entries in the sector
             for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir && !entryFound; iEntry++)
@@ -500,7 +500,7 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
                         *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_UNUSED;
 						
 						// Write the modified directory sector to disk
-						hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+						hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, (uint8_t*)dirsec);
 
                         mem_free(dircc);
 						mem_free(pathName);
@@ -545,4 +545,145 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
     mem_free(entrycc);
     
     return true;
+}
+
+struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const uint8_t* const data, const size_t dataSize)
+{
+    // Try to find the file
+    struct FILE* file = getFile(partIdx, baseDir, path);
+
+    // File already exists
+    if (file)
+    {
+        // Check if the found entry is a directory
+        if (attribCheck(file->attrib, FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY))
+        {
+            term_writeline("Can't overwrite a directory with a file!", false);
+		    return (struct FILE*)0;
+        }
+
+        uint32_t targetDir = 0;
+        char* pathName = (char*)0;
+        
+        // Extract the directory and the file name from the path
+        extractPath(partIdx, baseDir, path, &targetDir, &pathName);
+
+        // Get cluster chain
+        uint32_t* dircc = getClusterChain(partIdx, targetDir);
+
+        bool endOfDir = false;
+        bool entryFound = false;
+
+        // These are later used when rewriting the entry
+        uint64_t dirClusterBase = 0;        
+        size_t secIdx = 0;
+        size_t entryIdx = 0;
+        struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)0;
+
+        // Search through the cluster chain until the end of the directory is reached or the entry is found
+        for (size_t ccIdx = 0; dircc[ccIdx] < CLUSTER_CHAIN_TERMINATOR && !endOfDir && !entryFound; ccIdx++)
+        {
+            // Convert cluster to sector for LBA addressing
+            dirClusterBase = clusterToSector(partIdx, dircc[ccIdx]);
+
+            // Look through each sector within the cluster
+            for (secIdx = 0; secIdx < partArray[partIdx].sectorsPerCluster && !endOfDir && !entryFound; secIdx++)
+            {
+                // Read the sector from the drive
+                dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, dirClusterBase + secIdx);
+
+                // Look through all the entries in the sector
+                for (entryIdx = 0; entryIdx < 0x10 && !endOfDir && !entryFound; entryIdx++)
+                {
+                    // Get the first byte of the entry
+                    // Used to find unused entries and the end of the directory
+                    uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[entryIdx]);
+
+                    // End of directory reached
+                    if (entryFirstByte == DIR_ENTRY_END)
+                    {
+                        endOfDir = true;
+                    }
+                    else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
+                        dirsec->entries[entryIdx].attrib != FILE_ATTRIB_LONG_NAME) // mustn't be a long name entry
+                    {
+                        char* strName = fileNameToString(&dirsec->entries[entryIdx].fileName[0]);
+                        bool namesMatch = strcmp(pathName, strName);
+                        mem_free(strName);
+
+                        // Names match, return the directory entry
+                        if (namesMatch)
+                        {
+                            entryFound = true;
+                        }
+                    }
+                }
+
+                if (!entryFound)
+                {
+                    mem_free(dirsec);
+                }
+            }
+        }
+
+        mem_free(dircc);
+        
+        if (!dirsec)
+        {
+            debug_print("fat_entry.c | writeFile() | Unable to find file in the directory even though getFile() found it!");
+            return (struct FILE*)0;
+        }
+
+        // Update the file size in the directory entry
+        dirsec->entries[entryIdx].fileSize = dataSize;
+
+        // Write the updated directory sector to the disk
+        hddWrite(partArray[partIdx].hddIdx, dirClusterBase + secIdx, (uint8_t*)dirsec);
+
+        mem_free(dirsec);
+
+        // Update the file size in the FILE structure
+        file->size = dataSize;
+    }
+    // File doesn't exist
+    else
+    {
+        // Create a new file
+        file = newFile(partIdx, baseDir, path, dataSize);
+
+        if (!file)
+        {
+            term_writeline("Failed to create the file!", false);
+		    return (struct FILE*)0;
+        }
+    }
+
+    // Write the data
+    uint32_t* clusterChain = getClusterChain(partIdx, file->cluster);
+
+    if (!clusterChain)
+    {
+        term_writeline("The cluster chain of the file is broken!", false);
+        return (struct FILE*)0;
+    }
+
+    size_t dataIdx = 0;
+
+    // Write all the clusters
+    for (size_t chainIdx = 0; clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR; chainIdx++)
+    {
+        // Get the first sector of the cluster
+        uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
+
+        // Write all the sectors in a cluster
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster; iSec++)
+        {
+            // Write the data to the disk
+            hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, &data[dataIdx]);
+        }
+    }
+
+    mem_free(clusterChain);
+
+    return file;
 }

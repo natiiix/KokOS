@@ -189,11 +189,14 @@ bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust);
 uint8_t* readFile(const struct FILE* const file);
 
 // New
-struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const size_t fileSize);
 struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Delete
 bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+
+// Write
+struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const uint8_t* const data, const size_t dataSize);
 
 #if defined(__cplusplus)
 }

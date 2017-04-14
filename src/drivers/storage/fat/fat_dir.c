@@ -50,7 +50,7 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
         size_t fatentry = currClust % 0x80;
 
         // Read the sector which holds the information about the next cluster in currently processed chain
-        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], readsec);
+        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(partArray[partIdx].hddIdx, readsec);
         currClust = fat->entries[fatentry];
         mem_free(fat);
     }
@@ -71,7 +71,7 @@ uint32_t findEmptyCluster(const uint8_t partIdx)
     for (size_t secIdx = 0; secIdx < partArray[partIdx].fatSectors; secIdx++)
     {
         // Read the FAT table from the disk
-        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], fatBegin + secIdx);
+        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(partArray[partIdx].hddIdx, fatBegin + secIdx);
 
         // Each FAT table contains 128 entries
         for (size_t entryIdx = (secIdx ? 0 : 2); entryIdx < 0x80; entryIdx++)
@@ -103,13 +103,13 @@ void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t con
     size_t entryIdx = clustIdx % 0x80;
 
     // Read the old FAT sector
-    struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
+    struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(partArray[partIdx].hddIdx, secIdx);
 
     // Change the content of a specified entry
     fat->entries[entryIdx] = content;
 
     // Write the new FAT sector with the modified entry
-    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)fat);
+    hddWrite(partArray[partIdx].hddIdx, secIdx, (uint8_t*)fat);
 
     mem_free(fat);
 }
@@ -321,7 +321,7 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
         {
             // Read the directory sector from disk
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Go through each of the 16 entries in the directory sector
             for (size_t iEntry = 0; iEntry < 16 && !endOfDir; iEntry++)
@@ -459,7 +459,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster; iSec++)
         {
             // Read the sector from the drive
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Look through all the entries in the sector
             for (size_t iEntry = 0; iEntry < 0x10; iEntry++)
@@ -470,7 +470,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                 {
                     *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_END;
                     // Write it to the disk
-                    hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+                    hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, (uint8_t*)dirsec);
 
                     mem_free(dirsec);
                     mem_free(clusterChain);
@@ -503,7 +503,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                         // Mark this entry as unused
                         *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_UNUSED;
                         // Write it to the disk
-                        hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+                        hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, (uint8_t*)dirsec);
 
                         // The next entry will be marked as the end of the directory
                         writeEndOfDir = true;
