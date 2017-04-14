@@ -17,5 +17,5 @@ private:
     size_t m_cursorCol;
 
     size_t m_viewRow;
-    size_t m_viewCol;    
+    size_t m_viewCol;
 };

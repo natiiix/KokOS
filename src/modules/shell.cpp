@@ -12,70 +12,18 @@
 #include <modules/commands.hpp>
 #include <drivers/storage/fat.h>
 
-extern "C"
-void term_writeline_convert(const size_t, const size_t);
-
-uint8_t activePart; // index of the active partition
-uint32_t activeDir; // first cluster of the active directory
-
-string shellPrefix;
-bool diskToolsEnabled; // false if there are no FAT partitions available
-vector<string> pathStructure;
-
-vector<string> cmdHistory;
-uint8_t historyIdx;
-
-extern "C"
-void shell_init(void)
-{
-	// Used to make sure there is no memory leaking during kernel initialization
-	debug_memusage();
-	// Give the user a chance to see kernel initialization messages
-	debug_pause();
-
-    clear();
-
-	shellPrefix = string();
-	pathStructure = vector<string>();
-
-	cmdHistory = vector<string>();
-	historyIdx = Shell::HISTORY_INDEX_DEFAULT;
-
-	diskToolsEnabled = (partCount > 0);
-
-	if (diskToolsEnabled)
-	{
-		activePart = 0;
-		activeDir = partArray[activePart].rootDirCluster;
-		pathStructure.clear();
-		Shell::_update_prefix();
-	}
-	else
-	{
-		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
-		shellPrefix.clear();
-		shellPrefix.push_back('>');
-	}
-
-    while (true)
-    {
-		// Keep in mind that some memory is always allocated by the shell instance itself
-		debug_memusage();
-
-        string strInput = Shell::readline();
-
-		sprint(shellPrefix);
-        sprint(strInput);
-		newline();
-
-		Shell::process(strInput);
-		
-		strInput.dispose();
-    }
-}
-
 namespace Shell
 {
+	uint8_t activePart; // index of the active partition
+	uint32_t activeDir; // first cluster of the active directory
+
+	string shellPrefix;
+	bool diskToolsEnabled; // false if there are no FAT partitions available
+	vector<string> pathStructure;
+
+	vector<string> cmdHistory;
+	uint8_t historyIdx;
+
 	void process(const string& strInput)
 	{
 		// Extract command string from the input string
@@ -450,4 +398,53 @@ namespace Shell
 
 		shellPrefix.push_back('>');
 	}
+}
+
+extern "C"
+void shell_init(void)
+{
+	// Used to make sure there is no memory leaking during kernel initialization
+	debug_memusage();
+	// Give the user a chance to see kernel initialization messages
+	debug_pause();
+
+    clear();
+
+	Shell::shellPrefix = string();
+	Shell::pathStructure = vector<string>();
+
+	Shell::cmdHistory = vector<string>();
+	Shell::historyIdx = Shell::HISTORY_INDEX_DEFAULT;
+
+	Shell::diskToolsEnabled = (partCount > 0);
+
+	if (Shell::diskToolsEnabled)
+	{
+		Shell::activePart = 0;
+		Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
+		Shell::pathStructure.clear();
+		Shell::_update_prefix();
+	}
+	else
+	{
+		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
+		Shell::shellPrefix.clear();
+		Shell::shellPrefix.push_back('>');
+	}
+
+    while (true)
+    {
+		// Keep in mind that some memory is always allocated by the shell instance itself
+		debug_memusage();
+
+        string strInput = Shell::readline();
+
+		sprint(Shell::shellPrefix);
+        sprint(strInput);
+		newline();
+
+		Shell::process(strInput);
+		
+		strInput.dispose();
+    }
 }
