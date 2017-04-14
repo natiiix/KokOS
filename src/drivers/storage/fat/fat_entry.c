@@ -69,6 +69,25 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
     return (struct DIR_ENTRY*)0;
 }
 
+struct FILE* generateFileStruct(const uint8_t partIdx, const struct DIR_ENTRY* const direntry)
+{
+    // Allocate memory space to store the file structure
+    struct FILE* file = mem_alloc(sizeof(struct FILE));
+
+    // Convert the file name to a cstring
+    char* strName = fileNameToString(&direntry->fileName[0]);
+    strcopy(strName, &file->name[0]);
+    mem_free(strName);
+    
+    // Copy all the properties from the directory entry to the file structure
+    file->partIdx = partIdx;
+    file->attrib = direntry->attrib;
+    file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
+    file->size = direntry->fileSize;
+
+    return file;
+}
+
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
 {
     uint32_t targetDir = 0;
@@ -90,23 +109,11 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
     
     if (!direntry)
     {
-        debug_print("fat_entry.c | getFile() | Can't read the directory entry if it can't be found!");
+        debug_print("fat_entry.c | getFile() | Couldn't find the directory entry!");
         return (struct FILE*)0;
     }
 
-    // Allocate memory space to store the file structure
-    struct FILE* file = mem_alloc(sizeof(struct FILE));
-
-    // Convert the file name to a cstring
-    char* strName = fileNameToString(&direntry->fileName[0]);
-    strcopy(strName, &file->name[0]);
-    mem_free(strName);
-    
-    // Copy all the properties of the file
-    file->partIdx = partIdx;
-    file->attrib = direntry->attrib;
-    file->cluster = joinCluster(direntry->clusterHigh, direntry->clusterLow);
-    file->size = direntry->fileSize;
+    struct FILE* file = generateFileStruct(partIdx, direntry);
 
     mem_free(direntry);
 
@@ -549,24 +556,39 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 
 struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const uint8_t* const data, const size_t dataSize)
 {
-    // Try to find the file
-    struct FILE* file = getFile(partIdx, baseDir, path);
+    uint32_t targetDir = 0;
+    char* pathName = (char*)0;
+    
+    // Extract the directory and the file name from the path
+    extractPath(partIdx, baseDir, path, &targetDir, &pathName);
+
+    if (!pathName)
+	{
+		term_writeline("Invalid file name!", false);
+		return (struct FILE*)0;		
+	}
+	
+	if (!targetDir)
+	{
+        mem_free(pathName);
+		term_writeline("Invalid directory path!", false);
+		return (struct FILE*)0;
+	}
+
+    // Try to find an already existing entry
+    struct DIR_ENTRY* existingEntry = findEntry(partIdx, targetDir, pathName, 0, 0);
+
+    struct FILE* file = (struct FILE*)0;
 
     // File already exists
-    if (file)
+    if (existingEntry)
     {
         // Check if the found entry is a directory
-        if (attribCheck(file->attrib, FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY))
+        if (attribCheck(existingEntry->attrib, FILE_ATTRIB_DIRECTORY, FILE_ATTRIB_DIRECTORY))
         {
             term_writeline("Can't overwrite a directory with a file!", false);
 		    return (struct FILE*)0;
         }
-
-        uint32_t targetDir = 0;
-        char* pathName = (char*)0;
-        
-        // Extract the directory and the file name from the path
-        extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 
         // Get cluster chain
         uint32_t* dircc = getClusterChain(partIdx, targetDir);
@@ -574,26 +596,20 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
         bool endOfDir = false;
         bool entryFound = false;
 
-        // These are later used when rewriting the entry
-        uint64_t dirClusterBase = 0;        
-        size_t secIdx = 0;
-        size_t entryIdx = 0;
-        struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)0;
-
         // Search through the cluster chain until the end of the directory is reached or the entry is found
         for (size_t ccIdx = 0; dircc[ccIdx] < CLUSTER_CHAIN_TERMINATOR && !endOfDir && !entryFound; ccIdx++)
         {
             // Convert cluster to sector for LBA addressing
-            dirClusterBase = clusterToSector(partIdx, dircc[ccIdx]);
+            uint64_t dirClusterBase = clusterToSector(partIdx, dircc[ccIdx]);
 
             // Look through each sector within the cluster
-            for (secIdx = 0; secIdx < partArray[partIdx].sectorsPerCluster && !endOfDir && !entryFound; secIdx++)
+            for (size_t secIdx = 0; secIdx < partArray[partIdx].sectorsPerCluster && !endOfDir && !entryFound; secIdx++)
             {
                 // Read the sector from the drive
-                dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, dirClusterBase + secIdx);
+                struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, dirClusterBase + secIdx);
 
                 // Look through all the entries in the sector
-                for (entryIdx = 0; entryIdx < 0x10 && !endOfDir && !entryFound; entryIdx++)
+                for (size_t entryIdx = 0; entryIdx < 0x10 && !endOfDir && !entryFound; entryIdx++)
                 {
                     // Get the first byte of the entry
                     // Used to find unused entries and the end of the directory
@@ -605,59 +621,61 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
                         endOfDir = true;
                     }
                     else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
-                        dirsec->entries[entryIdx].attrib != FILE_ATTRIB_LONG_NAME) // mustn't be a long name entry
+                        dirsec->entries[entryIdx].clusterHigh == existingEntry->clusterHigh && // compare this entry with the entry we're looking for
+                        dirsec->entries[entryIdx].clusterLow == existingEntry->clusterLow)
                     {
-                        char* strName = fileNameToString(&dirsec->entries[entryIdx].fileName[0]);
-                        bool namesMatch = strcmp(pathName, strName);
-                        mem_free(strName);
+                        entryFound = true;
 
-                        // Names match, return the directory entry
-                        if (namesMatch)
+                        // Get the number of clusters used by the file before the overwrite
+                        size_t clustCountOld = bytesToClusterCount(partIdx, existingEntry->fileSize);
+                        if (!clustCountOld)
                         {
-                            entryFound = true;
+                            clustCountOld = 1;
                         }
+
+                        // Get the number of clusters used by the file after the overwrite
+                        size_t clustCountNew = bytesToClusterCount(partIdx, dataSize);
+                        if (!clustCountNew)
+                        {
+                            clustCountNew = 1;
+                        }
+
+                        uint32_t fileFirstCluster = joinCluster(existingEntry->clusterHigh, existingEntry->clusterLow);
+
+                        // The cluster chain must be prolonged
+                        if (clustCountNew > clustCountOld)
+                        {
+                            prolongClusterChain(partIdx, fileFirstCluster, clustCountNew - clustCountOld);
+                        }
+                        // The cluster chain must be shortened
+                        else if (clustCountNew < clustCountOld)
+                        {
+                            shortenClusterChain(partIdx, fileFirstCluster, clustCountOld - clustCountNew);
+                        }
+
+                        // Update the file size in the directory entry
+                        dirsec->entries[entryIdx].fileSize = dataSize;
+
+                        // Write the updated directory sector to the disk
+                        hddWrite(partArray[partIdx].hddIdx, dirClusterBase + secIdx, (uint8_t*)dirsec);
+
+                        // Generate the FILE structure with the updated size
+                        file = generateFileStruct(partIdx, &dirsec->entries[entryIdx]);
                     }
                 }
 
-                if (!entryFound)
-                {
-                    mem_free(dirsec);
-                }
+                mem_free(dirsec);
             }
         }
 
         mem_free(dircc);
-        
-        if (!dirsec)
+        mem_free(pathName);
+
+        if (!entryFound)
         {
             debug_print("fat_entry.c | writeFile() | Unable to find file in the directory even though getFile() found it!");
             return (struct FILE*)0;
         }
-
-        size_t clustCountOld = bytesToClusterCount(partIdx, file->size);
-        size_t clustCountNew = bytesToClusterCount(partIdx, dataSize);
-
-        // The cluster chain must be prolonged
-        if (clustCountNew > clustCountOld)
-        {
-            prolongClusterChain(partIdx, file->cluster, clustCountNew - clustCountOld);
-        }
-        // The cluster chain must be shortened
-        else if (clustCountNew < clustCountOld)
-        {
-            shortenClusterChain(partIdx, file->cluster, clustCountOld - clustCountNew);
-        }
-
-        // Update the file size in the directory entry
-        dirsec->entries[entryIdx].fileSize = dataSize;
-
-        // Write the updated directory sector to the disk
-        hddWrite(partArray[partIdx].hddIdx, dirClusterBase + secIdx, (uint8_t*)dirsec);
-
-        mem_free(dirsec);
-
-        // Update the file size in the FILE structure
-        file->size = dataSize;
     }
     // File doesn't exist
     else

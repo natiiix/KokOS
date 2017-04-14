@@ -172,6 +172,45 @@ namespace Shell
 		{
 			modDisk.process(strArgs);
 		}
+		else if (strCmd.compare("read"))
+		{
+			vector<string> vecArgs = strArgs.split(' ', true);
+    
+			if (vecArgs.size() != 1)
+			{
+				print("Invalid arguments!\n");
+				print("Syntax: read <File Path>\n");
+				
+				vecArgs.dispose();
+				return;
+			}
+
+			struct FILE* file = getFile(activePart, activeDir, vecArgs.at(0).c_str());
+
+            if (file == nullptr)
+            {
+                print("Invalid file path!\n");
+            }
+            else
+            {
+                char* content = (char*)readFile(file);
+
+                if (content)
+                {
+                    content[file->size] = '\0'; // WARNING: this is actually outside the allocated memory boundaries
+                    print(content);
+                    delete content;
+                }
+                else
+                {
+                    print("Empty file.\n");
+                }
+
+                delete file;
+            }
+
+			vecArgs.dispose();
+		}
 		else if (strCmd.compare("write"))
 		{
 			vector<string> vecArgs = strArgs.split(' ', true);

@@ -351,7 +351,12 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     else
                     {
                         // File
-                        term_writeline(strName, true);
+                        term_write(strName, true);
+
+                        // Display the size of the file in bytes
+                        term_write(" - ", false);
+                        term_write_convert(dirsec->entries[iEntry].fileSize, 10);
+                        term_writeline(" Bytes", false);
                     }
                 }
             }
@@ -587,7 +592,7 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 		// Copy the name from the original path to the name string
         for (size_t i = 0; i < namelen; i++)
         {
-            pathName[i] = ctoupper(pathFull[nameBeginIdx + i]);
+            pathName[i] = ctolower(pathFull[nameBeginIdx + i]);
         }
 		// Terminate the name string
 		pathName[namelen] = '\0';
