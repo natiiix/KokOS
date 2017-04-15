@@ -14,7 +14,7 @@
 - **dev** - meant for development only, often contains unstable code which may seriously harm your device upon execution (please NEVER run this code on a physical machine regardless of the circumstances)
 
 ## Features
-- text mode screen output
+- simple text-mode shell interface
 - ~~standard keyboard input (using port polling)~~ (removed due to redundancy / obsolescence)
 - keyboard input using interrupts
 - simple memory management (malloc, free,..)
@@ -23,25 +23,23 @@
 - partial C &lt;stdio.h&gt; implementation
 - C++ &lt;string&gt; implementation
 - C++ &lt;vector&gt; implementation
-- basic shell commands (help, cd, dir,..)
-- automatically converts paths to uppercase (because FAT doesn't seem to store lowercase names in basic directory entries)
-- automatically converts commands to lowercase
+- basic shell commands (help, clear)
+- basic file/directory operation commands (mkfile, mkdir, delete)
+- prevents you from deleting a non-empty directory
 - shell supports both absolute and relative path addressing
+- shell command history (using up/down arrows, up to 16 commands)
+- currently up-to-date help command
+- repetitive validity checks should prevent unexpected behavior
 
 ## In progress
-- FAT file system support
 - shell
-- shell commands
-- file operations (create, delete, read, write)
-- directory operations (create, delete - a content check before deletion hasn't been implemented yet)
+- FAT file system support
+- more complex file operations
 
 ## TODO
-- improve the shell help command (some information may not be up-to-date at the moment)
 - OS-specific programming language (something along the lines of bash script)
 - implement more C/C++ libraries
-- shell command history (using up arrow)
 - moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
-- fix hazardous user inputs
 - basic text editor
 
 ## On Hold
