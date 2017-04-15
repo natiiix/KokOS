@@ -1,9 +1,10 @@
 #pragma once
 
-#include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
 #include "shell_global.hpp"
+
+class string;
 
 namespace Shell
 {

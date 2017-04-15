@@ -10,3 +10,4 @@ void cmd_mkdir(const string& strArgs);
 void cmd_delete(const string& strArgs);
 
 void cmd_disk(const string& strArgs);
+void cmd_text(const string& strArgs);

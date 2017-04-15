@@ -9,8 +9,8 @@
 
 #include <kernel.h>
 
-#include <modules/commands.hpp>
 #include <drivers/storage/fat.h>
+#include <modules/commands.hpp>
 
 namespace Shell
 {
@@ -160,9 +160,14 @@ namespace Shell
 			}
 
 			struct FILE* file = writeFile(activePart, activeDir, vecArgs[0].c_str(), (uint8_t*)vecArgs[1].c_str(), strlen(vecArgs[1].c_str()));
+			
+			delete file;
 
 			vecArgs.dispose();
-			delete file;
+		}
+		else if (strCmd.compare("text"))
+		{
+			cmd_text(strArgs);
 		}
 		else
 		{
