@@ -50,7 +50,7 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust)
         size_t fatentry = currClust % 0x80;
 
         // Read the sector which holds the information about the next cluster in currently processed chain
-        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], readsec);
+        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(partArray[partIdx].hddIdx, readsec);
         currClust = fat->entries[fatentry];
         mem_free(fat);
     }
@@ -71,7 +71,7 @@ uint32_t findEmptyCluster(const uint8_t partIdx)
     for (size_t secIdx = 0; secIdx < partArray[partIdx].fatSectors; secIdx++)
     {
         // Read the FAT table from the disk
-        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], fatBegin + secIdx);
+        struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(partArray[partIdx].hddIdx, fatBegin + secIdx);
 
         // Each FAT table contains 128 entries
         for (size_t entryIdx = (secIdx ? 0 : 2); entryIdx < 0x80; entryIdx++)
@@ -103,43 +103,100 @@ void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t con
     size_t entryIdx = clustIdx % 0x80;
 
     // Read the old FAT sector
-    struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(hddArray[partArray[partIdx].hddIdx], secIdx);
+    struct FAT_TABLE* fat = (struct FAT_TABLE*)hddRead(partArray[partIdx].hddIdx, secIdx);
 
     // Change the content of a specified entry
     fat->entries[entryIdx] = content;
 
     // Write the new FAT sector with the modified entry
-    hddWrite(hddArray[partArray[partIdx].hddIdx], secIdx, (uint8_t*)fat);
+    hddWrite(partArray[partIdx].hddIdx, secIdx, (uint8_t*)fat);
 
     mem_free(fat);
 }
 
-bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust)
+bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount)
 {
+    if (!clustCount)
+    {
+        debug_print("fat_dir.c | prolongClusterChain() | It's redundant to prolong a cluster chain by 0 clusters!");
+        return true; // It was technically successful despite not doing anything
+    }
+
     // Get the cluster chain beginning at the specified cluster
     uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
 
-    // Get index of the last cluster in the chain
-    size_t clustIdx = 1;
-    while (clusterChain[clustIdx] < CLUSTER_CHAIN_TERMINATOR)
+    // Get the last cluster in the chain
+    uint32_t lastCluster = 0;
+    for (size_t i = 0; clusterChain[i] < CLUSTER_CHAIN_TERMINATOR; i++)
     {
-        clustIdx++;
+        lastCluster = clusterChain[i];
     }
 
-    // Find an empty cluster to add to the chain
-    size_t emptyCluster = findEmptyCluster(partIdx);
+    mem_free(clusterChain);
 
-    // Valid clusters always have an index of 2 or higher
-    if (emptyCluster < 2)
+    for (size_t i = 0; i < clustCount; i++)
     {
-        debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
+        // Find an empty cluster to add to the chain
+        size_t emptyCluster = findEmptyCluster(partIdx);
+
+        // Valid clusters always have an index of 2 or higher
+        if (emptyCluster < 2)
+        {
+            debug_print("fat_dir.c | prolongClusterChain() | Invalid empty cluster index!");
+            mem_free(clusterChain);
+            return false;
+        }
+
+        // Append the empty cluster to the end of the cluster chain
+        fatWrite(partIdx, lastCluster, emptyCluster);
+
+        // Mark the end of the chain by writing the terminator to the last cluster entry in the chain
+        // This must be done every time, otherwise the last cluster entry will contain 0 and thus it will be considered as empty
+        // and the findEmptyCluster() function will keep finding it over and over and it won't know it's already in the chain
+        fatWrite(partIdx, emptyCluster, CLUSTER_CHAIN_TERMINATOR);
+
+        // The cluster we've just appended to the chain is now the last cluster in the chain
+        lastCluster = emptyCluster;
+    }
+
+    return true;
+}
+
+bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount)
+{
+    if (!clustCount)
+    {
+        debug_print("fat_dir.c | shortenClusterChain() | It's redundant to shorten a cluster chain by 0 clusters!");
+        return true; // It was technically successful despite not doing anything
+    }
+
+    // Get the cluster chain beginning at the specified cluster
+    uint32_t* clusterChain = getClusterChain(partIdx, firstClust);
+
+    // Get the length of the cluster chain
+    uint32_t chainlen = 0;
+    for (size_t i = 0; clusterChain[i] < CLUSTER_CHAIN_TERMINATOR; i++)
+    {
+        chainlen++;
+    }
+
+    // Make sure we're not trying to shorten the chain by too much
+    if (clustCount >= chainlen)
+    {
+        debug_print("fat_dir.c | shortenClusterChain() | Can't shorten a cluster chain below 1 cluster!");
+        mem_free(clusterChain);
         return false;
     }
 
-    // Append the empty cluster to the end of the cluster chain
-    fatWrite(partIdx, clusterChain[clustIdx - 1], emptyCluster);
-    // Mark the end of the cluster chain terminator
-    fatWrite(partIdx, emptyCluster, CLUSTER_CHAIN_TERMINATOR);
+    // Count down clusters starting from the end
+    for (size_t i = 0; i < clustCount; i++)
+    {
+        // Set the cluster as unused
+        fatWrite(partIdx, clusterChain[chainlen - i], 0);
+    }
+
+    // Mark the end of the chain by writing the terminator to the last entry in the chain
+    fatWrite(partIdx, clusterChain[chainlen - clustCount], CLUSTER_CHAIN_TERMINATOR);
 
     mem_free(clusterChain);
     return true;
@@ -267,7 +324,7 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
         {
             // Read the directory sector from disk
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Go through each of the 16 entries in the directory sector
             for (size_t iEntry = 0; iEntry < 16 && !endOfDir; iEntry++)
@@ -297,7 +354,12 @@ void listDirectory(const uint8_t partIdx, const uint32_t dirFirstClust)
                     else
                     {
                         // File
-                        term_writeline(strName, true);
+                        term_write(strName, true);
+
+                        // Display the size of the file in bytes
+                        term_write(" - ", false);
+                        term_write_convert(dirsec->entries[iEntry].fileSize, 10);
+                        term_writeline(" Bytes", false);
                     }
                 }
             }
@@ -405,7 +467,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
         for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster; iSec++)
         {
             // Read the sector from the drive
-            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec);
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
 
             // Look through all the entries in the sector
             for (size_t iEntry = 0; iEntry < 0x10; iEntry++)
@@ -416,7 +478,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                 {
                     *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_END;
                     // Write it to the disk
-                    hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+                    hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, (uint8_t*)dirsec);
 
                     mem_free(dirsec);
                     mem_free(clusterChain);
@@ -449,7 +511,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                         // Mark this entry as unused
                         *(uint8_t*)&(dirsec->entries[iEntry]) = DIR_ENTRY_UNUSED;
                         // Write it to the disk
-                        hddWrite(hddArray[partArray[partIdx].hddIdx], clusterBase + iSec, (uint8_t*)dirsec);
+                        hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, (uint8_t*)dirsec);
 
                         // The next entry will be marked as the end of the directory
                         writeEndOfDir = true;
@@ -462,7 +524,7 @@ size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir)
                         mem_free(dirsec);
                         mem_free(clusterChain);
 
-                        if (prolongClusterChain(partIdx, baseDir))
+                        if (prolongClusterChain(partIdx, baseDir, 1))
                         {
                             return findUnusedDirEntry(partIdx, baseDir);
                         }
@@ -533,7 +595,7 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 		// Copy the name from the original path to the name string
         for (size_t i = 0; i < namelen; i++)
         {
-            pathName[i] = ctoupper(pathFull[nameBeginIdx + i]);
+            pathName[i] = ctolower(pathFull[nameBeginIdx + i]);
         }
 		// Terminate the name string
 		pathName[namelen] = '\0';
@@ -550,4 +612,10 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
         
         return false;
 	}
+}
+
+size_t bytesToClusterCount(const uint8_t partIdx, const uint32_t sizeInBytes)
+{
+    size_t clusterSize = 0x200 * partArray[partIdx].sectorsPerCluster;
+    return (sizeInBytes / clusterSize) + !!(sizeInBytes % clusterSize);
 }

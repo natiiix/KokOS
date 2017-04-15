@@ -11,7 +11,7 @@ uint8_t partCount = 0;
 
 bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
 {
-    struct VOLUMEID* volid = (struct VOLUMEID*)hddRead(hddArray[hddIdx], lba);
+    struct VOLUMEID* volid = (struct VOLUMEID*)hddRead(hddIdx, lba);
 
     bool volumeidValid =
         (volid->bytesPerSector == BYTES_PER_SECTOR) &&

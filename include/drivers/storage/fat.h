@@ -155,11 +155,13 @@ uint32_t* getClusterChain(const uint8_t partIdx, const uint32_t firstClust);
 uint32_t findEmptyCluster(const uint8_t partIdx);
 // Writes an entry to the FAT table
 void fatWrite(const uint8_t partIdx, const uint32_t clustIdx, const uint32_t content);
-// Inserts an empty cluster (found by findEmptyCluster()) to the cluster chain beginning with a specified cluster
-bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust);
-// Convert a FAT file name to a standard cstring format ("NAME    EXT" to "NAME.EXT")
+// Adds a specified amount of empty clusters to the end of a cluster chain
+bool prolongClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount);
+// Removes a specified amount of sectors from the end of a cluster chain
+bool shortenClusterChain(const uint8_t partIdx, const uint32_t firstClust, const size_t clustCount);
+// Convert a FAT file name to a standard cstring format ("NAME    EXT" to "name.ext")
 char* fileNameToString(const char* const fileName);
-// Converts a cstring file name to a FAT file name ("NAME.EXT" to "NAME    EXT")
+// Converts a cstring file name to a FAT file name ("name.ext" to "NAME    EXT")
 void stringToFileName(const char* const strSrc, char* const fileNameDst);
 // Version of the stringToFileName() function which ignores dots and therefore doesn't handle extensions
 void stringToFileNameNoExt(const char* const strSrc, char* const fileNameDst);
@@ -177,6 +179,8 @@ size_t generateDirEntryIndex(const uint8_t partIdx, const size_t clusterIdx, con
 size_t findUnusedDirEntry(const uint8_t partIdx, const uint32_t baseDir);
 // Extracts directory cluster and name from a full path
 bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* const pathFull, uint32_t* targetDir, char** const pathNamePtr);
+// Calculates how many clusters are required to store a specified amount of bytes
+size_t bytesToClusterCount(const uint8_t partIdx, const uint32_t sizeInBytes);
 
 // ---- ENTRY ----
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);
@@ -187,11 +191,14 @@ bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust);
 uint8_t* readFile(const struct FILE* const file);
 
 // New
-struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const size_t fileSize);
 struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Delete
 bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+
+// Write
+struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const uint8_t* const data, const size_t dataSize);
 
 #if defined(__cplusplus)
 }

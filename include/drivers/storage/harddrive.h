@@ -27,5 +27,5 @@ char* getHddInfoStr(const uint8_t hddIdx);
 void hddAddIDE(const uint16_t bus, const uint8_t drive);
 void hddAddAHCI(const HBA_PORT* const port);
 
-uint8_t* hddRead(const struct HARDDRIVE hdd, const uint64_t lba);
-void hddWrite(const struct HARDDRIVE hdd, const uint64_t lba, const uint8_t* const data);
+uint8_t* hddRead(const uint8_t hddIdx, const uint64_t lba);
+void hddWrite(const uint8_t hddIdx, const uint64_t lba, const uint8_t* const data);

@@ -9,7 +9,7 @@
 bool hdd_init(const uint8_t hddIdx)
 {
     bool isValidFat = false;
-    struct MBR* mbr = (struct MBR*)hddRead(hddArray[hddIdx], 0);
+    struct MBR* mbr = (struct MBR*)hddRead(hddIdx, 0);
 
     // Check the boot segment signature 0xAA55
     if (mbr->signature == FAT_SIGNATURE)
