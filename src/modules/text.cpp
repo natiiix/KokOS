@@ -20,6 +20,7 @@ size_t m_viewCol;
 size_t m_viewRow;
 
 vector<string> m_lines;
+bool m_modified;
 
 void generateLines(const uint8_t* const data)
 {
@@ -59,7 +60,7 @@ void updateView(void)
     // Right
     if (m_cursorCol >= m_viewCol + VGA_WIDTH)
     {
-        m_viewCol = (m_cursorCol - VGA_WIDTH);
+        m_viewCol = m_cursorCol - VGA_WIDTH + 1;
     }
 
     // Top
@@ -71,7 +72,7 @@ void updateView(void)
     // Bottom
     if (m_cursorRow >= m_viewRow + VGA_HEIGHT)
     {
-        m_viewRow = (m_cursorRow - VGA_HEIGHT);
+        m_viewRow = m_cursorRow - VGA_HEIGHT + 1;
     }
 }
 
@@ -85,8 +86,6 @@ void moveLeft(void)
     }
 
     m_cursorCol--;
-
-    updateView();
 }
 
 void moveRight(void)
@@ -99,8 +98,17 @@ void moveRight(void)
     }
 
     m_cursorCol++;
+}
 
-    updateView();
+// The "Flying Cursor" is what happens when the cursor is moved up/down to a line
+// that is shorter than the cursor's previous horizontal position,
+// thus rendering it further to the right from the actual end of the line
+void fixFlyingCursor(void)
+{
+    if (m_cursorCol > m_lines.at(m_cursorRow).size())
+    {
+        m_cursorCol = m_lines.at(m_cursorRow).size();
+    }
 }
 
 void moveUp(void)
@@ -113,7 +121,7 @@ void moveUp(void)
 
     m_cursorRow--;
 
-    updateView();
+    fixFlyingCursor();
 }
 
 void moveDown(void)
@@ -126,23 +134,27 @@ void moveDown(void)
 
     m_cursorRow++;
 
-    updateView();
+    fixFlyingCursor();
 }
 
 void renderView(void)
 {
+    // Update the view-related information
+    updateView();
+
     // Clear the screen
     clear();
 
     for (size_t i = 0; i < VGA_HEIGHT && m_viewRow + i < m_lines.size(); i++)
     {
         // The line doesn't appear in the current view
-        if (m_viewCol >= m_lines.at(i).size())
+        if (m_viewCol >= m_lines.at(m_viewRow + i).size())
         {
             continue;
         }
 
-        printat(&m_lines.at(i).c_str()[m_viewCol], 0, i);
+        // Print that part of the line that can be seen in the current view
+        printat(&m_lines.at(m_viewRow + i).c_str()[m_viewCol], 0, i);
     }
 
     // Update the cursor location
@@ -153,20 +165,38 @@ void editor(void)
 {
     struct keyevent ke;
 
+    m_cursorCol = 0;
+    m_cursorRow = 0;
+
+    m_viewCol = 0;
+    m_viewRow = 0;
+
+    m_modified = false;
+
+    // Display the initial content of the file
+    renderView();
+
     while (true)
     {
         ke = readKeyEvent();
 
         if (ke.state)
         {
-            /*if (ke.keychar > 0)
+            if (ke.keychar > 0)
             {
-                // Append a character to the input string
-                strInput += ke.keychar;
-            }
-            else if (ke.scancode == KEY_ENTER && !ke.modifiers)
-            {
+                if (m_cursorCol < m_lines[m_cursorRow].size())
+                {
+                    m_lines[m_cursorRow].insert(ke.keychar, m_cursorCol);
+                }
+                else
+                {
+                    m_lines[m_cursorRow].push_back(ke.keychar);
+                }
 
+                m_cursorCol++;
+            }
+            /*else if (ke.scancode == KEY_ENTER && !ke.modifiers)
+            {
                 // Generate spaces to clear the input line on the screen
                 char* strspaces = _generate_spaces(VGA_WIDTH);
                 printat(strspaces, 0, row);
@@ -175,24 +205,34 @@ void editor(void)
                 // Append the command string to the command history vector
                 historyAppend(strInput);
                 return strInput;
-            }
+            }*/
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
             {
-
-                // Delete the last character in the input string
-                if (strInput.size() > 0)
+                if (m_cursorCol && m_lines[m_cursorRow].size())
                 {
-                    strInput.pop_back();
-                }
-            }
-            else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
-            {
+                    if (m_cursorCol < m_lines[m_cursorRow].size())
+                    {
+                        m_lines[m_cursorRow].remove(m_cursorCol - 1);
+                    }
+                    else
+                    {
+                        m_lines[m_cursorRow].pop_back();
+                    }
 
-                // Clear the input string
-                strInput.clear();
-            }*/
- 
-            if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
+                    m_cursorCol--;
+                }
+                // TODO: append this line to the end of the previous line and pop it
+            }
+            else if (ke.scancode == KEY_DELETE && !ke.modifiers)
+            {
+                if (m_cursorCol < m_lines[m_cursorRow].size() - 1)
+                {
+                    m_lines[m_cursorRow].remove(m_cursorCol);
+                }
+                // TODO: append the next line to the end of this line and pop it
+            }
+            // Escape is used to exit the text editor 
+            else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
                 break;
             }
@@ -212,10 +252,15 @@ void editor(void)
             {
                 moveDown();
             }
-        }
 
-        renderView();
+            renderView();
+        }
     }
+
+    // Clear the screen before leaving the editor
+    // Otherwise the terminal would still display the content of the file
+    // even though the editor has already been closed
+    clear();
 }
 
 void cmd_text(const string& strArgs)
@@ -256,6 +301,14 @@ void cmd_text(const string& strArgs)
 
     // Start the editor itself
     editor();
+
+    if (!m_modified)
+    {
+        debug_print("text.cpp | cmd_text() | The file hasn't been modified!");
+        m_lines.dispose();
+        vecArgs.dispose();
+        return;
+    }
 
     uint8_t* data = nullptr;
     size_t dataSize = 0;
