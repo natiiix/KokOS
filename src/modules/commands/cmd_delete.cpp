@@ -21,7 +21,7 @@ void cmd_delete(const string& strArgs)
         return;
     }
 
-    if (deleteEntry(activePart, activeDir, vecArgs[0].c_str()))
+    if (deleteEntry(Shell::activePart, Shell::activeDir, vecArgs[0].c_str()))
     {
         debug_print("cmd_delete.cpp | cmd_delete() | Entry has been deleted successfully!");
     }

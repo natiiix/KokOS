@@ -19,17 +19,17 @@ void cmd_cd(const string& strArgs)
         return;
     }
 
-    uint32_t newDir = resolvePath(activePart, activeDir, vecArgs[0].c_str());
+    uint32_t newDir = resolvePath(Shell::activePart, Shell::activeDir, vecArgs[0].c_str());
 
     if (newDir)
     {
         // If the directory path is absolute delete the old path
         if (vecArgs[0][0] == '/')
         {
-            pathStructure.clear();
+            Shell::pathStructure.clear();
         }
 
-        activeDir = newDir;
+        Shell::activeDir = newDir;
 
         vector<string> pathElements = vecArgs[0].split('/', true);
         
@@ -43,7 +43,7 @@ void cmd_cd(const string& strArgs)
             // When going one directory up remove the last directory from the vector
             else if (pathElements[i] == "..")
             {
-                pathStructure.pop_back();
+                Shell::pathStructure.pop_back();
             }
             // When going one directory down append the directory to the vector
             else
@@ -51,7 +51,7 @@ void cmd_cd(const string& strArgs)
                 // The directory name string must not be disposed
                 // Therefore we need to copy it into a separate string outside the vector
                 // This is done automatically when converting the name to uppercase
-                pathStructure.push_back(pathElements[i].tolower());
+                Shell::pathStructure.push_back(pathElements[i].tolower());
             }
         }
 

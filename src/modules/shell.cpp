@@ -9,85 +9,20 @@
 
 #include <kernel.h>
 
-#include <modules/disk.hpp>
 #include <drivers/storage/fat.h>
-
 #include <modules/commands.hpp>
-
-extern "C"
-void term_writeline_convert(const size_t, const size_t);
-
-uint8_t activePart; // index of the active partition
-uint32_t activeDir; // first cluster of the active directory
-
-string shellPrefix;
-bool diskToolsEnabled; // false if there are no FAT partitions available
-vector<string> pathStructure;
-
-// Modules
-Disk modDisk;
-
-vector<string> cmdHistory;
-uint8_t historyIdx;
-
-extern "C"
-void shell_init(void)
-{
-	// Used to make sure there is no memory leaking during kernel initialization
-	debug_memusage();
-	// Give the user a chance to see kernel initialization messages
-	debug_pause();
-
-    clear();
-
-	shellPrefix = string();
-	pathStructure = vector<string>();
-
-	cmdHistory = vector<string>();
-	historyIdx = Shell::HISTORY_INDEX_DEFAULT;
-
-	diskToolsEnabled = (partCount > 0);
-
-	if (diskToolsEnabled)
-	{
-		activePart = 0;
-		activeDir = partArray[activePart].rootDirCluster;
-		pathStructure.clear();
-		Shell::_update_prefix();
-	}
-	else
-	{
-		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
-		shellPrefix.clear();
-		shellPrefix.push_back('>');
-	}
-
-	Shell::initModules();
-
-    while (true)
-    {
-		// Keep in mind that some memory is always allocated by the shell instance itself
-		debug_memusage();
-
-        string strInput = Shell::readline();
-
-		sprint(shellPrefix);
-        sprint(strInput);
-		newline();
-
-		Shell::process(strInput);
-		
-		strInput.dispose();
-    }
-}
 
 namespace Shell
 {
-	void initModules(void)
-	{
-		modDisk = Disk();
-		modDisk.init("disk");
-	}
+	uint8_t activePart; // index of the active partition
+	uint32_t activeDir; // first cluster of the active directory
+
+	string shellPrefix;
+	bool diskToolsEnabled; // false if there are no FAT partitions available
+	vector<string> pathStructure;
+
+	vector<string> cmdHistory;
+	uint8_t historyIdx;
 
 	void process(const string& strInput)
 	{
@@ -168,9 +103,9 @@ namespace Shell
 		// -- Compare the input string against each module command string --
 		// Disk operation module
 		// Syntax: disk <Action> <Arguments>
-		else if (modDisk.compare(strCmd))
+		else if (strCmd.compare("disk"))
 		{
-			modDisk.process(strArgs);
+			cmd_disk(strArgs);
 		}
 		else if (strCmd.compare("read"))
 		{
@@ -225,9 +160,14 @@ namespace Shell
 			}
 
 			struct FILE* file = writeFile(activePart, activeDir, vecArgs[0].c_str(), (uint8_t*)vecArgs[1].c_str(), strlen(vecArgs[1].c_str()));
+			
+			delete file;
 
 			vecArgs.dispose();
-			delete file;
+		}
+		else if (strCmd.compare("text"))
+		{
+			cmd_text(strArgs);
 		}
 		else
 		{
@@ -463,4 +403,53 @@ namespace Shell
 
 		shellPrefix.push_back('>');
 	}
+}
+
+extern "C"
+void shell_init(void)
+{
+	// Used to make sure there is no memory leaking during kernel initialization
+	debug_memusage();
+	// Give the user a chance to see kernel initialization messages
+	debug_pause();
+
+    clear();
+
+	Shell::shellPrefix = string();
+	Shell::pathStructure = vector<string>();
+
+	Shell::cmdHistory = vector<string>();
+	Shell::historyIdx = Shell::HISTORY_INDEX_DEFAULT;
+
+	Shell::diskToolsEnabled = (partCount > 0);
+
+	if (Shell::diskToolsEnabled)
+	{
+		Shell::activePart = 0;
+		Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
+		Shell::pathStructure.clear();
+		Shell::_update_prefix();
+	}
+	else
+	{
+		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
+		Shell::shellPrefix.clear();
+		Shell::shellPrefix.push_back('>');
+	}
+
+    while (true)
+    {
+		// Keep in mind that some memory is always allocated by the shell instance itself
+		debug_memusage();
+
+        string strInput = Shell::readline();
+
+		sprint(Shell::shellPrefix);
+        sprint(strInput);
+		newline();
+
+		Shell::process(strInput);
+		
+		strInput.dispose();
+    }
 }

@@ -138,7 +138,7 @@ uint8_t* readFile(const struct FILE* const file)
     }
 
     // Allocate memory space for the file content
-    uint8_t* fileContent = mem_alloc(file->size); // used to store the contents of the file
+    uint8_t* fileContent = mem_alloc(file->size + 1); // used to store the contents of the file
     size_t contentIdx = 0;
     bool fileEnd = false;
 
@@ -157,7 +157,7 @@ uint8_t* readFile(const struct FILE* const file)
             // If the file does not occupy the whole sector copy only as much as necessary
             // This also means the end of file has been reached
             size_t readlen = 0x200;
-            if (contentIdx + 0x200 > file->size)
+            if (contentIdx + readlen > file->size)
             {
                 readlen = file->size - contentIdx;
                 fileEnd = true;
@@ -171,6 +171,9 @@ uint8_t* readFile(const struct FILE* const file)
     }
 
     mem_free(clusterChain);
+
+    // Used to avoid having to copy the whole file's content when creating a string object from it
+    fileContent[file->size] = '\0';
 
     return fileContent;
 }

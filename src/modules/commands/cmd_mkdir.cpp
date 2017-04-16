@@ -21,7 +21,7 @@ void cmd_mkdir(const string& strArgs)
         return;
     }
 
-    struct FILE* dir = newDir(activePart, activeDir, vecArgs[0].c_str());
+    struct FILE* dir = newDir(Shell::activePart, Shell::activeDir, vecArgs[0].c_str());
 
     if (dir)
     {

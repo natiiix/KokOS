@@ -21,15 +21,15 @@ void cmd_dir(const string& strArgs)
 
     if (vecArgs.size() == 0)
     {
-        listDirectory(activePart, activeDir);
+        listDirectory(Shell::activePart, Shell::activeDir);
     }
     else
     {			
-        uint32_t pathCluster = resolvePath(activePart, activeDir, vecArgs[0].c_str());
+        uint32_t pathCluster = resolvePath(Shell::activePart, Shell::activeDir, vecArgs[0].c_str());
 
         if (pathCluster)
         {
-            listDirectory(activePart, pathCluster);
+            listDirectory(Shell::activePart, pathCluster);
         }
         else
         {
