@@ -182,6 +182,7 @@ void editor(void)
 
         if (ke.state)
         {
+            // Character Key
             if (ke.keychar > 0)
             {
                 // If the cursor isn't at the end of the line
@@ -200,10 +201,28 @@ void editor(void)
                 // Character has been added to the string, the cursor must be moved to the right as well
                 m_cursorCol++;
             }
+            // Enter
             else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
-                // Break the line and insert a new empty line after it
+                // This is the last line
+                if (m_cursorRow == m_lines.size() - 1)
+                {
+                    // Append an empty line at the end of the vector
+                    m_lines.push_back(string());
+                }
+                // This isn't the last line
+                else
+                {
+                    // Insert a new empty line after this line
+                    m_lines.insert(string(), m_cursorRow + 1);
+                }
+
+                // Move the cursor to the new line
+                m_cursorRow++;
+                // When a new line is created the cursor must be at its beginning
+                m_cursorCol = 0;
             }
+            // Backspace
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
             {
                 // If the cursor isn't at the beginning of the line
@@ -229,12 +248,20 @@ void editor(void)
                 // It can't be the very first line, because we wouldn't have a line to append this line to
                 else if (m_cursorRow)
                 {
+                    size_t prevLineOldLen = m_lines[m_cursorRow - 1].size();
+
                     // Append this line to the end of the previous line
                     m_lines[m_cursorRow - 1].push_back(m_lines[m_cursorRow]);
                     // Pop this line from the vector
                     m_lines.remove(m_cursorRow);
+
+                    // Move the cursor to the previous line
+                    m_cursorRow--;
+                    // Move the cursor to the former end of the previous line, right before the part that was just appended
+                    m_cursorCol = prevLineOldLen;
                 }
             }
+            // Delete
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
                 // The cursor isn't at the end of the line
@@ -244,7 +271,7 @@ void editor(void)
                     m_lines[m_cursorRow].remove(m_cursorCol);
                 }
                 // The cursor is right before the last character
-                else if (m_cursorCol == m_lines[m_cursorRow].size())
+                else if (m_cursorCol == m_lines[m_cursorRow].size() - 1)
                 {
                     // Pop the last character in the string
                     m_lines[m_cursorRow].pop_back();
