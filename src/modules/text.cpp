@@ -204,23 +204,47 @@ void editor(void)
             // Enter
             else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
-                // This is the last line
-                if (m_cursorRow == m_lines.size() - 1)
+                // The cursor is at the very beginning of the line
+                // We can make things easier by simple inserting an empty life before the current line
+                // instead of adding one after it and then copying the entire line and clearing it
+                if (!m_cursorCol)
                 {
-                    // Append an empty line at the end of the vector
-                    m_lines.push_back(string());
+                    // Insert a new empty line before the current line
+                    m_lines.insert(string(), m_cursorRow);
+
+                    // Move the cursor to the new line
+                    m_cursorRow++;
                 }
-                // This isn't the last line
                 else
                 {
-                    // Insert a new empty line after this line
-                    m_lines.insert(string(), m_cursorRow + 1);
-                }
+                    // This is the last line
+                    if (m_cursorRow == m_lines.size() - 1)
+                    {
+                        // Append an empty line at the end of the vector
+                        m_lines.push_back(string());
+                    }
+                    // This isn't the last line
+                    else
+                    {
+                        // Insert a new empty line after this line
+                        m_lines.insert(string(), m_cursorRow + 1);
+                    }
 
-                // Move the cursor to the new line
-                m_cursorRow++;
-                // When a new line is created the cursor must be at its beginning
-                m_cursorCol = 0;
+                    // The cursor is somewhere in the middle of the line
+                    // The part of the line on the right the cursor must be copied to a new line and removed from the old line
+                    if (m_cursorCol < m_lines[m_cursorRow].size())
+                    {
+                        // Copy the part of this line after the cursor to the new empty line
+                        m_lines[m_cursorRow + 1].push_back(&m_lines[m_cursorRow].c_str()[m_cursorCol]);
+                        // Remove that part of the line from this line
+                        m_lines[m_cursorRow].remove(m_cursorCol, m_lines[m_cursorRow].size() - m_cursorCol);
+                    }
+
+                    // Move the cursor to the new line
+                    m_cursorRow++;
+                    // When a new line is created the cursor must be at its beginning
+                    m_cursorCol = 0;
+                }
             }
             // Backspace
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
@@ -265,7 +289,8 @@ void editor(void)
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
                 // The cursor isn't at the end of the line
-                if (m_cursorCol < m_lines[m_cursorRow].size() - 1)
+                // Make sure the line isn't empty to void a problem with an unsigned integer underflow
+                if (m_lines[m_cursorRow].size() && m_cursorCol < m_lines[m_cursorRow].size() - 1)
                 {
                     // Remove the character at the current cursor location
                     m_lines[m_cursorRow].remove(m_cursorCol);
