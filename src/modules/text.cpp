@@ -202,6 +202,8 @@ void editor(void)
 
                 // Character has been added to the string, the cursor must be moved to the right as well
                 m_cursorCol++;
+
+                m_modified = true;
             }
             // Enter
             else if (ke.scancode == KEY_ENTER && !ke.modifiers)
@@ -247,6 +249,8 @@ void editor(void)
                     // When a new line is created the cursor must be at its beginning
                     m_cursorCol = 0;
                 }
+
+                m_modified = true;
             }
             // Backspace
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
@@ -286,6 +290,8 @@ void editor(void)
                     // Move the cursor to the former end of the previous line, right before the part that was just appended
                     m_cursorCol = prevLineOldLen;
                 }
+
+                m_modified = true;
             }
             // Delete
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
@@ -311,6 +317,8 @@ void editor(void)
                     // Pop the next line from the vector
                     m_lines.remove(m_cursorRow + 1);
                 }
+
+                m_modified = true;
             }
             // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
