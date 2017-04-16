@@ -13,6 +13,8 @@
 
 #include <kernel.h>
 
+static const size_t PAGE_UP_DOWN_LINES = 10;
+
 size_t m_cursorCol;
 size_t m_cursorRow;
 
@@ -218,7 +220,7 @@ void editor(void)
                 else
                 {
                     // This is the last line
-                    if (m_cursorRow == m_lines.size() - 1)
+                    if (m_cursorRow + 1 == m_lines.size())
                     {
                         // Append an empty line at the end of the vector
                         m_lines.push_back(string());
@@ -289,14 +291,13 @@ void editor(void)
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
                 // The cursor isn't at the end of the line
-                // Make sure the line isn't empty to void a problem with an unsigned integer underflow
-                if (m_lines[m_cursorRow].size() && m_cursorCol < m_lines[m_cursorRow].size() - 1)
+                if (m_cursorCol + 1 < m_lines[m_cursorRow].size())
                 {
                     // Remove the character at the current cursor location
                     m_lines[m_cursorRow].remove(m_cursorCol);
                 }
                 // The cursor is right before the last character
-                else if (m_cursorCol == m_lines[m_cursorRow].size() - 1)
+                else if (m_cursorCol + 1 == m_lines[m_cursorRow].size())
                 {
                     // Pop the last character in the string
                     m_lines[m_cursorRow].pop_back();
@@ -348,6 +349,62 @@ void editor(void)
             {
                 // Move the cursor to the end of the line
                 m_cursorCol = m_lines[m_cursorRow].size();
+            }
+            // Page Up
+            else if (ke.scancode == KEY_PAGE_UP && !ke.modifiers)
+            {
+                // If there are lines above the current view
+                if (m_viewRow)
+                {
+                    // If there's more than N lines above the view
+                    if (m_viewRow > PAGE_UP_DOWN_LINES)
+                    {
+                        // Move the view N lines up
+                        m_viewRow -= PAGE_UP_DOWN_LINES;
+                    }
+                    else
+                    {
+                        // Move the view to the first line
+                        m_viewRow = 0;
+                    }
+
+                    // If the cursor is outside the screen
+                    if (m_cursorRow >= m_viewRow + VGA_HEIGHT)
+                    {
+                        // Move the cursor up to last line of the view
+                        m_cursorRow = m_viewRow + VGA_HEIGHT - 1;
+
+                        fixFlyingCursor();
+                    }
+                }
+            }
+            // Page Down
+            else if (ke.scancode == KEY_PAGE_DOWN && !ke.modifiers)
+            {
+                // If the view can be moved lower
+                if (m_viewRow + VGA_HEIGHT < m_lines.size())
+                {
+                    // If there is more than N lines below the current view
+                    if (m_lines.size() - (m_viewRow + VGA_HEIGHT) > PAGE_UP_DOWN_LINES)
+                    {
+                        // Move the view N lines down
+                        m_viewRow += PAGE_UP_DOWN_LINES;
+                    }
+                    else
+                    {
+                        // Move the view all the way down
+                        m_viewRow = m_lines.size() - VGA_HEIGHT;
+                    }
+
+                    // If the cursor is outside the screen
+                    if (m_cursorRow < m_viewRow)
+                    {
+                        // Move the cursor down to the first line of the view
+                        m_cursorRow = m_viewRow;
+
+                        fixFlyingCursor();
+                    }
+                }
             }
 
             renderView();
