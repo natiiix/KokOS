@@ -13,6 +13,8 @@
 
 #include <kernel.h>
 
+static const size_t PAGE_UP_DOWN_LINES = 10;
+
 size_t m_cursorCol;
 size_t m_cursorRow;
 
@@ -182,75 +184,235 @@ void editor(void)
 
         if (ke.state)
         {
+            // Character Key
             if (ke.keychar > 0)
             {
+                // If the cursor isn't at the end of the line
                 if (m_cursorCol < m_lines[m_cursorRow].size())
                 {
+                    // Insert the character into the string
                     m_lines[m_cursorRow].insert(ke.keychar, m_cursorCol);
                 }
+                // If the cursor is at the very end of the line
                 else
                 {
+                    // Append the character to the end of the line
                     m_lines[m_cursorRow].push_back(ke.keychar);
                 }
 
+                // Character has been added to the string, the cursor must be moved to the right as well
                 m_cursorCol++;
-            }
-            /*else if (ke.scancode == KEY_ENTER && !ke.modifiers)
-            {
-                // Generate spaces to clear the input line on the screen
-                char* strspaces = _generate_spaces(VGA_WIDTH);
-                printat(strspaces, 0, row);
-                delete strspaces;
 
-                // Append the command string to the command history vector
-                historyAppend(strInput);
-                return strInput;
-            }*/
-            else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
+                m_modified = true;
+            }
+            // Enter
+            else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
-                if (m_cursorCol && m_lines[m_cursorRow].size())
+                // The cursor is at the very beginning of the line
+                // We can make things easier by simple inserting an empty life before the current line
+                // instead of adding one after it and then copying the entire line and clearing it
+                if (!m_cursorCol)
                 {
-                    if (m_cursorCol < m_lines[m_cursorRow].size())
+                    // Insert a new empty line before the current line
+                    m_lines.insert(string(), m_cursorRow);
+
+                    // Move the cursor to the new line
+                    m_cursorRow++;
+                }
+                else
+                {
+                    // This is the last line
+                    if (m_cursorRow + 1 == m_lines.size())
                     {
-                        m_lines[m_cursorRow].remove(m_cursorCol - 1);
+                        // Append an empty line at the end of the vector
+                        m_lines.push_back(string());
                     }
+                    // This isn't the last line
                     else
                     {
+                        // Insert a new empty line after this line
+                        m_lines.insert(string(), m_cursorRow + 1);
+                    }
+
+                    // The cursor is somewhere in the middle of the line
+                    // The part of the line on the right the cursor must be copied to a new line and removed from the old line
+                    if (m_cursorCol < m_lines[m_cursorRow].size())
+                    {
+                        // Copy the part of this line after the cursor to the new empty line
+                        m_lines[m_cursorRow + 1].push_back(&m_lines[m_cursorRow].c_str()[m_cursorCol]);
+                        // Remove that part of the line from this line
+                        m_lines[m_cursorRow].remove(m_cursorCol, m_lines[m_cursorRow].size() - m_cursorCol);
+                    }
+
+                    // Move the cursor to the new line
+                    m_cursorRow++;
+                    // When a new line is created the cursor must be at its beginning
+                    m_cursorCol = 0;
+                }
+
+                m_modified = true;
+            }
+            // Backspace
+            else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
+            {
+                // If the cursor isn't at the beginning of the line
+                if (m_cursorCol)
+                {
+                    // The cursor isn't at the end of the line
+                    if (m_cursorCol < m_lines[m_cursorRow].size())
+                    {
+                        // Delete the character right before the cursor
+                        m_lines[m_cursorRow].remove(m_cursorCol - 1);
+                    }
+                    // The cursor is at the very end of the line
+                    else
+                    {
+                        // Pop the last character from the string
                         m_lines[m_cursorRow].pop_back();
                     }
 
+                    // The character has been deleted, therefore the cursor must be moved to the left as well
                     m_cursorCol--;
                 }
-                // TODO: append this line to the end of the previous line and pop it
+                // The cursor is at the very beginning of the line
+                // It can't be the very first line, because we wouldn't have a line to append this line to
+                else if (m_cursorRow)
+                {
+                    size_t prevLineOldLen = m_lines[m_cursorRow - 1].size();
+
+                    // Append this line to the end of the previous line
+                    m_lines[m_cursorRow - 1].push_back(m_lines[m_cursorRow]);
+                    // Pop this line from the vector
+                    m_lines.remove(m_cursorRow);
+
+                    // Move the cursor to the previous line
+                    m_cursorRow--;
+                    // Move the cursor to the former end of the previous line, right before the part that was just appended
+                    m_cursorCol = prevLineOldLen;
+                }
+
+                m_modified = true;
             }
+            // Delete
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
-                if (m_cursorCol < m_lines[m_cursorRow].size() - 1)
+                // The cursor isn't at the end of the line
+                if (m_cursorCol + 1 < m_lines[m_cursorRow].size())
                 {
+                    // Remove the character at the current cursor location
                     m_lines[m_cursorRow].remove(m_cursorCol);
                 }
-                // TODO: append the next line to the end of this line and pop it
+                // The cursor is right before the last character
+                else if (m_cursorCol + 1 == m_lines[m_cursorRow].size())
+                {
+                    // Pop the last character in the string
+                    m_lines[m_cursorRow].pop_back();
+                }
+                // The cursor is at the very end of the line
+                // It can't be the very last line, because we wouldn't have anything to append to it
+                else if (m_cursorRow < m_lines.size() - 1)
+                {
+                    // Append the next line to the end of this line
+                    m_lines[m_cursorRow].push_back(m_lines[m_cursorRow + 1]);
+                    // Pop the next line from the vector
+                    m_lines.remove(m_cursorRow + 1);
+                }
+
+                m_modified = true;
             }
-            // Escape is used to exit the text editor 
+            // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
+                // Exit the editor by breaking the loop
                 break;
             }
+            // Left Arrow
             else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
             {
                 moveLeft();
             }
+            // Right Arrow
             else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
             {
                 moveRight();
             }
+            // Up Arrow
             else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
             {
                 moveUp();
             }
+            // Down Arrow
             else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
             {
                 moveDown();
+            }
+            // Home
+            else if (ke.scancode == KEY_HOME && !ke.modifiers)
+            {
+                // Move the cursor to the beginning of the line
+                m_cursorCol = 0;
+            }
+            // End
+            else if (ke.scancode == KEY_END && !ke.modifiers)
+            {
+                // Move the cursor to the end of the line
+                m_cursorCol = m_lines[m_cursorRow].size();
+            }
+            // Page Up
+            else if (ke.scancode == KEY_PAGE_UP && !ke.modifiers)
+            {
+                // If there are lines above the current view
+                if (m_viewRow)
+                {
+                    // If there's more than N lines above the view
+                    if (m_viewRow > PAGE_UP_DOWN_LINES)
+                    {
+                        // Move the view N lines up
+                        m_viewRow -= PAGE_UP_DOWN_LINES;
+                    }
+                    else
+                    {
+                        // Move the view to the first line
+                        m_viewRow = 0;
+                    }
+
+                    // If the cursor is outside the screen
+                    if (m_cursorRow >= m_viewRow + VGA_HEIGHT)
+                    {
+                        // Move the cursor up to last line of the view
+                        m_cursorRow = m_viewRow + VGA_HEIGHT - 1;
+
+                        fixFlyingCursor();
+                    }
+                }
+            }
+            // Page Down
+            else if (ke.scancode == KEY_PAGE_DOWN && !ke.modifiers)
+            {
+                // If the view can be moved lower
+                if (m_viewRow + VGA_HEIGHT < m_lines.size())
+                {
+                    // If there is more than N lines below the current view
+                    if (m_lines.size() - (m_viewRow + VGA_HEIGHT) > PAGE_UP_DOWN_LINES)
+                    {
+                        // Move the view N lines down
+                        m_viewRow += PAGE_UP_DOWN_LINES;
+                    }
+                    else
+                    {
+                        // Move the view all the way down
+                        m_viewRow = m_lines.size() - VGA_HEIGHT;
+                    }
+
+                    // If the cursor is outside the screen
+                    if (m_cursorRow < m_viewRow)
+                    {
+                        // Move the cursor down to the first line of the view
+                        m_cursorRow = m_viewRow;
+
+                        fixFlyingCursor();
+                    }
+                }
             }
 
             renderView();

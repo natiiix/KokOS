@@ -12,6 +12,7 @@
 - **master** - should always be relatively stable and safe to run (at your own risk!)
 - **unstable** - the latest version that is known to run somewhat properly, but may contain potentially dangerous code (you should avoid running this version and remain particularly cautious when doing so)
 - **dev** - meant for development only, often contains unstable code which may seriously harm your device upon execution (please NEVER run this code on a physical machine regardless of the circumstances)
+- **dev_xxx** - sub-branch of dev with a specified development topic waiting to be pulled to unstable, used to separate bigger chunks of changes done on the dev branch without having to modify the unstable branch
 
 ## Features
 - simple text-mode shell interface
@@ -35,12 +36,12 @@
 - shell
 - FAT file system support
 - more complex file operations
+- basic text file editor (selections and copy-pasting may be implemented later)
 
 ## TODO
 - OS-specific programming language (something along the lines of bash script)
 - implement more C/C++ libraries
 - moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
-- basic text editor
 
 ## On Hold
 - AHCI driver (I wasn't able to make it work and it's not of high importance to me)
