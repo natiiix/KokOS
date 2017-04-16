@@ -184,73 +184,118 @@ void editor(void)
         {
             if (ke.keychar > 0)
             {
+                // If the cursor isn't at the end of the line
                 if (m_cursorCol < m_lines[m_cursorRow].size())
                 {
+                    // Insert the character into the string
                     m_lines[m_cursorRow].insert(ke.keychar, m_cursorCol);
                 }
+                // If the cursor is at the very end of the line
                 else
                 {
+                    // Append the character to the end of the line
                     m_lines[m_cursorRow].push_back(ke.keychar);
                 }
 
+                // Character has been added to the string, the cursor must be moved to the right as well
                 m_cursorCol++;
             }
-            /*else if (ke.scancode == KEY_ENTER && !ke.modifiers)
+            else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
-                // Generate spaces to clear the input line on the screen
-                char* strspaces = _generate_spaces(VGA_WIDTH);
-                printat(strspaces, 0, row);
-                delete strspaces;
-
-                // Append the command string to the command history vector
-                historyAppend(strInput);
-                return strInput;
-            }*/
+                // Break the line and insert a new empty line after it
+            }
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
             {
-                if (m_cursorCol && m_lines[m_cursorRow].size())
+                // If the cursor isn't at the beginning of the line
+                if (m_cursorCol)
                 {
+                    // The cursor isn't at the end of the line
                     if (m_cursorCol < m_lines[m_cursorRow].size())
                     {
+                        // Delete the character right before the cursor
                         m_lines[m_cursorRow].remove(m_cursorCol - 1);
                     }
+                    // The cursor is at the very end of the line
                     else
                     {
+                        // Pop the last character from the string
                         m_lines[m_cursorRow].pop_back();
                     }
 
+                    // The character has been deleted, therefore the cursor must be moved to the left as well
                     m_cursorCol--;
                 }
-                // TODO: append this line to the end of the previous line and pop it
+                // The cursor is at the very beginning of the line
+                // It can't be the very first line, because we wouldn't have a line to append this line to
+                else if (m_cursorRow)
+                {
+                    // Append this line to the end of the previous line
+                    m_lines[m_cursorRow - 1].push_back(m_lines[m_cursorRow]);
+                    // Pop this line from the vector
+                    m_lines.remove(m_cursorRow);
+                }
             }
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
+                // The cursor isn't at the end of the line
                 if (m_cursorCol < m_lines[m_cursorRow].size() - 1)
                 {
+                    // Remove the character at the current cursor location
                     m_lines[m_cursorRow].remove(m_cursorCol);
                 }
-                // TODO: append the next line to the end of this line and pop it
+                // The cursor is right before the last character
+                else if (m_cursorCol == m_lines[m_cursorRow].size())
+                {
+                    // Pop the last character in the string
+                    m_lines[m_cursorRow].pop_back();
+                }
+                // The cursor is at the very end of the line
+                // It can't be the very last line, because we wouldn't have anything to append to it
+                else if (m_cursorRow < m_lines.size() - 1)
+                {
+                    // Append the next line to the end of this line
+                    m_lines[m_cursorRow].push_back(m_lines[m_cursorRow + 1]);
+                    // Pop the next line from the vector
+                    m_lines.remove(m_cursorRow + 1);
+                }
             }
-            // Escape is used to exit the text editor 
+            // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
+                // Exit the editor by breaking the loop
                 break;
             }
+            // Left Arrow
             else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
             {
                 moveLeft();
             }
+            // Right Arrow
             else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
             {
                 moveRight();
             }
+            // Up Arrow
             else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
             {
                 moveUp();
             }
+            // Down Arrow
             else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
             {
                 moveDown();
+            }
+            // Home
+            else if (ke.scancode == KEY_HOME && !ke.modifiers)
+            {
+                // Move the cursor to the beginning of the line
+                m_cursorCol = 0;
+            }
+            // End
+            else if (ke.scancode == KEY_END && !ke.modifiers)
+            {
+                // Move the cursor to the end of the line
+                m_cursorCol = m_lines[m_cursorRow].size();
             }
 
             renderView();
