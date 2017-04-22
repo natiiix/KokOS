@@ -13,16 +13,31 @@
 
 #include <kernel.h>
 
+// We want to access the VGA buffer directly to make the screen updating faster
+extern uint16_t* vgaBuffer;
+
+// Specifies by how many lines do Page Up / Page Down keys shift the view
 static const size_t PAGE_UP_DOWN_LINES = 10;
 
+// Color constants are pre-shifted so that they can be used without repetitive shifting
+static const uint16_t COLOR_DEFAULT = 0x0700;
+
+// Current cursor location relative to the first character in the file
 size_t m_cursorCol;
 size_t m_cursorRow;
 
+// Current location of the first character on the screen relative to the first character in the file
 size_t m_viewCol;
 size_t m_viewRow;
 
 vector<string> m_lines;
 bool m_modified;
+
+void generateLinesEmpty(void)
+{
+    m_lines = vector<string>();
+    m_lines.push_back(string());
+}
 
 void generateLines(const uint8_t* const data)
 {
@@ -144,19 +159,43 @@ void renderView(void)
     // Update the view-related information
     updateView();
 
-    // Clear the screen
-    clear();
+    // Index within the VGA buffer
+    size_t vgaIdx = 0;
 
-    for (size_t i = 0; i < VGA_HEIGHT && m_viewRow + i < m_lines.size(); i++)
+    for (size_t i = 0; i < VGA_HEIGHT; i++)
     {
+        bool endOfLine = false;
+
+        // There is not enough lines
+        if (m_viewRow + i >= m_lines.size() ||
         // The line doesn't appear in the current view
-        if (m_viewCol >= m_lines.at(m_viewRow + i).size())
+            m_viewCol >= m_lines.at(m_viewRow + i).size())
         {
-            continue;
+            endOfLine = true;
         }
 
-        // Print that part of the line that can be seen in the current view
-        printat(&m_lines.at(m_viewRow + i).c_str()[m_viewCol], 0, i);
+        // Pointer to the line string starting at the current view
+        char* strLine = &m_lines.at(m_viewRow + i).c_str()[m_viewCol];
+
+        for (size_t i = 0; i < VGA_WIDTH; i++)
+        {
+            // End of line reached
+            if (strLine[i] == '\0')
+            {
+                endOfLine = true;
+            }
+
+            if (endOfLine)
+            {
+                // Fill the rest of the line with spaces
+                vgaBuffer[vgaIdx++] = COLOR_DEFAULT | ' ';
+            }
+            else
+            {
+                // Write valid characters
+                vgaBuffer[vgaIdx++] = COLOR_DEFAULT | strLine[i];
+            }
+        }
     }
 
     // Update the cursor location
@@ -450,16 +489,27 @@ void cmd_text(const string& strArgs)
         uint8_t* content = readFile(file);
         delete file;
 
-        generateLines(content);
-        delete content;
+        // If the file has some content (isn't empty)
+        if (content)
+        {
+            generateLines(content);
+            delete content;
+        }
+        // The file is empty
+        else
+        {
+            generateLinesEmpty();
+        }
     }
     // File doesn't exist
     else
     {
         // Set up the lines vector as if it were an empty file
-        m_lines = vector<string>();
-        m_lines.push_back(string());
+        generateLinesEmpty();
     }
+
+    // Lets us see all the debug messages that are displayed before the editors clears the screen
+    debug_pause();
 
     // Start the editor itself
     editor();
