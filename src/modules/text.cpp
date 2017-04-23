@@ -42,7 +42,8 @@ void generateLinesEmpty(void)
 void generateLines(const uint8_t* const data)
 {
     // Convert the data to a string object
-    string strData = string((char*)data);
+    string strData;
+    strData.push_back((char*)data);
 
     // Split the string into separate lines
     m_lines = strData.split('\n', false);
