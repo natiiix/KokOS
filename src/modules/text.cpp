@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include <c/stdio.h>
+#include <c/string.h>
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
@@ -13,21 +14,61 @@
 
 #include <kernel.h>
 
+// Key used to switch between the settings screen and the text editing screen
+#define KEY_SETTINGS KEY_F1
+
+// We want to access the VGA buffer directly to make the screen updating faster
+extern uint16_t* vgaBuffer;
+
+// Specifies by how many lines do Page Up / Page Down keys shift the view
 static const size_t PAGE_UP_DOWN_LINES = 10;
 
+static const size_t SETTINGS_PADDING_LEFT = 24;
+
+static const uint8_t SETTINGS_COLOR_DEFAULT_BG = 0x0;
+static const uint8_t SETTINGS_COLOR_DEFAULT_FG = 0x7;
+static const uint8_t SETTINGS_COLOR_SELECTED_BG = 0x7;
+static const uint8_t SETTINGS_COLOR_SELECTED_FG = 0x0;
+
+// Current cursor location relative to the first character in the file
 size_t m_cursorCol;
 size_t m_cursorRow;
 
+// Current location of the first character on the screen relative to the first character in the file
 size_t m_viewCol;
 size_t m_viewRow;
 
 vector<string> m_lines;
 bool m_modified;
 
+bool m_renderRequired;
+
+// Used for VGA buffer filling
+uint16_t m_colorScheme;
+uint8_t m_colBG;
+uint8_t m_colFG;
+
+enum EDITOR_SCREEN
+{
+    SCREEN_EXIT, // tells the editor to exit
+    SCREEN_TEXT, // text editing screen
+    SCREEN_SETTINGS, // screen with editor settings
+};
+
+// Specified which screen is currently being rendered
+EDITOR_SCREEN m_screen;
+
+void generateLinesEmpty(void)
+{
+    m_lines = vector<string>();
+    m_lines.push_back(string());
+}
+
 void generateLines(const uint8_t* const data)
 {
     // Convert the data to a string object
-    string strData = string((char*)data);
+    string strData;
+    strData.push_back((char*)data);
 
     // Split the string into separate lines
     m_lines = strData.split('\n', false);
@@ -144,42 +185,232 @@ void renderView(void)
     // Update the view-related information
     updateView();
 
-    // Clear the screen
-    clear();
+    // Index within the VGA buffer
+    size_t vgaIdx = 0;
 
-    for (size_t i = 0; i < VGA_HEIGHT && m_viewRow + i < m_lines.size(); i++)
+    for (size_t i = 0; i < VGA_HEIGHT; i++)
     {
+        bool endOfLine = false;
+
+        // There is not enough lines
+        if (m_viewRow + i >= m_lines.size() ||
         // The line doesn't appear in the current view
-        if (m_viewCol >= m_lines.at(m_viewRow + i).size())
+            m_viewCol >= m_lines.at(m_viewRow + i).size())
         {
-            continue;
+            endOfLine = true;
         }
 
-        // Print that part of the line that can be seen in the current view
-        printat(&m_lines.at(m_viewRow + i).c_str()[m_viewCol], 0, i);
+        // Pointer to the line string starting at the current view
+        char* strLine = &m_lines.at(m_viewRow + i).c_str()[m_viewCol];
+
+        for (size_t i = 0; i < VGA_WIDTH; i++)
+        {
+            // End of line reached
+            if (strLine[i] == '\0')
+            {
+                endOfLine = true;
+            }
+
+            if (endOfLine)
+            {
+                // Fill the rest of the line with spaces
+                vgaBuffer[vgaIdx++] = m_colorScheme | ' ';
+            }
+            else
+            {
+                // Write valid characters
+                vgaBuffer[vgaIdx++] = m_colorScheme | strLine[i];
+            }
+        }
     }
 
     // Update the cursor location
     setcursor(m_cursorCol - m_viewCol, m_cursorRow - m_viewRow);
+
+    m_renderRequired = false;
 }
 
-void editor(void)
+uint8_t colorUp(const uint8_t oldColor)
+{
+    if (oldColor == 0xF)
+    {
+        // Color overflow
+        return 0x0;
+    }
+    else
+    {
+        // Next color in the chain
+        return oldColor + 1;
+    }
+}
+
+uint8_t colorDown(const uint8_t oldColor)
+{
+    if (oldColor == 0x0)
+    {
+        // Color underflow
+        return 0xF;
+    }
+    else
+    {
+        // Previous color in the chain
+        return oldColor - 1;
+    }
+}
+
+char* colorToStr(const uint8_t color)
+{
+    char* strColor = (char*)malloc(32);
+
+    switch (color)
+    {
+        case 0x0:
+            strcopy("Black", strColor);
+            break;
+
+        case 0x1:
+            strcopy("Blue", strColor);
+            break;
+            
+        case 0x2:
+            strcopy("Green", strColor);
+            break;
+            
+        case 0x3:
+            strcopy("Cyan", strColor);
+            break;
+            
+        case 0x4:
+            strcopy("Red", strColor);
+            break;
+            
+        case 0x5:
+            strcopy("Magenta", strColor);
+            break;
+            
+        case 0x6:
+            strcopy("Brown", strColor);
+            break;
+            
+        case 0x7:
+            strcopy("Light Grey", strColor);
+            break;
+            
+        case 0x8:
+            strcopy("Dark Grey", strColor);
+            break;
+            
+        case 0x9:
+            strcopy("Light Blue", strColor);
+            break;
+            
+        case 0xA:
+            strcopy("Light Green", strColor);
+            break;
+            
+        case 0xB:
+            strcopy("Light Cyan", strColor);
+            break;
+            
+        case 0xC:
+            strcopy("Light Red", strColor);
+            break;
+            
+        case 0xD:
+            strcopy("Light Magenta", strColor);
+            break;
+            
+        case 0xE:
+            strcopy("Light Brown", strColor);
+            break;
+            
+        case 0xF:
+            strcopy("White", strColor);
+            break;
+
+        default:
+            strcopy("Unknown", strColor);
+            break;
+    }
+
+    return strColor;
+}
+
+void updateColorScheme(void)
+{
+    m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
+}
+
+void renderSettings(const size_t selectedLine)
+{
+    clear(); // clear the screen
+    setcursor(0, 25); // put the cursor out of the screen
+
+    // Header line
+    size_t lineIdx = 3;
+    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    printat("-- SETTINGS --", SETTINGS_PADDING_LEFT, lineIdx);
+
+    // Background Color setting line
+    lineIdx = 7;
+    if (selectedLine == 0)
+    {
+        setcolor((VGA_COLOR)SETTINGS_COLOR_SELECTED_FG, (VGA_COLOR)SETTINGS_COLOR_SELECTED_BG);
+    }
+    else
+    {
+        setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    }
+
+    printat("Background Color: ", SETTINGS_PADDING_LEFT, lineIdx);
+    char* strBG = colorToStr(m_colBG);
+    printat(strBG, SETTINGS_PADDING_LEFT + 18, lineIdx);
+    delete strBG;
+
+    // Foreground Color setting line
+    lineIdx += 2;
+    if (selectedLine == 1)
+    {
+        setcolor((VGA_COLOR)SETTINGS_COLOR_SELECTED_FG, (VGA_COLOR)SETTINGS_COLOR_SELECTED_BG);
+    }
+    else
+    {
+        setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    }
+
+    printat("Foreground Color: ", SETTINGS_PADDING_LEFT, lineIdx);
+    char* strFG = colorToStr(m_colFG);
+    printat(strFG, SETTINGS_PADDING_LEFT + 18, lineIdx);
+    delete strFG;
+
+    // Controls help information
+    lineIdx = 17;
+    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+
+    printat("-- CONTROLS --", SETTINGS_PADDING_LEFT, lineIdx);
+    lineIdx += 2;
+    printat("Up Arrow    - Nagivate up", SETTINGS_PADDING_LEFT, lineIdx);
+    lineIdx += 1;
+    printat("Down Arrow  - Nagivate down", SETTINGS_PADDING_LEFT, lineIdx);
+    lineIdx += 1;
+    printat("Left Arrow  - Previous option", SETTINGS_PADDING_LEFT, lineIdx);
+    lineIdx += 1;
+    printat("Right Arrow - Next option", SETTINGS_PADDING_LEFT, lineIdx);
+
+    m_renderRequired = false;
+}
+
+void screenText(void)
 {
     struct keyevent ke;
 
-    m_cursorCol = 0;
-    m_cursorRow = 0;
-
-    m_viewCol = 0;
-    m_viewRow = 0;
-
-    m_modified = false;
-
-    // Display the initial content of the file
-    renderView();
-
     while (true)
     {
+        if (m_renderRequired)
+        {
+            renderView();
+        }
+
         ke = readKeyEvent();
 
         if (ke.state)
@@ -324,6 +555,7 @@ void editor(void)
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
                 // Exit the editor by breaking the loop
+                m_screen = SCREEN_EXIT;
                 break;
             }
             // Left Arrow
@@ -414,8 +646,140 @@ void editor(void)
                     }
                 }
             }
+            // Settings Key (virtual)
+            else if (ke.scancode == KEY_SETTINGS && !ke.modifiers)
+            {
+                // Switch to the settings screen
+                m_screen = SCREEN_SETTINGS;
+                break;
+            }
 
-            renderView();
+            m_renderRequired = true;
+        }
+    }
+}
+
+void screenSettings(void)
+{
+    struct keyevent ke;
+    size_t selectedLine = 0;
+
+    while (true)
+    {
+        if (m_renderRequired)
+        {
+            renderSettings(selectedLine);
+        }
+
+        ke = readKeyEvent();
+
+        if (ke.state)
+        {
+            // Settings Key (virtual) or ESCAPE
+            if ((ke.scancode == KEY_SETTINGS || ke.scancode == KEY_ESCAPE) && !ke.modifiers)
+            {
+                // Update the color scheme according to the new color settings
+                updateColorScheme();
+
+                // Switch back to the text editing screen
+                m_screen = SCREEN_TEXT;
+                break;
+            }
+            // Left Arrow
+            else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
+            {
+                switch (selectedLine)
+                {
+                    case 0:
+                        m_colBG = colorDown(m_colBG);
+                        break;
+
+                    case 1:
+                        m_colFG = colorDown(m_colFG);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            // Right Arrow
+            else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
+            {
+                switch (selectedLine)
+                {
+                    case 0:
+                        m_colBG = colorUp(m_colBG);
+                        break;
+
+                    case 1:
+                        m_colFG = colorUp(m_colFG);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            // Up Arrow
+            else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
+            {
+                selectedLine++;
+
+                if (selectedLine > 1)
+                {
+                    selectedLine = 0;
+                }
+            }
+            // Down Arrow
+            else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
+            {
+                if (selectedLine == 0)
+                {
+                    selectedLine = 1;
+                }
+                else
+                {
+                    selectedLine--;
+                }
+            }
+
+            m_renderRequired = true;
+        }
+    }
+}
+
+void editor(void)
+{
+    m_cursorCol = 0;
+    m_cursorRow = 0;
+
+    m_viewCol = 0;
+    m_viewRow = 0;
+
+    m_modified = false;
+
+    // Same as terminal (black background, grey foreground)
+    m_colBG = 0x0;
+    m_colFG = 0x7;
+    updateColorScheme();
+
+    m_screen = SCREEN_TEXT;
+
+    while (true)
+    {
+        // The screen must always be rendered after switching between screens
+        m_renderRequired = true;
+
+        if (m_screen == SCREEN_TEXT)
+        {
+            screenText();
+        }
+        else if (m_screen == SCREEN_SETTINGS)
+        {
+            screenSettings();
+        }
+        else
+        {
+            break;
         }
     }
 
@@ -450,16 +814,27 @@ void cmd_text(const string& strArgs)
         uint8_t* content = readFile(file);
         delete file;
 
-        generateLines(content);
-        delete content;
+        // If the file has some content (isn't empty)
+        if (content)
+        {
+            generateLines(content);
+            delete content;
+        }
+        // The file is empty
+        else
+        {
+            generateLinesEmpty();
+        }
     }
     // File doesn't exist
     else
     {
         // Set up the lines vector as if it were an empty file
-        m_lines = vector<string>();
-        m_lines.push_back(string());
+        generateLinesEmpty();
     }
+
+    // Lets us see all the debug messages that are displayed before the editors clears the screen
+    debug_pause();
 
     // Start the editor itself
     editor();

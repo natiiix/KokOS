@@ -122,6 +122,13 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 
 uint8_t* readFile(const struct FILE* const file)
 {
+    // Security check to prevent further problems
+    if (!file)
+    {
+        debug_print("fat_entry.c | readFile() | Can't read from a nullptr!");
+        return (uint8_t*)0;
+    }
+
     // It's impossible to read the contents of an empty file
     if (file->size == 0)
     {
