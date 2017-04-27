@@ -16,6 +16,7 @@ void Program::run(const char* const codePtr)
     // Process the lines
 
     m_lines.dispose();
+    m_variables.dispose();
 }
 
 void cmd_exec(const string& strArgs)
