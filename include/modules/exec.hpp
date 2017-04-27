@@ -27,6 +27,6 @@ class Program
 public:
     void run(const char* const codePtr);
 private:
-    vector<string> m_lines;
+    vector<uint32_t*> m_program;
     vector<Variable> m_variables;
 };

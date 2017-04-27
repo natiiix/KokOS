@@ -10,13 +10,14 @@ void Program::run(const char* const codePtr)
     string strCode;
     strCode.set(codePtr);
 
-    m_lines = strCode.split('\n', true);
+    vector<string> vectLines = strCode.split('\n', true);
     strCode.dispose();
 
     // Process the lines
 
-    m_lines.dispose();
+    vectLines.dispose();
     m_variables.dispose();
+    m_program.dispose();
 }
 
 void cmd_exec(const string& strArgs)
