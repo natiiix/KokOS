@@ -15,10 +15,10 @@ class Variable
 public:
     string Name; // symbol name representing the variable
     DataType Type; // data type of the variable
+    size_t Scope; // scope depth at which this variable was declared
     void* Pointer; // pointer to the value of the variable
 
-    Variable(void);
-    void declare(const string& name, const DataType type);
+    void declare(const string& name, const DataType type, const size_t scope);
     void dispose(void);
 };
 
@@ -27,6 +27,13 @@ class Program
 public:
     void run(const char* const codePtr);
 private:
-    vector<uint32_t*> m_program;
+    vector<size_t*> m_program;
     vector<Variable> m_variables;
+
+    size_t m_counter; // program counter
+    size_t m_scope; // current scope depth
+    vector<size_t> m_scopeStack; // contains indexes at which the program pushed the scope (used by loops)
+
+    void scopePush(void);
+    void scopePop(void);
 };
