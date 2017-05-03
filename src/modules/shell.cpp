@@ -169,6 +169,10 @@ namespace Shell
 		{
 			cmd_text(strArgs);
 		}
+		else if (strCmd.compare("exec"))
+		{
+			cmd_exec(strArgs);
+		}
 		else
 		{
 			print("Invalid command: \"");

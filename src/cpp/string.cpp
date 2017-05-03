@@ -42,6 +42,12 @@ string string::copy(void)
     return strout;
 }
 
+void string::set(const char* const str)
+{
+    string::clear();
+    string::push_back(str);
+}
+
 // Capacity
 size_t string::size(void) const
 {

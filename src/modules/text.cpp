@@ -58,6 +58,8 @@ enum EDITOR_SCREEN
 // Specified which screen is currently being rendered
 EDITOR_SCREEN m_screen;
 
+size_t m_settingsLine; // index of currently selected line in settings
+
 void generateLinesEmpty(void)
 {
     m_lines = vector<string>();
@@ -121,26 +123,42 @@ void updateView(void)
 
 void moveLeft(void)
 {
-    // The cursor is already at the very left of the screen
-    if (!m_cursorCol)
+    // The cursor is not at the beginning of the line
+    if (m_cursorCol)
     {
-        return;
-        // TODO: Move it to the end of the previous line if available
+        // Move the cursor to the left
+        m_cursorCol--;
     }
-
-    m_cursorCol--;
+    // The cursor is already at the very left of the screen
+    else
+    {
+        // Move the cursor to the end of the previous line unless this is the first line
+        if (m_cursorRow)
+        {
+            m_cursorRow--;
+            m_cursorCol = m_lines.at(m_cursorRow).size();
+        }
+    }
 }
 
 void moveRight(void)
 {
-    // The cursor is at the very end of the line
-    if (m_cursorCol == m_lines.at(m_cursorRow).size())
+    // The cursor is not end the end of the line
+    if (m_cursorCol < m_lines.at(m_cursorRow).size())
     {
-        return;
-        // TODO: Move it to the beginning of the next line if available
+        m_cursorCol++;
     }
-
-    m_cursorCol++;
+    // The cursor is at the very end of the line
+    else
+    {
+        // If this is not the last line yet
+        // Move to the beginning of the next line
+        if (m_cursorRow < m_lines.size() - 1)
+        {
+            m_cursorRow++;
+            m_cursorCol = 0;
+        }
+    }
 }
 
 // The "Flying Cursor" is what happens when the cursor is moved up/down to a line
@@ -341,19 +359,18 @@ void updateColorScheme(void)
     m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
 }
 
-void renderSettings(const size_t selectedLine)
+void renderSettings()
 {
     clear(); // clear the screen
     setcursor(0, 25); // put the cursor out of the screen
 
     // Header line
-    size_t lineIdx = 3;
-    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
-    printat("-- SETTINGS --", SETTINGS_PADDING_LEFT, lineIdx);
+    size_t lineIdx = 2;
+    printat("  -- SETTINGS --", SETTINGS_PADDING_LEFT, lineIdx);
 
     // Background Color setting line
-    lineIdx = 7;
-    if (selectedLine == 0)
+    lineIdx += 4;
+    if (m_settingsLine == 0)
     {
         setcolor((VGA_COLOR)SETTINGS_COLOR_SELECTED_FG, (VGA_COLOR)SETTINGS_COLOR_SELECTED_BG);
     }
@@ -369,7 +386,7 @@ void renderSettings(const size_t selectedLine)
 
     // Foreground Color setting line
     lineIdx += 2;
-    if (selectedLine == 1)
+    if (m_settingsLine == 1)
     {
         setcolor((VGA_COLOR)SETTINGS_COLOR_SELECTED_FG, (VGA_COLOR)SETTINGS_COLOR_SELECTED_BG);
     }
@@ -384,7 +401,7 @@ void renderSettings(const size_t selectedLine)
     delete strFG;
 
     // Controls help information
-    lineIdx = 17;
+    /*lineIdx = 15;
     setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
 
     printat("-- CONTROLS --", SETTINGS_PADDING_LEFT, lineIdx);
@@ -395,7 +412,21 @@ void renderSettings(const size_t selectedLine)
     lineIdx += 1;
     printat("Left Arrow  - Previous option", SETTINGS_PADDING_LEFT, lineIdx);
     lineIdx += 1;
-    printat("Right Arrow - Next option", SETTINGS_PADDING_LEFT, lineIdx);
+    printat("Right Arrow - Next option", SETTINGS_PADDING_LEFT, lineIdx);*/
+
+    // Current line and column numbers are written at the bottom of the screen
+    lineIdx = 23;
+    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    char* strRow = tostr(m_cursorRow, 10);
+    printat("Line: ", SETTINGS_PADDING_LEFT, lineIdx);
+    printat(strRow, SETTINGS_PADDING_LEFT + 6, lineIdx);
+    delete strRow;
+
+    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    char* strCol = tostr(m_cursorCol, 10);
+    printat("Column: ", SETTINGS_PADDING_LEFT + 16, lineIdx);
+    printat(strCol, SETTINGS_PADDING_LEFT + 24, lineIdx);
+    delete strCol;
 
     m_renderRequired = false;
 }
@@ -662,13 +693,12 @@ void screenText(void)
 void screenSettings(void)
 {
     struct keyevent ke;
-    size_t selectedLine = 0;
 
     while (true)
     {
         if (m_renderRequired)
         {
-            renderSettings(selectedLine);
+            renderSettings();
         }
 
         ke = readKeyEvent();
@@ -688,7 +718,7 @@ void screenSettings(void)
             // Left Arrow
             else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
             {
-                switch (selectedLine)
+                switch (m_settingsLine)
                 {
                     case 0:
                         m_colBG = colorDown(m_colBG);
@@ -705,7 +735,7 @@ void screenSettings(void)
             // Right Arrow
             else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
             {
-                switch (selectedLine)
+                switch (m_settingsLine)
                 {
                     case 0:
                         m_colBG = colorUp(m_colBG);
@@ -722,23 +752,23 @@ void screenSettings(void)
             // Up Arrow
             else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
             {
-                selectedLine++;
+                m_settingsLine++;
 
-                if (selectedLine > 1)
+                if (m_settingsLine > 1)
                 {
-                    selectedLine = 0;
+                    m_settingsLine = 0;
                 }
             }
             // Down Arrow
             else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
             {
-                if (selectedLine == 0)
+                if (m_settingsLine == 0)
                 {
-                    selectedLine = 1;
+                    m_settingsLine = 1;
                 }
                 else
                 {
-                    selectedLine--;
+                    m_settingsLine--;
                 }
             }
 
@@ -747,7 +777,7 @@ void screenSettings(void)
     }
 }
 
-void editor(void)
+void presetVariables(void)
 {
     m_cursorCol = 0;
     m_cursorRow = 0;
@@ -763,6 +793,13 @@ void editor(void)
     updateColorScheme();
 
     m_screen = SCREEN_TEXT;
+
+    m_settingsLine = 0;
+}
+
+void editor(void)
+{
+    presetVariables();
 
     while (true)
     {

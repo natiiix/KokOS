@@ -3,8 +3,15 @@
 set -e
 
 # Download and install dependencies
-sudo apt-get update
+sudo apt-get update -y
+sudo apt-get dist-upgrade -y
+sudo apt-get check -y
+sudo apt-get autoremove -y
 sudo apt-get install libgmp3-dev libmpfr-dev libisl-dev libcloog-isl-dev libmpc-dev texinfo -y
+
+# Install other tools required for building the OS
+sudo apt-get install nasm -y
+sudo apt-get install xorriso -y
 
 cd .. #/
 rm -rfv crosscompiler/
