@@ -270,7 +270,8 @@ void Program::executeCommand(void)
     // If the program is supposed to exit it should never reach the program counter incrementation
     if (m_counter == PROGRAM_COUNTER_EXIT)
     {
-        debug_print("exec_Program.cpp | Program::executeCommand() | Missing return statement after program exit detected!")
+        debug_print("exec_Program.cpp | Program::executeCommand() | Missing return statement after program exit detected!");
+        return;
     }
 
     // Progress to next command
