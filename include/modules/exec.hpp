@@ -46,4 +46,6 @@ private:
     Variable* varFind(const string& name);
 
     void exit(void); // stops the program execution
+    void error(const char* const str); // prints an error message and exits the program
+    void error(const string& str);
 };

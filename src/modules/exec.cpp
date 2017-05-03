@@ -169,28 +169,39 @@ void Program::executeCommand(void)
     // I figured out that a shortcut for the current command might be useful
     vector<string>& cmd = m_program[m_counter];
 
+    // Program exit via command
     if (cmd[0].compare("exit") && cmd.size() == 1)
     {
         Program::exit();
     }
+    // Integer variable declaration
     else if (cmd[0].compare("integer") && cmd.size() == 2)
     {
         Program::varDeclare(cmd[1], DataType::Integer);
     }
+    // Unrecognized command
     else
     {
-        print("Unexpected command on line ");
-
-        printint(m_counter);
-        print(": \"");
+        string strErrorMsg;        
+        strErrorMsg.clear();
         
-        string strCmd = string::join(cmd, ' ', true);
-        print(strCmd.c_str());
-        strCmd.dispose();
+        strErrorMsg.push_back("Unrecognized command: \"");
 
-        print("\"\n");
+        for (size_t i = 0; i < cmd.size(); i++)
+        {
+            if (i)
+            {
+                strErrorMsg.push_back(' ');
+            }
 
-        Program::exit();
+            strErrorMsg.push_back(cmd[i]);
+        }
+
+        strErrorMsg.push_back('\"');
+
+        Program::error(strErrorMsg);
+
+        strErrorMsg.dispose();
     }
 
     // If the execution was successful and program exit wasn't requested
@@ -203,11 +214,10 @@ void Program::executeCommand(void)
 
 void Program::varDeclare(const string& name, const DataType type)
 {
+    // Each existing variable must have a different name
     if (Program::varFind(name))
     {
-        print("Variable with this name is already declared!\n");
-        
-        Program::exit();
+        Program::error("Variable with this name is already declared!");
         return;
     }
 
@@ -236,4 +246,20 @@ Variable* Program::varFind(const string& name)
 void Program::exit(void)
 {
     m_counter = PROGRAM_COUNTER_EXIT;
+}
+
+void Program::error(const char* const str)
+{
+    print("Line ");
+    printint(m_counter);
+    print(" - Error:\n");
+    print(str);
+    print("\n");
+
+    Program::exit();
+}
+
+void Program::error(const string& str)
+{
+    Program::error(str.c_str());
 }
