@@ -83,7 +83,24 @@ void Program::run(const char* const codePtr)
     vector<string> vectLines = strCode.split('\n', true);
     strCode.dispose();
 
-    // TODO: Process the lines into program instructions
+    m_program.clear();
+
+    for (size_t i = 0; i < vectLines.size(); i++)
+    {
+        // Split each line into space separated words
+        vector<string> vectWords = vectLines[i].split(' ', true);
+        
+        // Ignore empty lines and comments
+        if (vectWords.size() &&
+            (vectWords[0].size() < 2 || vectWords[0][0] != '/' || vectWords[0][1] != '/'))
+        {
+            m_program.push_back(vectWords);
+        }
+        else
+        {
+            vectWords.dispose();
+        }        
+    }
 
     vectLines.dispose();
 
@@ -92,10 +109,16 @@ void Program::run(const char* const codePtr)
     m_scope = 0;
 
     // TODO: Program execution
-
+    
+    // Dispose the whole program code
+    while (m_program.size())
+    {
+        m_program.back().dispose();
+        m_program.pop_back();
+    }
     m_program.dispose();
-    m_variables.dispose();
 
+    m_variables.dispose();
     m_scopeStack.dispose();
 }
 
