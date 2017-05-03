@@ -105,7 +105,7 @@ void Program::executeCommand(void)
     // I figured out that a shortcut for the current command might be useful
     vector<string>& cmd = m_program[m_counter];
 
-    // Program exit via command
+    // Program exit
     if (cmd[0].compare("exit") && cmd.size() == 1)
     {
         Program::exit();
@@ -114,6 +114,26 @@ void Program::executeCommand(void)
     else if (cmd[0].compare("integer") && cmd.size() == 2)
     {
         Program::varDeclare(cmd[1], DataType::Integer);
+    }
+    // Real variable declaration
+    else if (cmd[0].compare("real") && cmd.size() == 2)
+    {
+        Program::varDeclare(cmd[1], DataType::Real);
+    }
+    // Logical variable declaration
+    else if (cmd[0].compare("logical") && cmd.size() == 2)
+    {
+        Program::varDeclare(cmd[1], DataType::Logical);
+    }
+    // Scope push
+    else if (cmd[0].compare("push") && cmd.size() == 1)
+    {
+        Program::scopePush();
+    }
+    // Scope pop
+    else if (cmd[0].compare("pop") && cmd.size() == 1)
+    {
+        Program::scopePop();
     }
     // Unrecognized command
     else
