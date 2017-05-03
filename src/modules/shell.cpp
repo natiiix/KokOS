@@ -176,7 +176,7 @@ namespace Shell
 		else
 		{
 			print("Invalid command: \"");
-			string::print(strCmd);
+			sprint(strCmd);
 			print("\"\n");
 		}
 
@@ -365,13 +365,13 @@ namespace Shell
 			size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
 			size_t inStartIdx = strInput.size() - inRenderLen;
 
-			string::printat(shellPrefix, 0, row);
+			sprintat(shellPrefix, 0, row);
 
 			// Don't attempt to print input if there is none
 			if (strInput.size())
 			{
 				string strInputRender = strInput.substr(inStartIdx, inRenderLen);
-				string::printat(strInputRender, preLen, row);
+				sprintat(strInputRender, preLen, row);
 				strInputRender.dispose();
 			}
 
@@ -445,11 +445,11 @@ void shell_init(void)
     {
 		// Keep in mind that some memory is always allocated by the shell instance itself
 		debug_memusage();
-
+		
         string strInput = Shell::readline();
 
-		string::print(Shell::shellPrefix);
-        string::print(strInput);
+		sprint(Shell::shellPrefix);
+        sprint(strInput);
 		newline();
 
 		Shell::process(strInput);

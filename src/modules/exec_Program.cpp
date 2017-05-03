@@ -222,7 +222,7 @@ void Program::executeCommand(void)
             case DataType::Integer:
             {
                 string strValue = string::toString(*(INTEGER*)varSource->Pointer);
-                string::print(strValue);
+                sprint(strValue);
                 newline();
                 strValue.dispose();
                 break;
@@ -231,7 +231,7 @@ void Program::executeCommand(void)
             case DataType::Logical:
             {
                 string strValue = string::toString(*(LOGICAL*)varSource->Pointer);
-                string::print(strValue);
+                sprint(strValue);
                 newline();
                 strValue.dispose();
                 break;

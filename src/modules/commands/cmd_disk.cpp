@@ -78,7 +78,7 @@ void cmd_disk(const string& strArgs)
     else
     {
         print("Invalid argument: \"");
-        string::print(vecArgs.at(0));
+        sprint(vecArgs.at(0));
         print("\"\n");
         cmd_disk_list_arguments();
     }

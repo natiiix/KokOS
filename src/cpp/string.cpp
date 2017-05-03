@@ -657,12 +657,12 @@ void string::shiftCharsLeft(const size_t pos, const size_t offset)
     resize(m_size - offset);
 }
 
-void string::print(const string& str)
+void sprint(const string& str)
 {
     print(str.c_str());
 }
 
-void string::printat(const string& str, const size_t col, const size_t row)
+void sprintat(const string& str, const size_t col, const size_t row)
 {
     printat(str.c_str(), col, row);
 }

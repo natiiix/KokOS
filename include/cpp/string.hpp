@@ -104,8 +104,6 @@ public:
     string operator+(const string& str);
 
 	//static void disposeVector(vector<string>& vec);
-	static void print(const string& str);
-	static void printat(const string& str, const size_t col, const size_t row);
 	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
 	static string toString(const int32_t value);
 	static string toString(const bool value);
@@ -126,3 +124,6 @@ private:
 	// Gets rid of removed characters
 	void shiftCharsLeft(const size_t pos, const size_t offset);
 };
+
+void sprint(const string& str);
+void sprintat(const string& str, const size_t col, const size_t row);
