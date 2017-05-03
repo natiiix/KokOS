@@ -3,6 +3,8 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
+static const size_t PROGRAM_COUNTER_EXIT = (size_t)-1;
+
 enum DataType
 {
     Integer,
@@ -37,4 +39,11 @@ private:
 
     void scopePush(void);
     void scopePop(void);
+
+    void executeCommand(void); // executes the command at the current line
+
+    void varDeclare(const string& name, const DataType type);
+    Variable* varFind(const string& name);
+
+    void exit(void); // stops the program execution
 };

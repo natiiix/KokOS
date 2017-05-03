@@ -88,18 +88,7 @@ void Program::run(const char* const codePtr)
     for (size_t i = 0; i < vectLines.size(); i++)
     {
         // Split each line into space separated words
-        vector<string> vectWords = vectLines[i].split(' ', true);
-        
-        // Ignore empty lines and comments
-        if (vectWords.size() &&
-            (vectWords[0].size() < 2 || vectWords[0][0] != '/' || vectWords[0][1] != '/'))
-        {
-            m_program.push_back(vectWords);
-        }
-        else
-        {
-            vectWords.dispose();
-        }        
+        m_program.push_back(vectLines[i].split(' ', true));
     }
 
     vectLines.dispose();
@@ -108,7 +97,17 @@ void Program::run(const char* const codePtr)
     m_counter = 0;
     m_scope = 0;
 
-    // TODO: Program execution
+    // Initial main program scope push
+    Program::scopePush();
+    
+    // Execute commands one after another until the program finishes
+    while (m_counter < m_program.size())
+    {
+        Program::executeCommand();
+    }
+
+    // Scope pop at the end of the main program
+    Program::scopePop();
     
     // Dispose the whole program code
     while (m_program.size())
@@ -134,14 +133,16 @@ void Program::scopePop(void)
     size_t varsize = m_variables.size();
     for (size_t i = 0; i < varsize; i++)
     {
-        // Find the first variable declared on the current scope level
-        if (m_variables[i].Scope == m_scope)
+        // If a variable has a lower scope level than the one that's being popped
+        // there shouldn't be any more variables declared in this scope before it
+        if (m_variables[varsize - 1 - i].Scope < m_scope)
         {
-            // All variables declared after the first one necessarily belong to the same scope
-            // And all of them need to be disposed because they shouldn't exist outside of the the scope
-            m_variables.pop_back(varsize - i);
             break;
         }
+
+        // Dispose the variable and pop it from the vector
+        m_variables.back().dispose();
+        m_variables.pop_back();
     }
 
     if (m_scope)
@@ -153,4 +154,86 @@ void Program::scopePop(void)
     {
         debug_print("exec.cpp | Program::scopePop() | Cannot perform scope pop at 0 scope depth!");
     }
+}
+
+void Program::executeCommand(void)
+{
+    // Ignore empty lines and comments
+    if (!m_program[m_counter].size() ||
+        (m_program[m_counter][0].size() >= 2 && m_program[m_counter][0][0] == '/' && m_program[m_counter][0][1] == '/'))
+    {
+        m_counter++;
+        return;
+    }
+
+    // I figured out that a shortcut for the current command might be useful
+    vector<string>& cmd = m_program[m_counter];
+
+    if (cmd[0].compare("exit") && cmd.size() == 1)
+    {
+        Program::exit();
+    }
+    else if (cmd[0].compare("integer") && cmd.size() == 2)
+    {
+        Program::varDeclare(cmd[1], DataType::Integer);
+    }
+    else
+    {
+        print("Unexpected command on line ");
+
+        printint(m_counter);
+        print(": \"");
+        
+        string strCmd = string::join(cmd, ' ', true);
+        print(strCmd.c_str());
+        strCmd.dispose();
+
+        print("\"\n");
+
+        Program::exit();
+    }
+
+    // If the execution was successful and program exit wasn't requested
+    if (m_counter != PROGRAM_COUNTER_EXIT)
+    {
+        // Progress to next command
+        m_counter++;
+    }
+}
+
+void Program::varDeclare(const string& name, const DataType type)
+{
+    if (Program::varFind(name))
+    {
+        print("Variable with this name is already declared!\n");
+        
+        Program::exit();
+        return;
+    }
+
+    m_variables.push_back(Variable());
+    m_variables.back().declare(name, type, m_scope);
+}
+
+Variable* Program::varFind(const string& name)
+{
+    size_t varsize = m_variables.size();
+    
+    for (size_t i = 0; i < varsize; i++)
+    {
+        // Find the variable with the specified name
+        if (m_variables[i].Name.compare(name))
+        {
+            // Return pointer to the variable
+            return &m_variables[i];
+        }
+    }
+
+    // Return nullptr if there is no variable with the specified name
+    return nullptr;
+}
+
+void Program::exit(void)
+{
+    m_counter = PROGRAM_COUNTER_EXIT;
 }
