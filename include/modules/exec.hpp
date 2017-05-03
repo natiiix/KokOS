@@ -3,6 +3,10 @@
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
 
+typedef int32_t INTEGER;
+typedef double REAL;
+typedef bool LOGICAL;
+
 static const size_t PROGRAM_COUNTER_EXIT = (size_t)-1;
 
 enum DataType
@@ -44,6 +48,8 @@ private:
 
     void varDeclare(const string& name, const DataType type);
     Variable* varFind(const string& name);
+    bool varNameIsKeyword(const string& name); // check variable name against a list of keywords
+    bool varNameInvalidChar(const string& name); // check if variable name consists of valid characters only
 
     void exit(void); // stops the program execution
     void error(const char* const str); // prints an error message and exits the program
