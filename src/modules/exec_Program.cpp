@@ -196,12 +196,13 @@ void Program::executeCommand(void)
                 string strError;
                 strError.clear();
 
-                strError.push_back("Symbol \"");
+                strError.push_back("Unable to resolve symbol \"");
                 strError.push_back(cmd[2]);
-                strError.push_back("\" doesn't represent an existing variable nor a valid literal value!");
+                strError.push_back("\"!");
 
                 Program::error(strError);
                 strError.dispose();
+                return;
             }
         }
     }
@@ -266,6 +267,12 @@ void Program::executeCommand(void)
         return;
     }
     
+    // If the program is supposed to exit it should never reach the program counter incrementation
+    if (m_counter == PROGRAM_COUNTER_EXIT)
+    {
+        debug_print("exec_Program.cpp | Program::executeCommand() | Missing return statement after program exit detected!")
+    }
+
     // Progress to next command
     m_counter++;
 }
