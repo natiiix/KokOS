@@ -176,7 +176,7 @@ namespace Shell
 		else
 		{
 			print("Invalid command: \"");
-			sprint(strCmd);
+			string::print(strCmd);
 			print("\"\n");
 		}
 
@@ -365,13 +365,13 @@ namespace Shell
 			size_t inRenderLen = (inSpace >= strInput.size() ? strInput.size() : inSpace);
 			size_t inStartIdx = strInput.size() - inRenderLen;
 
-			sprintat(shellPrefix, 0, row);
+			string::printat(shellPrefix, 0, row);
 
 			// Don't attempt to print input if there is none
 			if (strInput.size())
 			{
 				string strInputRender = strInput.substr(inStartIdx, inRenderLen);
-				sprintat(strInputRender, preLen, row);
+				string::printat(strInputRender, preLen, row);
 				strInputRender.dispose();
 			}
 
@@ -448,8 +448,8 @@ void shell_init(void)
 
         string strInput = Shell::readline();
 
-		sprint(Shell::shellPrefix);
-        sprint(strInput);
+		string::print(Shell::shellPrefix);
+        string::print(strInput);
 		newline();
 
 		Shell::process(strInput);

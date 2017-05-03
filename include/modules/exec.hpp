@@ -4,7 +4,6 @@
 #include <cpp/vector.hpp>
 
 typedef int32_t INTEGER;
-typedef double REAL;
 typedef bool LOGICAL;
 
 static const size_t PROGRAM_COUNTER_EXIT = (size_t)-1;
@@ -12,7 +11,6 @@ static const size_t PROGRAM_COUNTER_EXIT = (size_t)-1;
 enum DataType
 {
     Integer,
-    Real,
     Logical,
 };
 
@@ -54,4 +52,5 @@ private:
     void exit(void); // stops the program execution
     void error(const char* const str); // prints an error message and exits the program
     void error(const string& str);
+    void errorVarUndeclared(const string& name); // "variable hasn't been declared" error
 };

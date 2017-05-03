@@ -18,11 +18,6 @@ void Variable::declare(const string& name, const DataType type, const size_t sco
             (*(INTEGER*)Pointer) = 0;
             break;
 
-        case DataType::Real:
-            Pointer = malloc(sizeof(REAL));
-            (*(REAL*)Pointer) = 0.0;
-            break;
-
         case DataType::Logical:
             Pointer = malloc(sizeof(LOGICAL));
             (*(LOGICAL*)Pointer) = false;

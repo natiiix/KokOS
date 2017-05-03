@@ -115,11 +115,6 @@ void Program::executeCommand(void)
     {
         Program::varDeclare(cmd[1], DataType::Integer);
     }
-    // Real variable declaration
-    else if (cmd[0].compare("real") && cmd.size() == 2)
-    {
-        Program::varDeclare(cmd[1], DataType::Real);
-    }
     // Logical variable declaration
     else if (cmd[0].compare("logical") && cmd.size() == 2)
     {
@@ -134,6 +129,117 @@ void Program::executeCommand(void)
     else if (cmd[0].compare("pop") && cmd.size() == 1)
     {
         Program::scopePop();
+    }
+    // Variable value definition
+    else if (cmd.size() == 3 && cmd[1].compare("="))
+    {
+        Variable* varTarget = Program::varFind(cmd[0]);
+        
+        // Target variable doesn't exist
+        if (!varTarget)
+        {
+            Program::errorVarUndeclared(cmd[0]);
+            return;
+        }
+
+        Variable* varSource = Program::varFind(cmd[2]);
+
+        // Source is an existing variable
+        if (varSource)
+        {
+            // Target and source variable have the same data type
+            if (varTarget->Type == varSource->Type)
+            {
+                // Copy the value of source variable to the target variable
+                switch (varTarget->Type)
+                {
+                    case DataType::Integer:
+                        (*(INTEGER*)varTarget->Pointer) = (*(INTEGER*)varSource->Pointer);
+                        break;
+
+                    case DataType::Logical:
+                        (*(LOGICAL*)varTarget->Pointer) = (*(LOGICAL*)varSource->Pointer);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                Program::error("Variables do not have matching data types!");
+                return;
+            }
+        }
+        // Source may be a literal value
+        else
+        {
+            bool isValidLiteral = false;
+
+            switch (varTarget->Type)
+            {
+                case DataType::Integer:
+                    isValidLiteral = cmd[2].parseInt32((INTEGER*)varTarget->Pointer);
+                    break;
+
+                case DataType::Logical:
+                    isValidLiteral = cmd[2].parseBool((LOGICAL*)varTarget->Pointer);
+                    break;
+
+                default:
+                    break;
+            }
+
+            // Invalid literal value / usage of undeclared variable
+            if (!isValidLiteral)
+            {
+                string strError;
+                strError.clear();
+
+                strError.push_back("Symbol \"");
+                strError.push_back(cmd[2]);
+                strError.push_back("\" doesn't represent an existing variable nor a valid literal value!");
+
+                Program::error(strError);
+                strError.dispose();
+            }
+        }
+    }
+    // Scope pop
+    else if (cmd[0].compare("print") && cmd.size() == 2)
+    {
+        Variable* varSource = Program::varFind(cmd[1]);
+        
+        // Source variable doesn't exist
+        if (!varSource)
+        {
+            Program::errorVarUndeclared(cmd[1]);
+            return;
+        }
+
+        switch (varSource->Type)
+        {
+            case DataType::Integer:
+            {
+                string strValue = string::toString(*(INTEGER*)varSource->Pointer);
+                string::print(strValue);
+                newline();
+                strValue.dispose();
+                break;
+            }
+
+            case DataType::Logical:
+            {
+                string strValue = string::toString(*(LOGICAL*)varSource->Pointer);
+                string::print(strValue);
+                newline();
+                strValue.dispose();
+                break;
+            }
+
+            default:
+                break;
+        }
     }
     // Unrecognized command
     else
@@ -156,16 +262,12 @@ void Program::executeCommand(void)
         strErrorMsg.push_back('\"');
 
         Program::error(strErrorMsg);
-
         strErrorMsg.dispose();
+        return;
     }
-
-    // If the execution was successful and program exit wasn't requested
-    if (m_counter != PROGRAM_COUNTER_EXIT)
-    {
-        // Progress to next command
-        m_counter++;
-    }
+    
+    // Progress to next command
+    m_counter++;
 }
 
 void Program::varDeclare(const string& name, const DataType type)
@@ -291,4 +393,17 @@ void Program::error(const char* const str)
 void Program::error(const string& str)
 {
     Program::error(str.c_str());
+}
+
+void Program::errorVarUndeclared(const string& name)
+{
+    string strErrorMsg;
+    strErrorMsg.clear();
+    
+    strErrorMsg.push_back("Variable \"");
+    strErrorMsg.push_back(name);
+    strErrorMsg.push_back("\" has not been declared in current scope!");
+
+    Program::error(strErrorMsg);
+    strErrorMsg.dispose();
 }

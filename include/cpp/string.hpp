@@ -84,6 +84,10 @@ public:
 	void insert(const char c, const size_t pos);
 	// Inserts a string at a specified position in the string
 	void insert(const string& str, const size_t pos);
+	// Parses a 32 bit integer from the string
+	bool parseInt32(int32_t* const output) const;
+	// Parses a boolean value from the string
+	bool parseBool(bool* const output) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
@@ -100,7 +104,11 @@ public:
     string operator+(const string& str);
 
 	//static void disposeVector(vector<string>& vec);
+	static void print(const string& str);
+	static void printat(const string& str, const size_t col, const size_t row);
 	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
+	static string toString(const int32_t value);
+	static string toString(const bool value);
 
 private:
     void* m_ptr;
@@ -118,6 +126,3 @@ private:
 	// Gets rid of removed characters
 	void shiftCharsLeft(const size_t pos, const size_t offset);
 };
-
-void sprint(const string& str);
-void sprintat(const string& str, const size_t col, const size_t row);

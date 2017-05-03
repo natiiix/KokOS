@@ -4,6 +4,7 @@
 #include <c/stdlib.h>
 #include <c/stdio.h>
 #include <c/string.h>
+#include <c/math.h>
 
 #include <kernel.h>
 
@@ -398,6 +399,71 @@ void string::insert(const string& str, const size_t pos)
         m_ptrC[pos + i] = str.at(i);
     }
 }
+//
+bool string::parseInt32(int32_t* const output) const
+{
+    // Can't parse a value from an empty string
+    if (!m_size)
+    {
+        // Parsing failed
+        return false;
+    }
+
+    // Check for value negativity based on the first character being a minus sign
+    bool negative = (string::at(0) == '-');
+    
+    int32_t value = 0;
+
+    // Ignore the initial minus sign if the value is negative
+    for (size_t i = negative; i < m_size; i++)
+    {
+        char cDigit = string::at(i);
+        
+        // Check if the character is a valid digit
+        if (cDigit >= '0' && cDigit <= '9')
+        {
+            int32_t digitWeight = powInt32(10, m_size - 1 - (i - negative));
+            value += (cDigit - '0') * digitWeight;
+        }
+        // Invalid character occurred
+        else
+        {
+            // Parsing failed
+            return false;
+        }
+    }
+
+    // Value parsed, now just solve negativity
+    if (negative)
+    {
+        (*output) = -value;
+    }
+    else
+    {
+        (*output) = value;
+    }
+
+    // Value has been parse successfully
+    return true;
+}
+//
+bool string::parseBool(bool* const output) const
+{
+    if (string::compare("false"))
+    {
+        (*output) = false;
+        return true;
+    }
+    else if (string::compare("true"))
+    {
+        (*output) = true;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 // Operator overloads
 bool string::operator==(const string& str) const
@@ -466,6 +532,53 @@ string string::join(const vector<string>& vect, const char cDelimiter, const boo
 
             strout.push_back(vect.at(i));
         }
+    }
+
+    return strout;
+}
+
+string string::toString(const int32_t value)
+{
+    string strout;
+    strout.clear();
+
+    int32_t tmp = value;
+
+    char digits[32];
+    size_t digitCount = 0;
+
+    if (tmp < 0)
+    {
+        strout.push_back('-');
+        tmp = -tmp;
+    }
+
+    while (tmp)
+    {
+        digits[digitCount++] = '0' + (tmp % 10);
+        tmp /= 10;
+    }
+
+    for (size_t i = 0; i < digitCount; i++)
+    {
+        strout.push_back(digits[digitCount - 1 - i]);
+    }
+
+    return strout;
+}
+
+string string::toString(const bool value)
+{
+    string strout;
+    strout.clear();
+
+    if (value)
+    {
+        strout.push_back("true");
+    }
+    else
+    {
+        strout.push_back("false");
     }
 
     return strout;
@@ -544,12 +657,12 @@ void string::shiftCharsLeft(const size_t pos, const size_t offset)
     resize(m_size - offset);
 }
 
-void sprint(const string& str)
+void string::print(const string& str)
 {
     print(str.c_str());
 }
 
-void sprintat(const string& str, const size_t col, const size_t row)
+void string::printat(const string& str, const size_t col, const size_t row)
 {
     printat(str.c_str(), col, row);
 }
