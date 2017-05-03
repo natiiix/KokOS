@@ -121,26 +121,42 @@ void updateView(void)
 
 void moveLeft(void)
 {
-    // The cursor is already at the very left of the screen
-    if (!m_cursorCol)
+    // The cursor is not at the beginning of the line
+    if (m_cursorCol)
     {
-        return;
-        // TODO: Move it to the end of the previous line if available
+        // Move the cursor to the left
+        m_cursorCol--;
     }
-
-    m_cursorCol--;
+    // The cursor is already at the very left of the screen
+    else
+    {
+        // Move the cursor to the end of the previous line unless this is the first line
+        if (m_cursorRow)
+        {
+            m_cursorRow--;
+            m_cursorCol = m_lines.at(m_cursorRow).size();
+        }
+    }
 }
 
 void moveRight(void)
 {
-    // The cursor is at the very end of the line
-    if (m_cursorCol == m_lines.at(m_cursorRow).size())
+    // The cursor is not end the end of the line
+    if (m_cursorCol < m_lines.at(m_cursorRow).size())
     {
-        return;
-        // TODO: Move it to the beginning of the next line if available
+        m_cursorCol++;
     }
-
-    m_cursorCol++;
+    // The cursor is at the very end of the line
+    else
+    {
+        // If this is not the last line yet
+        // Move to the beginning of the next line
+        if (m_cursorRow < m_lines.size() - 1)
+        {
+            m_cursorRow++;
+            m_cursorCol = 0;
+        }
+    }
 }
 
 // The "Flying Cursor" is what happens when the cursor is moved up/down to a line
