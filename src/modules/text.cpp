@@ -572,6 +572,23 @@ void screenText(void)
 
                 m_modified = true;
             }
+            // Ctrl + Delete
+            // Delete the whole current line
+            else if (ke.scancode == KEY_DELETE && ke.modifiers == MODIFIER_CTRL)
+            {
+                // If the current line isn't the last line of the file
+                if (m_lines.size() > m_cursorRow + 1)
+                {
+                    // Delete the current line
+                    m_lines.remove(m_cursorRow);
+                }
+                // The current line is the last line of the file
+                else
+                {
+                    // Clear the line
+                    m_lines[m_cursorRow].clear();
+                }
+            }
             // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
