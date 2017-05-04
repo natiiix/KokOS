@@ -131,6 +131,7 @@ void Program::executeCommand(void)
         Program::scopePop();
     }
     // Variable value definition
+    // Syntax: <Target Variable> = <Source Variable / Literal Value>
     else if (cmd.size() == 3 && cmd[1].compare("="))
     {
         Variable* varTarget = Program::varFind(cmd[0]);
@@ -174,6 +175,184 @@ void Program::executeCommand(void)
                 }
 
                 break;
+            }
+
+            default:
+                break;
+        }
+    }
+    // Variable value definition with operation performing
+    // Syntax: <Target Variable> = <Source Variable / Literal Value> <Operator> <Source Variable / Literal Value>
+    else if (cmd.size() == 5 && cmd[1].compare("="))
+    {
+        Variable* varTarget = Program::varFind(cmd[0]);
+
+        // Target variable doesn't exist
+        if (!varTarget)
+        {
+            Program::errorVarUndeclared(cmd[0]);
+            return;
+        }
+
+        switch (varTarget->Type)
+        {
+            case DataType::Integer:
+            {
+                INTEGER valueSource1 = 0;
+                INTEGER valueSource2 = 0;
+
+                // Resolve both source values
+                if (!Program::symbolToInteger(cmd[2], &valueSource1) ||
+                    !Program::symbolToInteger(cmd[4], &valueSource2))
+                {
+                    // Unable to resolve one of the symbols
+                    return;
+                }
+
+                // Addition
+                if (cmd[3].compare("+"))
+                {
+                    varTarget->set(valueSource1 + valueSource2);
+                }
+                // Subtraction
+                else if (cmd[3].compare("-"))
+                {
+                    varTarget->set(valueSource1 - valueSource2);
+                }
+                // Multiplication
+                else if (cmd[3].compare("*"))
+                {
+                    varTarget->set(valueSource1 * valueSource2);
+                }
+                // Integer division
+                else if (cmd[3].compare("/"))
+                {
+                    varTarget->set(valueSource1 / valueSource2);
+                }
+                // Remainder after integer division
+                else if (cmd[3].compare("%"))
+                {
+                    varTarget->set(valueSource1 % valueSource2);
+                }
+                else
+                {
+                    Program::errorOperatorInvalid(cmd[3]);
+                    return;
+                }
+
+                break;
+            }
+
+            case DataType::Logical:
+            {
+                // Check input symbols for logical values
+                LOGICAL valueLogical1 = 0;
+                LOGICAL valueLogical2 = 0;
+                bool source1Logical = false;
+                bool source2Logical = false;
+
+                source1Logical = Program::symbolToLogical(cmd[2], &valueLogical1, false);
+                source2Logical = Program::symbolToLogical(cmd[2], &valueLogical2, false);
+
+                // Check input symbols for integer values
+                INTEGER valueInteger1 = 0;
+                INTEGER valueInteger2 = 0;
+                bool source1Integer = false;
+                bool source2Integer = false;
+
+                source1Integer = Program::symbolToInteger(cmd[2], &valueInteger1, false);
+                source2Integer = Program::symbolToInteger(cmd[2], &valueInteger2, false);
+
+                // Both source symbols represent valid logical values
+                if (source1Logical && source2Logical)
+                {
+                    // Boolean NXOR (equality check)
+                    if (cmd[3].compare("=="))
+                    {
+                        varTarget->set(valueLogical1 == valueLogical2);
+                    }
+                    // Boolean XOR (inequality check)
+                    else if (cmd[3].compare("!="))
+                    {
+                        varTarget->set(valueLogical1 != valueLogical2);
+                    }
+                    // Boolean AND
+                    else if (cmd[3].compare("&&"))
+                    {
+                        varTarget->set(valueLogical1 && valueLogical2);
+                    }
+                    // Boolen OR
+                    else if (cmd[3].compare("||"))
+                    {
+                        varTarget->set(valueLogical1 || valueLogical2);
+                    }
+                    else
+                    {
+                        Program::errorOperatorInvalid(cmd[3]);
+                        return;
+                    }
+
+                    break;
+                }
+                // Both source symbols represent valid integer values
+                else if (source1Integer && source2Integer)
+                {
+                    // Equality
+                    if (cmd[3].compare("=="))
+                    {
+                        varTarget->set(valueInteger1 == valueInteger2);
+                    }
+                    // Inequality
+                    else if (cmd[3].compare("!="))
+                    {
+                        varTarget->set(valueInteger1 != valueInteger2);
+                    }
+                    // Greater than
+                    else if (cmd[3].compare(">"))
+                    {
+                        varTarget->set(valueInteger1 > valueInteger2);
+                    }
+                    // Less than
+                    else if (cmd[3].compare("<"))
+                    {
+                        varTarget->set(valueInteger1 < valueInteger2);
+                    }
+                    // Greater than or equal to
+                    else if (cmd[3].compare(">="))
+                    {
+                        varTarget->set(valueInteger1 >= valueInteger2);
+                    }
+                    // Less than or equal to
+                    else if (cmd[3].compare("<="))
+                    {
+                        varTarget->set(valueInteger1 <= valueInteger2);
+                    }
+                    else
+                    {
+                        Program::errorOperatorInvalid(cmd[3]);
+                        return;
+                    }
+
+                    break;
+                }
+
+                // Failed to resolve any of the symbols
+                if (!source1Logical && !source2Logical && !source1Integer && !source2Integer)
+                {
+                    Program::errorSymbolUnresolved(cmd[2]);
+                    Program::errorSymbolUnresolved(cmd[4]);
+                }
+                // Data types of source symbols do not match
+                else if (source1Logical != source2Logical && source1Integer != source2Integer)
+                {
+                    Program::errorTypesIncompatible();
+                }
+                else
+                {
+                    Program::error("Unable to process source symbols!\nMake sure both source symbols represent existing values of matching data type!");
+                }
+
+                return;
             }
 
             default:
@@ -328,7 +507,9 @@ bool Program::varNameIsKeyword(const string& name)
         name.compare("exit") ||
         name.compare("integer") ||
         name.compare("real") ||
-        name.compare("logical"))
+        name.compare("logical") ||
+        name.compare("push") ||
+        name.compare("pop"))
     {
         return true;
     }
@@ -377,26 +558,26 @@ void Program::error(const string& str)
     Program::error(str.c_str());
 }
 
-void Program::errorVarUndeclared(const string& name)
+void Program::errorVarUndeclared(const string& strVarName)
 {
     string strErrorMsg;
     strErrorMsg.clear();
     
     strErrorMsg.push_back("Variable \"");
-    strErrorMsg.push_back(name);
+    strErrorMsg.push_back(strVarName);
     strErrorMsg.push_back("\" has not been declared in current scope!");
 
     Program::error(strErrorMsg);
     strErrorMsg.dispose();
 }
 
-void Program::errorSymbolUnresolved(const string& name)
+void Program::errorSymbolUnresolved(const string& strSymbol)
 {
     string strError;
     strError.clear();
 
     strError.push_back("Unable to resolve symbol \"");
-    strError.push_back(name);
+    strError.push_back(strSymbol);
     strError.push_back("\"!");
 
     Program::error(strError);
@@ -408,7 +589,20 @@ void Program::errorTypesIncompatible(void)
     Program::error("Variables do not have matching data types!");
 }
 
-bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output)
+void Program::errorOperatorInvalid(const string& strOperator)
+{
+    string strError;
+    strError.clear();
+
+    strError.push_back("Symbol \"");
+    strError.push_back(strOperator);
+    strError.push_back("\" is not a valid operator!");
+
+    Program::error(strError);
+    strError.dispose();
+}
+
+bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError)
 {
     // First check if the symbol is a variable name
     Variable* varSource = Program::varFind(strSymbol);
@@ -428,7 +622,11 @@ bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output)
         // Symbol represents a variable of different data type
         else
         {
-            Program::errorTypesIncompatible();
+            if (throwError)
+            {
+                Program::errorTypesIncompatible();
+            }
+
             return false;
         }
     }
@@ -439,7 +637,7 @@ bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output)
         bool validLiteral = strSymbol.parseInt32(output);
 
         // Symbol parsing failed
-        if (!validLiteral)
+        if (!validLiteral && throwError)
         {
             Program::errorSymbolUnresolved(strSymbol);
         }
@@ -448,7 +646,7 @@ bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output)
     }
 }
 
-bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output)
+bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output, const bool throwError)
 {
     // First check if the symbol is a variable name
     Variable* varSource = Program::varFind(strSymbol);
@@ -468,7 +666,11 @@ bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output)
         // Symbol represents a variable of different data type
         else
         {
-            Program::errorTypesIncompatible();
+            if (throwError)
+            {
+                Program::errorTypesIncompatible();
+            }
+
             return false;
         }
     }
@@ -479,7 +681,7 @@ bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output)
         bool validLiteral = strSymbol.parseBool(output);
 
         // Symbol parsing failed
-        if (!validLiteral)
+        if (!validLiteral && throwError)
         {
             Program::errorSymbolUnresolved(strSymbol);
         }
