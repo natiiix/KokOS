@@ -116,14 +116,8 @@ void Program::executeCommand(void)
         Program::varDeclare(cmd[1], DataType::Integer);
     }
     // Integer variable declaration with immediate value definition
-    else if (cmd[0].compare("integer") && cmd.size() == 4)
+    else if (cmd[0].compare("integer") && cmd.size() == 4 && cmd[2].compare("="))
     {
-        if (!cmd[2].compare("="))
-        {
-            Program::errorOperatorInvalid(cmd[2]);
-            return;
-        }
-
         INTEGER value = 0;
         if (!Program::symbolToInteger(cmd[3], &value))
         {
@@ -142,15 +136,9 @@ void Program::executeCommand(void)
         Program::varDeclare(cmd[1], DataType::Logical);
     }
     // Logical variable declaration with immediate value definition
-    else if (cmd[0].compare("logical") && cmd.size() == 4)
+    else if (cmd[0].compare("logical") && cmd.size() == 4 && cmd[2].compare("="))
     {
-        if (!cmd[2].compare("="))
-        {
-            Program::errorOperatorInvalid(cmd[2]);
-            return;
-        }
-
-        LOGICAL value = 0;
+        LOGICAL value = false;
         if (!Program::symbolToLogical(cmd[3], &value))
         {
             return;
@@ -172,8 +160,7 @@ void Program::executeCommand(void)
     {
         Program::scopePop();
     }
-    // Variable value definition
-    // Syntax: <Target Variable> = <Source Variable / Literal Value>
+    // Variable value definition by direct assignment
     else if (cmd.size() == 3 && cmd[1].compare("="))
     {
         Variable* varTarget = Program::varFind(cmd[0]);
@@ -223,8 +210,7 @@ void Program::executeCommand(void)
                 break;
         }
     }
-    // Variable value definition with operation performing
-    // Syntax: <Target Variable> = <Source Variable / Literal Value> <Operator> <Source Variable / Literal Value>
+    // Variable value definition by performing an operation
     else if (cmd.size() == 5 && cmd[1].compare("="))
     {
         Variable* varTarget = Program::varFind(cmd[0]);
@@ -436,6 +422,126 @@ void Program::executeCommand(void)
             default:
                 break;
         }
+    }
+    // if statement
+    else if (cmd[0].compare("if") && cmd.size() == 2)
+    {
+        LOGICAL condition = false;
+        if (!Program::symbolToLogical(cmd[1], &condition))
+        {
+            return;
+        }
+
+        // Condition is true
+        if (condition)
+        {
+            Program::scopePush();
+        }
+        // Condition is false
+        else
+        {
+            // Skip the code related to the if statement
+
+            for (size_t i = m_counter + 1; i < m_program.size(); i++)
+            {
+                // Make sure the if statement is terminated by the corresponding end statement
+                // rather than one that belongs to an if statement inside of this one
+                size_t innerScope = 0;
+
+                // If there is an if statement inside of this if statement
+                if (m_program[i][0].compare("if") && m_program[i].size() == 2)
+                {
+                    // Increment the temporary scope level
+                    innerScope++;
+                }
+                else if (m_program[i].size() == 1)
+                {
+                    // If the program is inside an internal if statement
+                    if (innerScope)
+                    {
+                        // If this end statement belongs to an inner if statement
+                        if (m_program[i][0].compare("end"))
+                        {
+                            // Decrement the temporary scope level
+                            innerScope--;
+                        }
+                    }
+                    // If the program is on the level of this if statement
+                    else
+                    {
+                        // Found an else statement that belongs to this if statement
+                        if (m_program[i][0].compare("else"))
+                        {
+                            // If there is no more code after the else statement
+                            if (i + 1 >= m_program.size())
+                            {
+                                // Thow an error because there should always be at least an end statement after an else statement
+                                Program::error("Unexpected else statement!");
+                                return;
+                            }
+
+                            // Continue with the code of this else statement
+                            m_counter = i + 1;
+                            Program::scopePush();                            
+                            return;
+                        }
+                        // End of this if statement reached
+                        else if (m_program[i][0].compare("end"))
+                        {
+                            // Continue with the code after the end statement
+                            m_counter = i + 1;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            Program::error("End of if statement expected!");
+            return;
+        }
+    }
+    // else statement
+    else if (cmd[0].compare("else") && cmd.size() == 1)
+    {
+        // The code related to an else statement is skipped by default
+
+        for (size_t i = m_counter + 1; i < m_program.size(); i++)
+        {
+            // Make sure the if statement is terminated by the corresponding end statement
+            // rather than one that belongs to an if statement inside of this one
+            size_t innerScope = 0;
+
+            // If there is an if statement inside of this if statement
+            if (m_program[i][0].compare("if") && m_program[i].size() == 2)
+            {
+                // Increment the temporary scope level
+                innerScope++;
+            }
+            // End statement reached
+            else if (m_program[i][0].compare("end") && m_program[i].size() == 1)
+            {
+                // It belongs to an inner if statement
+                if (innerScope)
+                {
+                    // Decrement the temporary scope level
+                    innerScope--;
+                }
+                // It belongs to this else statement
+                else
+                {
+                    m_counter = i;
+                    return;
+                }
+            }
+        }
+
+        Program::error("End of else statement expected!");
+        return;
+    }
+    // end statement
+    else if (cmd[0].compare("end") && cmd.size() == 1)
+    {
+        Program::scopePop();
     }
     // Unrecognized command
     else
