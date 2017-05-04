@@ -115,10 +115,52 @@ void Program::executeCommand(void)
     {
         Program::varDeclare(cmd[1], DataType::Integer);
     }
+    // Integer variable declaration with immediate value definition
+    else if (cmd[0].compare("integer") && cmd.size() == 4)
+    {
+        if (!cmd[2].compare("="))
+        {
+            Program::errorOperatorInvalid(cmd[2]);
+            return;
+        }
+
+        INTEGER value = 0;
+        if (!Program::symbolToInteger(cmd[3], &value))
+        {
+            return;
+        }
+
+        // Declare the variable
+        Program::varDeclare(cmd[1], DataType::Integer);
+
+        // Assign the specified value to the recently reclared variable
+        m_variables.back().set(value);
+    }
     // Logical variable declaration
     else if (cmd[0].compare("logical") && cmd.size() == 2)
     {
         Program::varDeclare(cmd[1], DataType::Logical);
+    }
+    // Logical variable declaration with immediate value definition
+    else if (cmd[0].compare("logical") && cmd.size() == 4)
+    {
+        if (!cmd[2].compare("="))
+        {
+            Program::errorOperatorInvalid(cmd[2]);
+            return;
+        }
+
+        LOGICAL value = 0;
+        if (!Program::symbolToLogical(cmd[3], &value))
+        {
+            return;
+        }
+
+        // Declare the variable
+        Program::varDeclare(cmd[1], DataType::Logical);
+
+        // Assign the specified value to the recently reclared variable
+        m_variables.back().set(value);
     }
     // Scope push
     else if (cmd[0].compare("push") && cmd.size() == 1)
