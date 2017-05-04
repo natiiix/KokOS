@@ -14,21 +14,18 @@
 
 #include <kernel.h>
 
-// Key used to switch between the settings screen and the text editing screen
-#define KEY_SETTINGS KEY_F1
-
 // We want to access the VGA buffer directly to make the screen updating faster
 extern uint16_t* vgaBuffer;
 
 // Specifies by how many lines do Page Up / Page Down keys shift the view
 static const size_t PAGE_UP_DOWN_LINES = 10;
 
-static const size_t SETTINGS_PADDING_LEFT = 24;
+static const size_t MENU_PADDING_LEFT = 24;
 
-static const uint8_t SETTINGS_COLOR_DEFAULT_BG = 0x0;
-static const uint8_t SETTINGS_COLOR_DEFAULT_FG = 0x7;
-static const uint8_t SETTINGS_COLOR_SELECTED_BG = 0x7;
-static const uint8_t SETTINGS_COLOR_SELECTED_FG = 0x0;
+static const uint8_t MENU_COLOR_DEFAULT_BG = 0x0;
+static const uint8_t MENU_COLOR_DEFAULT_FG = 0x7;
+static const uint8_t MENU_COLOR_SELECTED_BG = 0x7;
+static const uint8_t MENU_COLOR_SELECTED_FG = 0x0;
 
 // Current cursor location relative to the first character in the file
 size_t m_cursorCol;
@@ -50,15 +47,16 @@ uint8_t m_colFG;
 
 enum EDITOR_SCREEN
 {
-    SCREEN_EXIT, // tells the editor to exit
-    SCREEN_TEXT, // text editing screen
-    SCREEN_SETTINGS, // screen with editor settings
+    SCREEN_EXIT, // indicates the intent to exit the editor
+    SCREEN_TEXT, // text editing mode
+    SCREEN_MENU, // user is in menu
 };
 
 // Specified which screen is currently being rendered
 EDITOR_SCREEN m_screen;
 
-size_t m_settingsLine; // index of currently selected line in settings
+size_t m_menuLine; // index of currently selected line in the menu
+static const size_t MENU_LINE_COUNT = 4; // the total number of lines in menu
 
 void generateLinesEmpty(void)
 {
@@ -359,73 +357,65 @@ void updateColorScheme(void)
     m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
 }
 
-void renderSettings()
+void setMenuLineColor(const size_t renderLine)
+{
+    if (renderLine == m_menuLine)
+    {
+        setcolor((VGA_COLOR)MENU_COLOR_SELECTED_FG, (VGA_COLOR)MENU_COLOR_SELECTED_BG);
+    }
+    else
+    {
+        setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
+    }
+}
+
+void renderMenu()
 {
     clear(); // clear the screen
     setcursor(0, 25); // put the cursor out of the screen
 
     // Header line
     size_t lineIdx = 2;
-    printat("  -- SETTINGS --", SETTINGS_PADDING_LEFT, lineIdx);
+    printat("  -- MENU --", MENU_PADDING_LEFT, lineIdx);
 
     // Background Color setting line
     lineIdx += 4;
-    if (m_settingsLine == 0)
-    {
-        setcolor((VGA_COLOR)SETTINGS_COLOR_SELECTED_FG, (VGA_COLOR)SETTINGS_COLOR_SELECTED_BG);
-    }
-    else
-    {
-        setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
-    }
-
-    printat("Background Color: ", SETTINGS_PADDING_LEFT, lineIdx);
+    setMenuLineColor(0);
+    printat("Background Color: ", MENU_PADDING_LEFT, lineIdx);
     char* strBG = colorToStr(m_colBG);
-    printat(strBG, SETTINGS_PADDING_LEFT + 18, lineIdx);
+    printat(strBG, MENU_PADDING_LEFT + 18, lineIdx);
     delete strBG;
 
     // Foreground Color setting line
     lineIdx += 2;
-    if (m_settingsLine == 1)
-    {
-        setcolor((VGA_COLOR)SETTINGS_COLOR_SELECTED_FG, (VGA_COLOR)SETTINGS_COLOR_SELECTED_BG);
-    }
-    else
-    {
-        setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
-    }
-
-    printat("Foreground Color: ", SETTINGS_PADDING_LEFT, lineIdx);
+    setMenuLineColor(1);
+    printat("Foreground Color: ", MENU_PADDING_LEFT, lineIdx);
     char* strFG = colorToStr(m_colFG);
-    printat(strFG, SETTINGS_PADDING_LEFT + 18, lineIdx);
+    printat(strFG, MENU_PADDING_LEFT + 18, lineIdx);
     delete strFG;
 
-    // Controls help information
-    /*lineIdx = 15;
-    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    // Save and Exit button
+    lineIdx += 4;
+    setMenuLineColor(2);
+    printat("Save and Exit", MENU_PADDING_LEFT, lineIdx);
 
-    printat("-- CONTROLS --", SETTINGS_PADDING_LEFT, lineIdx);
+    // Exit Without Saving button
     lineIdx += 2;
-    printat("Up Arrow    - Nagivate up", SETTINGS_PADDING_LEFT, lineIdx);
-    lineIdx += 1;
-    printat("Down Arrow  - Nagivate down", SETTINGS_PADDING_LEFT, lineIdx);
-    lineIdx += 1;
-    printat("Left Arrow  - Previous option", SETTINGS_PADDING_LEFT, lineIdx);
-    lineIdx += 1;
-    printat("Right Arrow - Next option", SETTINGS_PADDING_LEFT, lineIdx);*/
+    setMenuLineColor(3);
+    printat("Exit Without Saving", MENU_PADDING_LEFT, lineIdx);
 
     // Current line and column numbers are written at the bottom of the screen
     lineIdx = 23;
-    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
     char* strRow = tostr(m_cursorRow, 10);
-    printat("Line: ", SETTINGS_PADDING_LEFT, lineIdx);
-    printat(strRow, SETTINGS_PADDING_LEFT + 6, lineIdx);
+    printat("Line: ", MENU_PADDING_LEFT, lineIdx);
+    printat(strRow, MENU_PADDING_LEFT + 6, lineIdx);
     delete strRow;
 
-    setcolor((VGA_COLOR)SETTINGS_COLOR_DEFAULT_FG, (VGA_COLOR)SETTINGS_COLOR_DEFAULT_BG);
+    setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
     char* strCol = tostr(m_cursorCol, 10);
-    printat("Column: ", SETTINGS_PADDING_LEFT + 16, lineIdx);
-    printat(strCol, SETTINGS_PADDING_LEFT + 24, lineIdx);
+    printat("Column: ", MENU_PADDING_LEFT + 16, lineIdx);
+    printat(strCol, MENU_PADDING_LEFT + 24, lineIdx);
     delete strCol;
 
     m_renderRequired = false;
@@ -582,11 +572,31 @@ void screenText(void)
 
                 m_modified = true;
             }
+            // Ctrl + Delete
+            // Delete the whole current line
+            else if (ke.scancode == KEY_DELETE && ke.modifiers == MODIFIER_CTRL)
+            {
+                // If the current line isn't the last line of the file
+                if (m_lines.size() > m_cursorRow + 1)
+                {
+                    // Delete the current line
+                    m_lines.remove(m_cursorRow);
+                }
+                // The current line is the last line of the file
+                else
+                {
+                    // Clear the line
+                    m_lines[m_cursorRow].clear();
+                }
+
+                // Move the cursor to the beginning of the line
+                m_cursorCol = 0;
+            }
             // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
-                // Exit the editor by breaking the loop
-                m_screen = SCREEN_EXIT;
+                // Switch to the settings screen
+                m_screen = SCREEN_MENU;
                 break;
             }
             // Left Arrow
@@ -677,20 +687,13 @@ void screenText(void)
                     }
                 }
             }
-            // Settings Key (virtual)
-            else if (ke.scancode == KEY_SETTINGS && !ke.modifiers)
-            {
-                // Switch to the settings screen
-                m_screen = SCREEN_SETTINGS;
-                break;
-            }
 
             m_renderRequired = true;
         }
     }
 }
 
-void screenSettings(void)
+void screenMenu(void)
 {
     struct keyevent ke;
 
@@ -698,15 +701,15 @@ void screenSettings(void)
     {
         if (m_renderRequired)
         {
-            renderSettings();
+            renderMenu();
         }
 
         ke = readKeyEvent();
 
         if (ke.state)
         {
-            // Settings Key (virtual) or ESCAPE
-            if ((ke.scancode == KEY_SETTINGS || ke.scancode == KEY_ESCAPE) && !ke.modifiers)
+            // Escape
+            if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
                 // Update the color scheme according to the new color settings
                 updateColorScheme();
@@ -718,7 +721,7 @@ void screenSettings(void)
             // Left Arrow
             else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
             {
-                switch (m_settingsLine)
+                switch (m_menuLine)
                 {
                     case 0:
                         m_colBG = colorDown(m_colBG);
@@ -735,7 +738,7 @@ void screenSettings(void)
             // Right Arrow
             else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
             {
-                switch (m_settingsLine)
+                switch (m_menuLine)
                 {
                     case 0:
                         m_colBG = colorUp(m_colBG);
@@ -752,23 +755,41 @@ void screenSettings(void)
             // Up Arrow
             else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
             {
-                m_settingsLine++;
-
-                if (m_settingsLine > 1)
+                // Up arrow pressed at the very top line
+                if (m_menuLine == 0)
                 {
-                    m_settingsLine = 0;
+                    m_menuLine = MENU_LINE_COUNT - 1;
+                }
+                else
+                {
+                    m_menuLine--;
                 }
             }
             // Down Arrow
             else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
             {
-                if (m_settingsLine == 0)
+                m_menuLine++;
+
+                // Down arrow pressed at the very bottom line
+                if (m_menuLine >= MENU_LINE_COUNT)
                 {
-                    m_settingsLine = 1;
+                    m_menuLine = 0;
                 }
-                else
+            }
+            // Enter
+            else if (ke.scancode == KEY_ENTER && !ke.modifiers)
+            {
+                if (m_menuLine == 2 || m_menuLine == 3)
                 {
-                    m_settingsLine--;
+                    // User wishes not to save any modifications made to the text file
+                    if (m_menuLine == 3)
+                    {
+                        m_modified = false;
+                    }
+
+                    // Exit the editor
+                    m_screen = SCREEN_EXIT;
+                    break;
                 }
             }
 
@@ -794,7 +815,7 @@ void presetVariables(void)
 
     m_screen = SCREEN_TEXT;
 
-    m_settingsLine = 0;
+    m_menuLine = 0;
 }
 
 void editor(void)
@@ -810,9 +831,9 @@ void editor(void)
         {
             screenText();
         }
-        else if (m_screen == SCREEN_SETTINGS)
+        else if (m_screen == SCREEN_MENU)
         {
-            screenSettings();
+            screenMenu();
         }
         else
         {

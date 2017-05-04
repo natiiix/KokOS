@@ -31,20 +31,19 @@
 - shell command history (using up/down arrows, up to 16 commands)
 - currently up-to-date help command
 - repetitive validity checks should prevent unexpected behavior
-
-## In progress
-- shell
-- FAT file system support
-- more complex file operations
+- FAT file system support (some operations haven't been implemented, see TODO)
 - basic text file editor (selections and copy-pasting may be implemented later)
 
+## In progress
+- simple OS-specific programming language and its interpreter
+
 ## TODO
-- OS-specific programming language (something along the lines of bash script)
-- implement more C/C++ libraries
+- copy / move / rename commands for both files and directoties
 - moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
 
 ## On Hold
 - AHCI driver (I wasn't able to make it work and it's not of high importance to me)
+- implement more C/C++ libraries (it doesn't seem necessary at the moment)
 
 ## Links
 <div>Inspiration / based upon: <a href="http://wiki.osdev.org/Main_Page">OSDev Wiki</a></div>

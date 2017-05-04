@@ -445,7 +445,7 @@ void shell_init(void)
     {
 		// Keep in mind that some memory is always allocated by the shell instance itself
 		debug_memusage();
-
+		
         string strInput = Shell::readline();
 
 		sprint(Shell::shellPrefix);

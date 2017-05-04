@@ -84,6 +84,10 @@ public:
 	void insert(const char c, const size_t pos);
 	// Inserts a string at a specified position in the string
 	void insert(const string& str, const size_t pos);
+	// Parses a 32 bit integer from the string
+	bool parseInt32(int32_t* const output) const;
+	// Parses a boolean value from the string
+	bool parseBool(bool* const output) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
@@ -101,6 +105,8 @@ public:
 
 	//static void disposeVector(vector<string>& vec);
 	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
+	static string toString(const int32_t value);
+	static string toString(const bool value);
 
 private:
     void* m_ptr;
