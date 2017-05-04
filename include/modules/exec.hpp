@@ -24,6 +24,12 @@ public:
 
     void declare(const string& name, const DataType type, const size_t scope);
     void dispose(void);
+
+    INTEGER getInteger(void) const;
+    LOGICAL getLogical(void) const;
+
+    void set(const INTEGER value);
+    void set(const LOGICAL value);
 };
 
 class Program
@@ -53,4 +59,6 @@ private:
     void error(const char* const str); // prints an error message and exits the program
     void error(const string& str);
     void errorVarUndeclared(const string& name); // "variable hasn't been declared" error
+    void errorSymbolUnresolved(const string& name); // "unable to resolve symbol" error
+    void errorTypesIncompatible(void);
 };

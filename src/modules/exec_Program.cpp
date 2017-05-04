@@ -154,11 +154,11 @@ void Program::executeCommand(void)
                 switch (varTarget->Type)
                 {
                     case DataType::Integer:
-                        (*(INTEGER*)varTarget->Pointer) = (*(INTEGER*)varSource->Pointer);
+                        varTarget->set(varSource->getInteger());
                         break;
 
                     case DataType::Logical:
-                        (*(LOGICAL*)varTarget->Pointer) = (*(LOGICAL*)varSource->Pointer);
+                        varTarget->set(varSource->getLogical());
                         break;
 
                     default:
@@ -167,7 +167,7 @@ void Program::executeCommand(void)
             }
             else
             {
-                Program::error("Variables do not have matching data types!");
+                Program::errorTypesIncompatible();
                 return;
             }
         }
@@ -179,12 +179,20 @@ void Program::executeCommand(void)
             switch (varTarget->Type)
             {
                 case DataType::Integer:
-                    isValidLiteral = cmd[2].parseInt32((INTEGER*)varTarget->Pointer);
+                {
+                    int32_t value = 0;
+                    isValidLiteral = cmd[2].parseInt32(&value);
+                    varTarget->set(value);
                     break;
+                }
 
                 case DataType::Logical:
-                    isValidLiteral = cmd[2].parseBool((LOGICAL*)varTarget->Pointer);
-                    break;
+                {
+                    bool value = false;
+                    isValidLiteral = cmd[2].parseBool(&value);
+                    varTarget->set(value);
+                    break;   
+                }
 
                 default:
                     break;
@@ -193,15 +201,7 @@ void Program::executeCommand(void)
             // Invalid literal value / usage of undeclared variable
             if (!isValidLiteral)
             {
-                string strError;
-                strError.clear();
-
-                strError.push_back("Unable to resolve symbol \"");
-                strError.push_back(cmd[2]);
-                strError.push_back("\"!");
-
-                Program::error(strError);
-                strError.dispose();
+                Program::errorSymbolUnresolved(cmd[2]);
                 return;
             }
         }
@@ -222,7 +222,7 @@ void Program::executeCommand(void)
         {
             case DataType::Integer:
             {
-                string strValue = string::toString(*(INTEGER*)varSource->Pointer);
+                string strValue = string::toString(varSource->getInteger());
                 sprint(strValue);
                 newline();
                 strValue.dispose();
@@ -231,7 +231,7 @@ void Program::executeCommand(void)
 
             case DataType::Logical:
             {
-                string strValue = string::toString(*(LOGICAL*)varSource->Pointer);
+                string strValue = string::toString(varSource->getLogical());
                 sprint(strValue);
                 newline();
                 strValue.dispose();
@@ -414,4 +414,22 @@ void Program::errorVarUndeclared(const string& name)
 
     Program::error(strErrorMsg);
     strErrorMsg.dispose();
+}
+
+void Program::errorSymbolUnresolved(const string& name)
+{
+    string strError;
+    strError.clear();
+
+    strError.push_back("Unable to resolve symbol \"");
+    strError.push_back(name);
+    strError.push_back("\"!");
+
+    Program::error(strError);
+    strError.dispose();
+}
+
+void Program::errorTypesIncompatible(void)
+{
+    Program::error("Variables do not have matching data types!");
 }
