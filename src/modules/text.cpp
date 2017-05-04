@@ -588,6 +588,9 @@ void screenText(void)
                     // Clear the line
                     m_lines[m_cursorRow].clear();
                 }
+
+                // Move the cursor to the beginning of the line
+                m_cursorCol = 0;
             }
             // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
