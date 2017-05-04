@@ -336,20 +336,20 @@ void Program::executeCommand(void)
                     break;
                 }
 
-                // Failed to resolve any of the symbols
-                if (!source1Logical && !source2Logical && !source1Integer && !source2Integer)
+                // Failed to resolve the first source symbol
+                if (!source1Logical && !source1Integer)
                 {
                     Program::errorSymbolUnresolved(cmd[2]);
+                }
+                // Failed to resolve the second source symbol
+                else if (!source2Logical && !source2Integer)
+                {
                     Program::errorSymbolUnresolved(cmd[4]);
                 }
                 // Data types of source symbols do not match
-                else if (source1Logical != source2Logical && source1Integer != source2Integer)
-                {
-                    Program::errorTypesIncompatible();
-                }
                 else
                 {
-                    Program::error("Unable to process source symbols!\nMake sure both source symbols represent existing values of matching data type!");
+                    Program::errorTypesIncompatible();
                 }
 
                 return;
