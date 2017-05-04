@@ -314,33 +314,30 @@ void Program::executeCommand(void)
                 break;
         }
     }
-    // if statement
-    else if (cmd[0].compare("if") && cmd.size() == 2)
+    // if statement / while loop
+    else if (cmd[0].compare("if") || cmd[0].compare("while"))
     {
         LOGICAL condition = false;
-        if (!Program::symbolToLogical(cmd[1], &condition))
-        {
-            return;
-        }
 
-        // Condition is true
-        if (condition)
+        if (cmd.size() == 2)
         {
-            Program::scopePush();
+            // Single symbol condition format
+            if (!Program::symbolToLogical(cmd[1], &condition))
+            {
+                return;
+            }
         }
-        // Condition is false
+        else if (cmd.size() == 4)
+        {
+            // Condition via comparison of 2 symbols format
+            if (!Program::evaluateLogical(cmd[1], cmd[2], cmd[3], &condition))
+            {
+                return;
+            }
+        }
         else
         {
-            elseLoop();
-            return;
-        }
-    }
-    // if statement with comparison
-    else if (cmd[0].compare("if") && cmd.size() == 4)
-    {
-        LOGICAL condition = false;
-        if (!Program::evaluateLogical(cmd[1], cmd[2], cmd[3], &condition))
-        {
+            Program::error("Unexpected condition format!");
             return;
         }
 
