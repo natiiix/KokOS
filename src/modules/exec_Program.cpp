@@ -252,7 +252,7 @@ void Program::executeCommand(void)
                 bool source2Logical = false;
 
                 source1Logical = Program::symbolToLogical(cmd[2], &valueLogical1, false);
-                source2Logical = Program::symbolToLogical(cmd[2], &valueLogical2, false);
+                source2Logical = Program::symbolToLogical(cmd[4], &valueLogical2, false);
 
                 // Check input symbols for integer values
                 INTEGER valueInteger1 = 0;
@@ -261,7 +261,7 @@ void Program::executeCommand(void)
                 bool source2Integer = false;
 
                 source1Integer = Program::symbolToInteger(cmd[2], &valueInteger1, false);
-                source2Integer = Program::symbolToInteger(cmd[2], &valueInteger2, false);
+                source2Integer = Program::symbolToInteger(cmd[4], &valueInteger2, false);
 
                 // Both source symbols represent valid logical values
                 if (source1Logical && source2Logical)
