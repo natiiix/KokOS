@@ -130,6 +130,21 @@ void Program::executeCommand(void)
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
     }
+    // Integer variable declaration with statement evaluation
+    else if (cmd[0].compare("integer") && cmd.size() == 6 && cmd[2].compare("="))
+    {
+        INTEGER value = false;
+        if (!Program::evaluateInteger(cmd[3], cmd[4], cmd[5], &value))
+        {
+            return;
+        }
+
+        // Declare the variable
+        Program::varDeclare(cmd[1], DataType::Integer);
+
+        // Assign the specified value to the recently reclared variable
+        m_variables.back().set(value);
+    }
     // Logical variable declaration
     else if (cmd[0].compare("logical") && cmd.size() == 2)
     {
@@ -140,6 +155,21 @@ void Program::executeCommand(void)
     {
         LOGICAL value = false;
         if (!Program::symbolToLogical(cmd[3], &value))
+        {
+            return;
+        }
+
+        // Declare the variable
+        Program::varDeclare(cmd[1], DataType::Logical);
+
+        // Assign the specified value to the recently reclared variable
+        m_variables.back().set(value);
+    }
+    // Logical variable declaration with statement evaluation
+    else if (cmd[0].compare("logical") && cmd.size() == 6 && cmd[2].compare("="))
+    {
+        LOGICAL value = false;
+        if (!Program::evaluateLogical(cmd[3], cmd[4], cmd[5], &value))
         {
             return;
         }
@@ -226,45 +256,8 @@ void Program::executeCommand(void)
         {
             case DataType::Integer:
             {
-                INTEGER valueSource1 = 0;
-                INTEGER valueSource2 = 0;
-
-                // Resolve both source values
-                if (!Program::symbolToInteger(cmd[2], &valueSource1) ||
-                    !Program::symbolToInteger(cmd[4], &valueSource2))
+                if (!Program::evaluateInteger(cmd[2], cmd[3], cmd[4], (INTEGER*)varTarget->Pointer))
                 {
-                    // Unable to resolve one of the symbols
-                    return;
-                }
-
-                // Addition
-                if (cmd[3].compare("+"))
-                {
-                    varTarget->set(valueSource1 + valueSource2);
-                }
-                // Subtraction
-                else if (cmd[3].compare("-"))
-                {
-                    varTarget->set(valueSource1 - valueSource2);
-                }
-                // Multiplication
-                else if (cmd[3].compare("*"))
-                {
-                    varTarget->set(valueSource1 * valueSource2);
-                }
-                // Integer division
-                else if (cmd[3].compare("/"))
-                {
-                    varTarget->set(valueSource1 / valueSource2);
-                }
-                // Remainder after integer division
-                else if (cmd[3].compare("%"))
-                {
-                    varTarget->set(valueSource1 % valueSource2);
-                }
-                else
-                {
-                    Program::errorOperatorInvalid(cmd[3]);
                     return;
                 }
 
@@ -273,114 +266,12 @@ void Program::executeCommand(void)
 
             case DataType::Logical:
             {
-                // Check input symbols for logical values
-                LOGICAL valueLogical1 = 0;
-                LOGICAL valueLogical2 = 0;
-                bool source1Logical = false;
-                bool source2Logical = false;
-
-                source1Logical = Program::symbolToLogical(cmd[2], &valueLogical1, false);
-                source2Logical = Program::symbolToLogical(cmd[4], &valueLogical2, false);
-
-                // Check input symbols for integer values
-                INTEGER valueInteger1 = 0;
-                INTEGER valueInteger2 = 0;
-                bool source1Integer = false;
-                bool source2Integer = false;
-
-                source1Integer = Program::symbolToInteger(cmd[2], &valueInteger1, false);
-                source2Integer = Program::symbolToInteger(cmd[4], &valueInteger2, false);
-
-                // Both source symbols represent valid logical values
-                if (source1Logical && source2Logical)
+                if (!Program::evaluateLogical(cmd[2], cmd[3], cmd[4], (LOGICAL*)varTarget->Pointer))
                 {
-                    // Boolean NXOR (equality check)
-                    if (cmd[3].compare("=="))
-                    {
-                        varTarget->set(valueLogical1 == valueLogical2);
-                    }
-                    // Boolean XOR (inequality check)
-                    else if (cmd[3].compare("!="))
-                    {
-                        varTarget->set(valueLogical1 != valueLogical2);
-                    }
-                    // Boolean AND
-                    else if (cmd[3].compare("&&"))
-                    {
-                        varTarget->set(valueLogical1 && valueLogical2);
-                    }
-                    // Boolen OR
-                    else if (cmd[3].compare("||"))
-                    {
-                        varTarget->set(valueLogical1 || valueLogical2);
-                    }
-                    else
-                    {
-                        Program::errorOperatorInvalid(cmd[3]);
-                        return;
-                    }
-
-                    break;
-                }
-                // Both source symbols represent valid integer values
-                else if (source1Integer && source2Integer)
-                {
-                    // Equality
-                    if (cmd[3].compare("=="))
-                    {
-                        varTarget->set(valueInteger1 == valueInteger2);
-                    }
-                    // Inequality
-                    else if (cmd[3].compare("!="))
-                    {
-                        varTarget->set(valueInteger1 != valueInteger2);
-                    }
-                    // Greater than
-                    else if (cmd[3].compare(">"))
-                    {
-                        varTarget->set(valueInteger1 > valueInteger2);
-                    }
-                    // Less than
-                    else if (cmd[3].compare("<"))
-                    {
-                        varTarget->set(valueInteger1 < valueInteger2);
-                    }
-                    // Greater than or equal to
-                    else if (cmd[3].compare(">="))
-                    {
-                        varTarget->set(valueInteger1 >= valueInteger2);
-                    }
-                    // Less than or equal to
-                    else if (cmd[3].compare("<="))
-                    {
-                        varTarget->set(valueInteger1 <= valueInteger2);
-                    }
-                    else
-                    {
-                        Program::errorOperatorInvalid(cmd[3]);
-                        return;
-                    }
-
-                    break;
+                    return;
                 }
 
-                // Failed to resolve the first source symbol
-                if (!source1Logical && !source1Integer)
-                {
-                    Program::errorSymbolUnresolved(cmd[2]);
-                }
-                // Failed to resolve the second source symbol
-                else if (!source2Logical && !source2Integer)
-                {
-                    Program::errorSymbolUnresolved(cmd[4]);
-                }
-                // Data types of source symbols do not match
-                else
-                {
-                    Program::errorTypesIncompatible();
-                }
-
-                return;
+                break;
             }
 
             default:
@@ -440,108 +331,65 @@ void Program::executeCommand(void)
         // Condition is false
         else
         {
-            // Skip the code related to the if statement
-
-            for (size_t i = m_counter + 1; i < m_program.size(); i++)
-            {
-                // Make sure the if statement is terminated by the corresponding end statement
-                // rather than one that belongs to an if statement inside of this one
-                size_t innerScope = 0;
-
-                // If there is an if statement inside of this if statement
-                if (m_program[i][0].compare("if") && m_program[i].size() == 2)
-                {
-                    // Increment the temporary scope level
-                    innerScope++;
-                }
-                else if (m_program[i].size() == 1)
-                {
-                    // If the program is inside an internal if statement
-                    if (innerScope)
-                    {
-                        // If this end statement belongs to an inner if statement
-                        if (m_program[i][0].compare("end"))
-                        {
-                            // Decrement the temporary scope level
-                            innerScope--;
-                        }
-                    }
-                    // If the program is on the level of this if statement
-                    else
-                    {
-                        // Found an else statement that belongs to this if statement
-                        if (m_program[i][0].compare("else"))
-                        {
-                            // If there is no more code after the else statement
-                            if (i + 1 >= m_program.size())
-                            {
-                                // Thow an error because there should always be at least an end statement after an else statement
-                                Program::error("Unexpected else statement!");
-                                return;
-                            }
-
-                            // Continue with the code of this else statement
-                            m_counter = i + 1;
-                            Program::scopePush();                            
-                            return;
-                        }
-                        // End of this if statement reached
-                        else if (m_program[i][0].compare("end"))
-                        {
-                            // Continue with the code after the end statement
-                            m_counter = i + 1;
-                            return;
-                        }
-                    }
-                }
-            }
-
-            Program::error("End of if statement expected!");
+            elseLoop();
             return;
         }
     }
-    // else statement
-    else if (cmd[0].compare("else") && cmd.size() == 1)
+    // if statement with comparison
+    else if (cmd[0].compare("if") && cmd.size() == 4)
     {
-        // The code related to an else statement is skipped by default
-
-        for (size_t i = m_counter + 1; i < m_program.size(); i++)
+        LOGICAL condition = false;
+        if (!Program::evaluateLogical(cmd[1], cmd[2], cmd[3], &condition))
         {
-            // Make sure the if statement is terminated by the corresponding end statement
-            // rather than one that belongs to an if statement inside of this one
-            size_t innerScope = 0;
-
-            // If there is an if statement inside of this if statement
-            if (m_program[i][0].compare("if") && m_program[i].size() == 2)
-            {
-                // Increment the temporary scope level
-                innerScope++;
-            }
-            // End statement reached
-            else if (m_program[i][0].compare("end") && m_program[i].size() == 1)
-            {
-                // It belongs to an inner if statement
-                if (innerScope)
-                {
-                    // Decrement the temporary scope level
-                    innerScope--;
-                }
-                // It belongs to this else statement
-                else
-                {
-                    m_counter = i;
-                    return;
-                }
-            }
+            return;
         }
 
-        Program::error("End of else statement expected!");
+        // Condition is true
+        if (condition)
+        {
+            Program::scopePush();
+        }
+        // Condition is false
+        else
+        {
+            elseLoop();
+            return;
+        }
+    }
+    // else / else if statement
+    else if (cmd[0].compare("else") &&
+        (cmd.size() == 1 || ((cmd.size() == 3 || cmd.size() == 5) && cmd[1].compare("if"))))
+    {
+        size_t endIndex = Program::findEnd();
+
+        if (endIndex)
+        {
+            m_counter = endIndex;
+        }
+
         return;
     }
     // end statement
     else if (cmd[0].compare("end") && cmd.size() == 1)
     {
-        Program::scopePop();
+        if (m_scope)
+        {
+            // If this end statements belongs to a while loop
+            if (m_program[m_scopeStack.back()][0].compare("while"))
+            {
+                // Jump back to the beginning of the loop
+                m_counter = m_scopeStack.back();
+                Program::scopePop();
+                return;
+            }
+
+            Program::scopePop();
+        }
+        else
+        {
+            Program::error("Unexpected \"end\" statement!");
+            return;
+        }
     }
     // Unrecognized command
     else
@@ -835,5 +683,307 @@ bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output, co
         }
 
         return validLiteral;
+    }
+}
+
+bool Program::evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output)
+{
+    INTEGER valueSource1 = 0;
+    INTEGER valueSource2 = 0;
+
+    // Resolve both source values
+    if (!Program::symbolToInteger(strSymbol1, &valueSource1) ||
+        !Program::symbolToInteger(strSymbol2, &valueSource2))
+    {
+        // Unable to resolve one of the symbols
+        return false;
+    }
+
+    // Addition
+    if (strOperator.compare("+"))
+    {
+        (*output) = (valueSource1 + valueSource2);
+    }
+    // Subtraction
+    else if (strOperator.compare("-"))
+    {
+        (*output) = (valueSource1 - valueSource2);
+    }
+    // Multiplication
+    else if (strOperator.compare("*"))
+    {
+        (*output) = (valueSource1 * valueSource2);
+    }
+    // Integer division
+    else if (strOperator.compare("/"))
+    {
+        (*output) = (valueSource1 / valueSource2);
+    }
+    // Remainder after integer division
+    else if (strOperator.compare("%"))
+    {
+        (*output) = (valueSource1 % valueSource2);
+    }
+    else
+    {
+        Program::errorOperatorInvalid(strOperator);
+        return false;
+    }
+
+    return true;
+}
+
+bool Program::evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output)
+{
+    // Check input symbols for logical values
+    LOGICAL valueLogical1 = 0;
+    LOGICAL valueLogical2 = 0;
+    bool source1Logical = false;
+    bool source2Logical = false;
+
+    source1Logical = Program::symbolToLogical(strSymbol1, &valueLogical1, false);
+    source2Logical = Program::symbolToLogical(strSymbol2, &valueLogical2, false);
+
+    // Both source symbols represent valid logical values
+    if (source1Logical && source2Logical)
+    {
+        // Boolean NXOR (equality check)
+        if (strOperator.compare("=="))
+        {
+            (*output) = (valueLogical1 == valueLogical2);
+        }
+        // Boolean XOR (inequality check)
+        else if (strOperator.compare("!="))
+        {
+            (*output) = (valueLogical1 != valueLogical2);
+        }
+        // Boolean AND
+        else if (strOperator.compare("&&"))
+        {
+            (*output) = (valueLogical1 && valueLogical2);
+        }
+        // Boolen OR
+        else if (strOperator.compare("||"))
+        {
+            (*output) = (valueLogical1 || valueLogical2);
+        }
+        else
+        {
+            Program::errorOperatorInvalid(strOperator);
+            return false;
+        }
+
+        return true;
+    }
+
+    // Check input symbols for integer values
+    INTEGER valueInteger1 = 0;
+    INTEGER valueInteger2 = 0;
+    bool source1Integer = false;
+    bool source2Integer = false;
+
+    source1Integer = Program::symbolToInteger(strSymbol1, &valueInteger1, false);
+    source2Integer = Program::symbolToInteger(strSymbol2, &valueInteger2, false);
+    
+    // Both source symbols represent valid integer values
+    if (source1Integer && source2Integer)
+    {
+        // Equality
+        if (strOperator.compare("=="))
+        {
+            (*output) = (valueInteger1 == valueInteger2);
+        }
+        // Inequality
+        else if (strOperator.compare("!="))
+        {
+            (*output) = (valueInteger1 != valueInteger2);
+        }
+        // Greater than
+        else if (strOperator.compare(">"))
+        {
+            (*output) = (valueInteger1 > valueInteger2);
+        }
+        // Less than
+        else if (strOperator.compare("<"))
+        {
+            (*output) = (valueInteger1 < valueInteger2);
+        }
+        // Greater than or equal to
+        else if (strOperator.compare(">="))
+        {
+            (*output) = (valueInteger1 >= valueInteger2);
+        }
+        // Less than or equal to
+        else if (strOperator.compare("<="))
+        {
+            (*output) = (valueInteger1 <= valueInteger2);
+        }
+        else
+        {
+            Program::errorOperatorInvalid(strOperator);
+            return false;
+        }
+
+        return true;
+    }
+
+    // Failed to resolve the first source symbol
+    if (!source1Logical && !source1Integer)
+    {
+        Program::errorSymbolUnresolved(strSymbol1);
+    }
+    // Failed to resolve the second source symbol
+    else if (!source2Logical && !source2Integer)
+    {
+        Program::errorSymbolUnresolved(strSymbol2);
+    }
+    // Data types of source symbols do not match
+    else
+    {
+        Program::errorTypesIncompatible();
+    }
+
+    return false;
+}
+
+size_t Program::findEnd(void)
+{
+    // Find the end statement of the current scope
+    // Ignore all the inner scopes by counting inner scope levels
+    for (size_t i = m_counter + 1; i < m_program.size(); i++)
+    {
+        size_t innerScope = 0;
+
+        // if and while statements increase the scope depth level
+        if (m_program[i][0].compare("if") ||
+            m_program[i][0].compare("while"))
+        {
+            // Increment the temporary scope level
+            innerScope++;
+        }
+        // end statement reached
+        else if (m_program[i][0].compare("end") && m_program[i].size() == 1)
+        {
+            if (innerScope)
+            {
+                // Decrement the temporary scope level
+                innerScope--;
+            }
+            else
+            {
+                // Return the number of the line with the corresponding end statement
+                return i;
+            }
+        }
+    }
+
+    // Couldn't find the corresponsing end statement
+    Program::error("Expected an \"end\" statement!");
+    return 0;
+}
+
+size_t Program::findElse(void)
+{
+    // Find the nearest else / else if statement related to this if statement
+    // If an end statement is reached before any else / else if is found
+    // the index of that end statement is returned instead
+
+    for (size_t i = m_counter + 1; i < m_program.size(); i++)
+    {
+        size_t innerScope = 0;
+
+        // if and while statements increase the scope depth level
+        if (m_program[i][0].compare("if") ||
+            m_program[i][0].compare("while"))
+        {
+            // Increment the temporary scope level
+            innerScope++;
+        }
+        // If the program is inside an inner scope
+        else if (innerScope)
+        {
+            // If this end statement belongs to an inner if statement
+            if (m_program[i][0].compare("end"))
+            {
+                // Decrement the temporary scope level
+                innerScope--;
+            }
+        }
+        // If the program is on the level of this if statement
+        else
+        {
+            // Found an else statement that belongs to this if statement
+            if ((m_program[i][0].compare("else") &&
+                (m_program[i].size() == 1 ||
+                    ((m_program[i].size() == 3 || m_program[i].size() == 5)
+                        && m_program[i][1].compare("if")))) ||
+                // End of this if statement reached
+                m_program[i][0].compare("end"))
+            {
+                return i;
+            }
+        }
+    }
+
+    Program::error("Unexpected end of program! Expected an end statement!");
+    return 0;
+}
+
+void Program::elseLoop(void)
+{
+    // Go through the code until an else if with satisfied condition is found or else / end is reached
+    while (true)
+    {
+        size_t elseIndex = Program::findElse();
+
+        if (elseIndex)
+        {
+            if (m_program[elseIndex][0].compare("else") &&
+                (m_program[elseIndex].size() == 3 || m_program[elseIndex].size() == 5) &&
+                m_program[elseIndex][1].compare("if"))
+            {
+                LOGICAL elseCondition = false;
+                    
+                // else if statement using a single symbol condition
+                if (m_program[elseIndex].size() == 3)
+                {
+                    if (!Program::symbolToLogical(m_program[elseIndex][2], &elseCondition))
+                    {
+                        break;
+                    }
+                }
+                // else if statement that uses a comparison as a condition
+                else if (m_program[elseIndex].size() == 5)
+                {
+                    if (!Program::evaluateLogical(m_program[elseIndex][2], m_program[elseIndex][3], m_program[elseIndex][4], &elseCondition))
+                    {
+                        break;
+                    }
+                }
+
+                // Condition of this else if is satisfied, continue the code execution
+                if (elseCondition)
+                {
+                    m_counter = elseIndex + 1;
+                    Program::scopePush();
+                    break;
+                }
+                // Condition is not satisfied, look for the next else if / else / end statement
+                else
+                {
+                    m_counter = elseIndex;
+                    continue;
+                }
+            }
+
+            // Simple else only statement or end statement reached
+            // The only thing that can be done is to continue
+            m_counter = elseIndex + 1;
+            break;
+        }
+        else
+        {
+            break;
+        }
     }
 }

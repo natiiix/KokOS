@@ -65,4 +65,12 @@ private:
 
     bool symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError = true);
     bool symbolToLogical(const string& strSymbol, LOGICAL* const output, const bool throwError = true);
+
+    bool evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output);
+    bool evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output);
+
+    size_t findEnd(void);
+    size_t findElse(void);
+
+    void elseLoop(void);
 };
