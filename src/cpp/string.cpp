@@ -422,7 +422,7 @@ bool string::parseInt32(int32_t* const output) const
         // Check if the character is a valid digit
         if (cDigit >= '0' && cDigit <= '9')
         {
-            int32_t digitWeight = powInt32(10, m_size - 1 - (i - negative));
+            int32_t digitWeight = powInt32(10, m_size - 1 - i);
             value += (cDigit - '0') * digitWeight;
         }
         // Invalid character occurred
@@ -553,11 +553,12 @@ string string::toString(const int32_t value)
         tmp = -tmp;
     }
 
-    while (tmp)
+    do
     {
         digits[digitCount++] = '0' + (tmp % 10);
         tmp /= 10;
     }
+    while (tmp);
 
     for (size_t i = 0; i < digitCount; i++)
     {
