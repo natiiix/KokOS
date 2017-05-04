@@ -142,71 +142,45 @@ void Program::executeCommand(void)
             return;
         }
 
-        Variable* varSource = Program::varFind(cmd[2]);
-
-        // Source is an existing variable
-        if (varSource)
+        switch (varTarget->Type)
         {
-            // Target and source variable have the same data type
-            if (varTarget->Type == varSource->Type)
+            case DataType::Integer:
             {
-                // Copy the value of source variable to the target variable
-                switch (varTarget->Type)
+                INTEGER value = 0;
+
+                if (Program::symbolToInteger(cmd[2], &value))
                 {
-                    case DataType::Integer:
-                        varTarget->set(varSource->getInteger());
-                        break;
-
-                    case DataType::Logical:
-                        varTarget->set(varSource->getLogical());
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-            else
-            {
-                Program::errorTypesIncompatible();
-                return;
-            }
-        }
-        // Source may be a literal value
-        else
-        {
-            bool isValidLiteral = false;
-
-            switch (varTarget->Type)
-            {
-                case DataType::Integer:
-                {
-                    int32_t value = 0;
-                    isValidLiteral = cmd[2].parseInt32(&value);
                     varTarget->set(value);
-                    break;
                 }
-
-                case DataType::Logical:
+                else
                 {
-                    bool value = false;
-                    isValidLiteral = cmd[2].parseBool(&value);
-                    varTarget->set(value);
-                    break;   
+                    return;
                 }
 
-                default:
-                    break;
+                break;
             }
 
-            // Invalid literal value / usage of undeclared variable
-            if (!isValidLiteral)
+            case DataType::Logical:
             {
-                Program::errorSymbolUnresolved(cmd[2]);
-                return;
+                LOGICAL value = 0;
+
+                if (Program::symbolToLogical(cmd[2], &value))
+                {
+                    varTarget->set(value);
+                }
+                else
+                {
+                    return;
+                }
+
+                break;
             }
+
+            default:
+                break;
         }
     }
-    // Scope pop
+    // Variable value print
     else if (cmd[0].compare("print") && cmd.size() == 2)
     {
         Variable* varSource = Program::varFind(cmd[1]);
@@ -432,4 +406,84 @@ void Program::errorSymbolUnresolved(const string& name)
 void Program::errorTypesIncompatible(void)
 {
     Program::error("Variables do not have matching data types!");
+}
+
+bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output)
+{
+    // First check if the symbol is a variable name
+    Variable* varSource = Program::varFind(strSymbol);
+
+    // If the symbol represents an existing variable
+    if (varSource)
+    {
+        // And the variable has the desired data type
+        if (varSource->Type == DataType::Integer)
+        {
+            // Set the output to the value of the variable
+            (*output) = varSource->getInteger();
+
+            // Symbol represented an integer variable and the value has been copied successfully
+            return true;
+        }
+        // Symbol represents a variable of different data type
+        else
+        {
+            Program::errorTypesIncompatible();
+            return false;
+        }
+    }
+    // The symbol could also be a literal value
+    else
+    {
+        // Attempt to parse an integer value from the symbol
+        bool validLiteral = strSymbol.parseInt32(output);
+
+        // Symbol parsing failed
+        if (!validLiteral)
+        {
+            Program::errorSymbolUnresolved(strSymbol);
+        }
+
+        return validLiteral;
+    }
+}
+
+bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output)
+{
+    // First check if the symbol is a variable name
+    Variable* varSource = Program::varFind(strSymbol);
+
+    // If the symbol represents an existing variable
+    if (varSource)
+    {
+        // And the variable has the desired data type
+        if (varSource->Type == DataType::Logical)
+        {
+            // Set the output to the value of the variable
+            (*output) = varSource->getLogical();
+
+            // Symbol represented a logical variable and the value has been copied successfully
+            return true;
+        }
+        // Symbol represents a variable of different data type
+        else
+        {
+            Program::errorTypesIncompatible();
+            return false;
+        }
+    }
+    // The symbol could also be a literal value
+    else
+    {
+        // Attempt to parse a logical value from the symbol
+        bool validLiteral = strSymbol.parseBool(output);
+
+        // Symbol parsing failed
+        if (!validLiteral)
+        {
+            Program::errorSymbolUnresolved(strSymbol);
+        }
+
+        return validLiteral;
+    }
 }

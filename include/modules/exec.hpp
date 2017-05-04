@@ -61,4 +61,7 @@ private:
     void errorVarUndeclared(const string& name); // "variable hasn't been declared" error
     void errorSymbolUnresolved(const string& name); // "unable to resolve symbol" error
     void errorTypesIncompatible(void);
+
+    bool symbolToInteger(const string& strSymbol, INTEGER* const output);
+    bool symbolToLogical(const string& strSymbol, LOGICAL* const output);
 };
