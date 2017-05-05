@@ -105,15 +105,11 @@ void Program::executeCommand(void)
     // I figured out that a shortcut for the current command might be useful
     vector<string>& cmd = m_program[m_counter];
 
-    printint(m_counter);
-    print(" ");
-    sprint(cmd[0]);
-    newline();
-
     // Program exit
     if (cmd[0].compare("exit") && cmd.size() == 1)
     {
         Program::exit();
+        return;
     }
     // Integer variable declaration
     else if (cmd[0].compare("integer") && cmd.size() == 2)
@@ -870,12 +866,12 @@ bool Program::evaluateLogical(const string& strSymbol1, const string& strOperato
 
 size_t Program::findEnd(void)
 {
+    size_t innerScope = 0;
+
     // Find the end statement of the current scope
     // Ignore all the inner scopes by counting inner scope levels
     for (size_t i = m_counter + 1; i < m_program.size(); i++)
     {
-        size_t innerScope = 0;
-
         // if and while statements increase the scope depth level
         if (m_program[i][0].compare("if") ||
             m_program[i][0].compare("while"))
@@ -883,8 +879,8 @@ size_t Program::findEnd(void)
             // Increment the temporary scope level
             innerScope++;
         }
-        // end statement reached
-        else if (m_program[i][0].compare("end") && m_program[i].size() == 1)
+        // end statements decrease the scope depth level if there is any
+        else if (m_program[i][0].compare("end"))
         {
             if (innerScope)
             {
@@ -910,10 +906,10 @@ size_t Program::findElse(void)
     // If an end statement is reached before any else / else if is found
     // the index of that end statement is returned instead
 
+    size_t innerScope = 0;
+
     for (size_t i = m_counter + 1; i < m_program.size(); i++)
     {
-        size_t innerScope = 0;
-
         // if and while statements increase the scope depth level
         if (m_program[i][0].compare("if") ||
             m_program[i][0].compare("while"))
