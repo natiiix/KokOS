@@ -341,16 +341,36 @@ void Program::executeCommand(void)
             return;
         }
 
-        // Condition is true
+        // Condition is true, just continue the code execution
         if (condition)
         {
             Program::scopePush();
         }
-        // Condition is false
+        // Condition is false, skip the related code
         else
         {
-            elseLoop();
-            return;
+            // If this is an if statement and the condition is false
+            if (cmd[0].compare("if"))
+            {
+                // Try to find an else if / else statement, if there are none go to the end
+                Program::elseLoop();
+                return;
+            }
+            // This is not an if statement
+            // else if / else statements are supposed to be ignored
+            else
+            {
+                size_t endIndex = Program::findEnd();
+                
+                // end statement found
+                // Jump past the end statement
+                if (endIndex)
+                {
+                    m_counter = endIndex + 1;
+                }
+
+                return;
+            }
         }
     }
     // else / else if statement
