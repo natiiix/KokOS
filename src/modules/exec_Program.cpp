@@ -105,6 +105,11 @@ void Program::executeCommand(void)
     // I figured out that a shortcut for the current command might be useful
     vector<string>& cmd = m_program[m_counter];
 
+    printint(m_counter);
+    print(" ");
+    sprint(cmd[0]);
+    newline();
+
     // Program exit
     if (cmd[0].compare("exit") && cmd.size() == 1)
     {

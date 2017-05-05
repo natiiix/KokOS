@@ -591,6 +591,8 @@ void screenText(void)
 
                 // Move the cursor to the beginning of the line
                 m_cursorCol = 0;
+
+                m_modified = true;
             }
             // Escape
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
