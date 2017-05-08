@@ -58,12 +58,16 @@ EDITOR_SCREEN m_screen;
 size_t m_menuLine; // index of currently selected line in the menu
 static const size_t MENU_LINE_COUNT = 4; // the total number of lines in menu
 
+// Used when the text file is empty / doesn't exist
+// Generates a single empty line in the line vector
 void generateLinesEmpty(void)
 {
     m_lines = vector<string>();
     m_lines.push_back(string());
 }
 
+// Used when the text file exists and isn't empty
+// Generates line vector from the data read from the file
 void generateLines(const uint8_t* const data)
 {
     // Convert the data to a string object
@@ -77,6 +81,8 @@ void generateLines(const uint8_t* const data)
     strData.dispose();
 }
 
+// Used when saving modified content of the file
+// Converts the line vector into linear data bytes
 void generateData(uint8_t** const data, size_t* dataSize)
 {
     // Join the lines to create a string containing all the data
@@ -89,11 +95,11 @@ void generateData(uint8_t** const data, size_t* dataSize)
     // strData must NOT be disposed now, because the cstring held by it is used when writing the file
 }
 
+// Used in editor mode
+// Updates the editor view so that the cursor is on the screen
+// If the cursor is on the streen it does nothing
 void updateView(void)
 {
-    // The cursor is outside the screen boundaries
-    // Move the view to fit the cursor on the screen
-
     // Left
     if (m_cursorCol < m_viewCol)
     {
@@ -119,6 +125,8 @@ void updateView(void)
     }
 }
 
+// Used when left arrow key is pressed
+// Moves cursor to the left
 void moveLeft(void)
 {
     // The cursor is not at the beginning of the line
@@ -139,6 +147,8 @@ void moveLeft(void)
     }
 }
 
+// Used when right arrow key is pressed
+// Moves cursor to the right
 void moveRight(void)
 {
     // The cursor is not end the end of the line
@@ -170,6 +180,8 @@ void fixFlyingCursor(void)
     }
 }
 
+// Used when up arrow key is pressed
+// Moves cursor one line up if possible
 void moveUp(void)
 {
     // The cursor is already at the first line
@@ -183,6 +195,8 @@ void moveUp(void)
     fixFlyingCursor();
 }
 
+// Used when down arrow key is pressed
+// Moves cursor one line down if possible
 void moveDown(void)
 {
     // The cursor is already at the last line
@@ -196,6 +210,8 @@ void moveDown(void)
     fixFlyingCursor();
 }
 
+// Used in editor mode
+// Displays the current content of line within the view on screen
 void renderView(void)
 {
     // Update the view-related information
@@ -246,6 +262,8 @@ void renderView(void)
     m_renderRequired = false;
 }
 
+// Used in menu mode
+// Changes the active color to one with a higher value
 uint8_t colorUp(const uint8_t oldColor)
 {
     if (oldColor == 0xF)
@@ -260,6 +278,8 @@ uint8_t colorUp(const uint8_t oldColor)
     }
 }
 
+// Used in menu mode
+// Changes the active color to one with a lower value
 uint8_t colorDown(const uint8_t oldColor)
 {
     if (oldColor == 0x0)
@@ -274,6 +294,8 @@ uint8_t colorDown(const uint8_t oldColor)
     }
 }
 
+// Used in menu mode
+// Generates a cstring containing the name of a color from its value
 char* colorToStr(const uint8_t color)
 {
     char* strColor = (char*)malloc(32);
@@ -352,11 +374,15 @@ char* colorToStr(const uint8_t color)
     return strColor;
 }
 
+// Used when exitting menu mode
+// Updates the color scheme used in editor mode
 void updateColorScheme(void)
 {
     m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
 }
 
+// Used in menu mode
+// Sets render colors according to whether the rendered line is currently selected or not
 void setMenuLineColor(const size_t renderLine)
 {
     if (renderLine == m_menuLine)
@@ -369,6 +395,8 @@ void setMenuLineColor(const size_t renderLine)
     }
 }
 
+// Used in menu mode
+// Renders the content of the menu screen
 void renderMenu()
 {
     clear(); // clear the screen
@@ -421,6 +449,8 @@ void renderMenu()
     m_renderRequired = false;
 }
 
+// Used in editor mode
+// Handles keypresses and re-renders the screen whenever necessary
 void screenText(void)
 {
     struct keyevent ke;
@@ -695,6 +725,8 @@ void screenText(void)
     }
 }
 
+// Used in menu mode
+// Handles keypresses and re-renders the screen whenever necessary
 void screenMenu(void)
 {
     struct keyevent ke;
@@ -800,6 +832,8 @@ void screenMenu(void)
     }
 }
 
+// Used when entering editor mode for the first time
+// Set all the variable to their default values
 void presetVariables(void)
 {
     m_cursorCol = 0;
@@ -820,6 +854,8 @@ void presetVariables(void)
     m_menuLine = 0;
 }
 
+// Loop that keeps the editor alive
+// The loop is broken once the user requests an exit via menu
 void editor(void)
 {
     presetVariables();
@@ -829,14 +865,17 @@ void editor(void)
         // The screen must always be rendered after switching between screens
         m_renderRequired = true;
 
+        // Editor menu
         if (m_screen == SCREEN_TEXT)
         {
             screenText();
         }
+        // Menu mode
         else if (m_screen == SCREEN_MENU)
         {
             screenMenu();
         }
+        // Exit requested
         else
         {
             break;
