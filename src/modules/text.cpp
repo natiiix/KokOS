@@ -836,7 +836,7 @@ void screenText(void)
                     }
                     else
                     {
-                        m_curosrCol = 0;
+                        m_cursorCol = 0;
                     }
                 }
             }
