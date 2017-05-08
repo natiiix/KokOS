@@ -799,7 +799,7 @@ void screenText(void)
                     editorInsertChar(' ');
 
                     // Insert another space if the cursor isn't 2 space aligned
-                    if (m_lines[m_cursorRow].size() % 2)
+                    if (m_cursorCol % 2)
                     {
                         editorInsertChar(' ');
                     }
