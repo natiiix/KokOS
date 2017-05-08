@@ -523,6 +523,31 @@ void editorNewLine(void)
 }
 
 // Used in editor mode
+// Counts the amount of leading spaces on a specified line
+void editorCountSpaces(const size_t line)
+{
+    size_t spaceCount = 0;
+    size_t prevLineLen = m_lines[m_cursorRow - 1].size();
+    
+    for (size_t i = 0; i < prevLineLen; i++)
+    {
+        // Character is a space
+        if (m_lines[m_cursorRow - 1][i] == ' ')
+        {
+            spaceCount++;
+        }
+        // Character is NOT a space
+        else
+        {
+            // Stop the counting
+            break;
+        }
+    }
+
+    return spaceCount;
+}
+
+// Used in editor mode
 // Handles keypresses and re-renders the screen whenever necessary
 void screenText(void)
 {
@@ -757,23 +782,7 @@ void screenText(void)
                 if (m_cursorRow)
                 {
                     // Count the number of leading spaces on the previous line
-                    size_t spaceCount = 0;
-                    size_t prevLineLen = m_lines[m_cursorRow - 1].size();
-                    
-                    for (size_t i = 0; i < prevLineLen; i++)
-                    {
-                        // Character is a space
-                        if (m_lines[m_cursorRow - 1][i] == ' ')
-                        {
-                            spaceCount++;
-                        }
-                        // Character is NOT a space
-                        else
-                        {
-                            // Stop the counting
-                            break;
-                        }
-                    }
+                    size_t spaceCount = editorCountSpaces(m_cursorRow - 1);
 
                     // There are spaces beyond the current cursor position on the previous line
                     if (m_cursorCol < spaceCount)
@@ -803,6 +812,21 @@ void screenText(void)
                     {
                         editorInsertChar(' ');
                     }
+                }
+            }
+            // Shift + Tab
+            // Used to decrease the number of leading spaces
+            // Removes just 1 space if there is an odd number of them, 2 spaces if the number is even
+            else if (ke.scancode == KEY_TAB && ke.modifiers == MODIFIER_SHIFT)
+            {
+                // Count the number of leading spaces on this line
+                size_t spaceCount = editorCountSpaces(m_cursorRow);
+
+                // Can't decrease the number of leading spaces if there are none
+                if (spaceCount)
+                {
+                    // Make the number of leading space even again
+                    m_lines[m_cursorRow].remove(0, 2 - (spaceCount % 2));
                 }
             }
 
