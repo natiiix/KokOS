@@ -467,6 +467,7 @@ void screenText(void)
         if (ke.state)
         {
             // Character Key
+            // Inserts a character at the current position in the line
             if (ke.keychar > 0)
             {
                 // If the cursor isn't at the end of the line
@@ -488,6 +489,8 @@ void screenText(void)
                 m_modified = true;
             }
             // Enter
+            // Creates a new line
+            // If there was any text on the right of the cursor, it will be moved to the new line
             else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
                 // The cursor is at the very beginning of the line
@@ -535,6 +538,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Backspace
+            // Deletes the character before the cursor is there is any
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
             {
                 // If the cursor isn't at the beginning of the line
@@ -576,6 +580,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Delete
+            // Deletes the character after the cursor if there is any
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
                 // The cursor isn't at the end of the line
@@ -603,7 +608,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Ctrl + Delete
-            // Delete the whole current line
+            // Deletes the whole current line
             else if (ke.scancode == KEY_DELETE && ke.modifiers == MODIFIER_CTRL)
             {
                 // If the current line isn't the last line of the file
@@ -625,6 +630,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Escape
+            // Switches from editor mode to menu mode
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
                 // Switch to the settings screen
@@ -632,38 +638,45 @@ void screenText(void)
                 break;
             }
             // Left Arrow
+            // Moves the cursor one character back
             else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
             {
                 moveLeft();
             }
             // Right Arrow
+            // Moves the cursor one character forward
             else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
             {
                 moveRight();
             }
             // Up Arrow
+            // Moves the cursor one line up
             else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
             {
                 moveUp();
             }
             // Down Arrow
+            // Moves the cursor one line down
             else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
             {
                 moveDown();
             }
             // Home
+            // Moves the cursor to the beginning of the line
             else if (ke.scancode == KEY_HOME && !ke.modifiers)
             {
                 // Move the cursor to the beginning of the line
                 m_cursorCol = 0;
             }
             // End
+            // Moves the cursor to the end of the current line
             else if (ke.scancode == KEY_END && !ke.modifiers)
             {
                 // Move the cursor to the end of the line
                 m_cursorCol = m_lines[m_cursorRow].size();
             }
             // Page Up
+            // Scrolls the view by N lines up (doesn't move the cursor unless necessary)            
             else if (ke.scancode == KEY_PAGE_UP && !ke.modifiers)
             {
                 // If there are lines above the current view
@@ -692,6 +705,7 @@ void screenText(void)
                 }
             }
             // Page Down
+            // Scrolls the view by N lines down (doesn't move the cursor unless necessary)
             else if (ke.scancode == KEY_PAGE_DOWN && !ke.modifiers)
             {
                 // If the view can be moved lower
@@ -717,6 +731,21 @@ void screenText(void)
 
                         fixFlyingCursor();
                     }
+                }
+            }
+            // Tab
+            // Used for convenient alignment of text (mainly when programming)
+            else if (ke.scancode == KEY_TAB && !ke.modifiers)
+            {
+                // Cursor is not on the first line
+                if (m_cursorRow)
+                {
+
+                }
+                // Cursor is on the very first line
+                else
+                {
+
                 }
             }
 
