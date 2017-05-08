@@ -527,12 +527,12 @@ void editorNewLine(void)
 void editorCountSpaces(const size_t line)
 {
     size_t spaceCount = 0;
-    size_t prevLineLen = m_lines[m_cursorRow - 1].size();
+    size_t prevLineLen = m_lines.at(line).size();
     
     for (size_t i = 0; i < prevLineLen; i++)
     {
         // Character is a space
-        if (m_lines[m_cursorRow - 1][i] == ' ')
+        if (m_lines.at(line).at(i) == ' ')
         {
             spaceCount++;
         }
