@@ -450,6 +450,79 @@ void renderMenu()
 }
 
 // Used in editor mode
+// Inserts a character at the current cursor position
+void editorInsertChar(const char c)
+{
+    // If the cursor isn't at the end of the line
+    if (m_cursorCol < m_lines[m_cursorRow].size())
+    {
+        // Insert the character into the string
+        m_lines[m_cursorRow].insert(c, m_cursorCol);
+    }
+    // If the cursor is at the very end of the line
+    else
+    {
+        // Append the character to the end of the line
+        m_lines[m_cursorRow].push_back(c);
+    }
+
+    // Character has been added to the string, the cursor must be moved to the right as well
+    m_cursorCol++;
+
+    m_modified = true;
+}
+
+// Used in editor mode
+// Creates a new line at the current cursor position
+// If there was any text on the right of the cursor, it will be moved to the new line
+void editorNewLine(void)
+{
+    // The cursor is at the very beginning of the line
+    // We can make things easier by simple inserting an empty life before the current line
+    // instead of adding one after it and then copying the entire line and clearing it
+    if (!m_cursorCol)
+    {
+        // Insert a new empty line before the current line
+        m_lines.insert(string(), m_cursorRow);
+
+        // Move the cursor to the new line
+        m_cursorRow++;
+    }
+    else
+    {
+        // This is the last line
+        if (m_cursorRow + 1 == m_lines.size())
+        {
+            // Append an empty line at the end of the vector
+            m_lines.push_back(string());
+        }
+        // This isn't the last line
+        else
+        {
+            // Insert a new empty line after this line
+            m_lines.insert(string(), m_cursorRow + 1);
+        }
+
+        // The cursor is somewhere in the middle of the line
+        // The part of the line on the right the cursor must be copied to a new line and removed from the old line
+        if (m_cursorCol < m_lines[m_cursorRow].size())
+        {
+            // Copy the part of this line after the cursor to the new empty line
+            m_lines[m_cursorRow + 1].push_back(&m_lines[m_cursorRow].c_str()[m_cursorCol]);
+            // Remove that part of the line from this line
+            m_lines[m_cursorRow].remove(m_cursorCol, m_lines[m_cursorRow].size() - m_cursorCol);
+        }
+
+        // Move the cursor to the new line
+        m_cursorRow++;
+        // When a new line is created the cursor must be at its beginning
+        m_cursorCol = 0;
+    }
+
+    m_modified = true;
+}
+
+// Used in editor mode
 // Handles keypresses and re-renders the screen whenever necessary
 void screenText(void)
 {
@@ -467,75 +540,14 @@ void screenText(void)
         if (ke.state)
         {
             // Character Key
-            // Inserts a character at the current position in the line
             if (ke.keychar > 0)
             {
-                // If the cursor isn't at the end of the line
-                if (m_cursorCol < m_lines[m_cursorRow].size())
-                {
-                    // Insert the character into the string
-                    m_lines[m_cursorRow].insert(ke.keychar, m_cursorCol);
-                }
-                // If the cursor is at the very end of the line
-                else
-                {
-                    // Append the character to the end of the line
-                    m_lines[m_cursorRow].push_back(ke.keychar);
-                }
-
-                // Character has been added to the string, the cursor must be moved to the right as well
-                m_cursorCol++;
-
-                m_modified = true;
+                editorInsertChar(ke.keychar);
             }
             // Enter
-            // Creates a new line
-            // If there was any text on the right of the cursor, it will be moved to the new line
             else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
-                // The cursor is at the very beginning of the line
-                // We can make things easier by simple inserting an empty life before the current line
-                // instead of adding one after it and then copying the entire line and clearing it
-                if (!m_cursorCol)
-                {
-                    // Insert a new empty line before the current line
-                    m_lines.insert(string(), m_cursorRow);
-
-                    // Move the cursor to the new line
-                    m_cursorRow++;
-                }
-                else
-                {
-                    // This is the last line
-                    if (m_cursorRow + 1 == m_lines.size())
-                    {
-                        // Append an empty line at the end of the vector
-                        m_lines.push_back(string());
-                    }
-                    // This isn't the last line
-                    else
-                    {
-                        // Insert a new empty line after this line
-                        m_lines.insert(string(), m_cursorRow + 1);
-                    }
-
-                    // The cursor is somewhere in the middle of the line
-                    // The part of the line on the right the cursor must be copied to a new line and removed from the old line
-                    if (m_cursorCol < m_lines[m_cursorRow].size())
-                    {
-                        // Copy the part of this line after the cursor to the new empty line
-                        m_lines[m_cursorRow + 1].push_back(&m_lines[m_cursorRow].c_str()[m_cursorCol]);
-                        // Remove that part of the line from this line
-                        m_lines[m_cursorRow].remove(m_cursorCol, m_lines[m_cursorRow].size() - m_cursorCol);
-                    }
-
-                    // Move the cursor to the new line
-                    m_cursorRow++;
-                    // When a new line is created the cursor must be at its beginning
-                    m_cursorCol = 0;
-                }
-
-                m_modified = true;
+                editorNewLine();
             }
             // Backspace
             // Deletes the character before the cursor is there is any
@@ -735,17 +747,59 @@ void screenText(void)
             }
             // Tab
             // Used for convenient alignment of text (mainly when programming)
+            // Text will be aligned by an even number of spaces (2, 4, 6, 8,...)
             else if (ke.scancode == KEY_TAB && !ke.modifiers)
             {
-                // Cursor is not on the first line
+                bool tabAligned = false;
+
+                // Cursor is NOT on the first line
+                // Try to align this line with the previous line
                 if (m_cursorRow)
                 {
+                    // Count the number of leading spaces on the previous line
+                    size_t spaceCount = 0;
+                    size_t prevLineLen = m_lines[m_cursorRow - 1].size();
+                    
+                    for (size_t i = 0; i < prevLineLen; i++)
+                    {
+                        // Character is a space
+                        if (m_lines[m_cursorRow - 1][i] == ' ')
+                        {
+                            spaceCount++;
+                        }
+                        // Character is NOT a space
+                        else
+                        {
+                            // Stop the counting
+                            break;
+                        }
+                    }
 
+                    // There are spaces beyond the current cursor position on the previous line
+                    if (m_cursorCol < spaceCount)
+                    {
+                        // Insert the number of spaces required to make the lines aligned
+                        size_t spacesToInsert = spaceCount - m_cursorCol;
+
+                        for (size_t i = 0; i < spacesToInsert; i++)
+                        {
+                            editorInsertChar(' ');
+                        }
+                    }
                 }
-                // Cursor is on the very first line
-                else
-                {
 
+                // Couldn't align this line with the previous
+                // This is the first line or the cursor is further than the last space on the previous line
+                if (!tabAligned)
+                {
+                    // At least one space is always inserted
+                    editorInsertChar(' ');
+
+                    // Insert another space if the cursor isn't 2 space aligned
+                    if (m_lines[m_cursorRow].size() % 2)
+                    {
+                        editorInsertChar(' ');
+                    }
                 }
             }
 
