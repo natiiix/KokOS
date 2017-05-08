@@ -785,6 +785,9 @@ void screenText(void)
                         {
                             editorInsertChar(' ');
                         }
+
+                        // Line has been aligned with the previous line
+                        tabAligned = true;
                     }
                 }
 
