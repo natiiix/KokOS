@@ -524,7 +524,7 @@ void editorNewLine(void)
 
 // Used in editor mode
 // Counts the amount of leading spaces on a specified line
-void editorCountSpaces(const size_t line)
+size_t editorCountSpaces(const size_t line)
 {
     size_t spaceCount = 0;
     size_t prevLineLen = m_lines.at(line).size();
@@ -824,9 +824,20 @@ void screenText(void)
 
                 // Can't decrease the number of leading spaces if there are none
                 if (spaceCount)
-                {
+                {                    
                     // Make the number of leading space even again
-                    m_lines[m_cursorRow].remove(0, 2 - (spaceCount % 2));
+                    size_t spacesToRemove = 2 - (spaceCount % 2);
+                    m_lines[m_cursorRow].remove(0, spacesToRemove);
+
+                    // Also move the cursor accordingly
+                    if (m_cursorCol > spacesToRemove)
+                    {
+                        m_cursorCol -= spacesToRemove;
+                    }
+                    else
+                    {
+                        m_curosrCol = 0;
+                    }
                 }
             }
 
