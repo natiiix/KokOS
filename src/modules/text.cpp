@@ -702,8 +702,21 @@ void screenText(void)
             // Moves the cursor to the beginning of the line
             else if (ke.scancode == KEY_HOME && !ke.modifiers)
             {
-                // Move the cursor to the beginning of the line
-                m_cursorCol = 0;
+                // Count leading spaces on this line
+                size_t leadingSpaces = editorCountSpaces(m_cursorRow);
+
+                // If the cursor is at the end of the leading spaces
+                if (m_cursorCol == leadingSpaces)
+                {
+                    // Move it to the very beginning of the line
+                    m_cursorCol = 0;
+                }
+                // If the cursor is anywhere else
+                else
+                {
+                    // Move it to past the leading spaces
+                    m_cursorCol = leadingSpaces;
+                }
             }
             // End
             // Moves the cursor to the end of the current line
