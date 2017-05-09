@@ -409,6 +409,31 @@ void Program::executeCommand(void)
             return;
         }
     }
+    // break scope
+    else if (cmd[0].compare("break") && cmd.size() == 1)
+    {
+        breakScope(1);
+        return;
+    }
+    // break N scope levels
+    else if (cmd[0].compare("break") && cmd.size() == 2)
+    {
+        INTEGER breakLevels = 0;
+        
+        if (Program::symbolToInteger(cmd[1], &breakLevels))
+        {
+            if (breakLevels > 0)
+            {
+                breakScope(breakLevels);
+            }
+            else
+            {
+                Program::error("Cannot break a non-positive number of scope levels!");
+            }
+        }
+
+        return;
+    }
     // Unrecognized command
     else
     {
@@ -514,6 +539,7 @@ Variable* Program::varFind(const string& name)
     return nullptr;
 }
 
+// TODO: Update keyword list
 bool Program::varNameIsKeyword(const string& name)
 {
     // Variable name must not be an existing keyword
@@ -1004,4 +1030,35 @@ void Program::elseLoop(void)
             break;
         }
     }
+}
+
+void Program::breakScope(const size_t levelsToBreak)
+{
+    // Cannot break more scope levels than how many there currently are
+    if (m_scope < levelsToBreak)
+    {
+        Program::error("Unable to break the specified number of scopes!");
+        return;
+    }
+
+    // Break out of scopes one by one
+    for (size_t i = 0; i < levelsToBreak; i++)
+    {
+        // Find the end of this scope
+        size_t endIndex = findEnd();
+
+        // End of scope found
+        if (endIndex)
+        {
+            m_counter = endIndex;
+        }
+        // Unable to find the end of scope
+        else
+        {
+            return;
+        }
+    }
+
+    // Move to the next command after the end of the last scope we've broken out of
+    m_counter++;
 }
