@@ -539,17 +539,19 @@ Variable* Program::varFind(const string& name)
     return nullptr;
 }
 
-// TODO: Update keyword list
 bool Program::varNameIsKeyword(const string& name)
 {
-    // Variable name must not be an existing keyword
-    if (
-        name.compare("exit") ||
+    // Variable name must NOT be an existing keyword
+    if (name.compare("exit") ||        
         name.compare("integer") ||
-        name.compare("real") ||
         name.compare("logical") ||
         name.compare("push") ||
-        name.compare("pop"))
+        name.compare("pop") ||
+        name.compare("print") ||
+        name.compare("if") ||
+        name.compare("else") ||
+        name.compare("end") ||
+        name.compare("break"))
     {
         return true;
     }
