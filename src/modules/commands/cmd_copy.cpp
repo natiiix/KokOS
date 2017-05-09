@@ -38,7 +38,11 @@ void cmd_copy(const string& strArgs)
     // Make sure the source file path is inside an existing directory
     if (!dirPathValid(Shell::activePart, Shell::activeDir, vecArgs.at(1).c_str()))
     {
-        print("Invalid target directory path!\n");
+        print("Invalid target directory path! Unable to copy the file there!\n");
+
+        delete fileSource;
+        vecArgs.dispose();
+        return;
     }
 
     // Check if the target file exists

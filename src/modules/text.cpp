@@ -1053,7 +1053,7 @@ void textEditorStart(const char* const filePath)
         // All text written in such scenario would go to waste because such file couldn't be saved
         if (!dirPathValid(Shell::activePart, Shell::activeDir, filePath))
         {
-            print("Invalid directory path!\n");
+            print("Invalid directory path! Unable create a new file there!\n");
             return;
         }
 
