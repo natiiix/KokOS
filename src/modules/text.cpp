@@ -1049,11 +1049,20 @@ void textEditorStart(const char* const filePath)
     // File doesn't exist
     else
     {
+        // Make the file path doesn't lead to a non-existent directory path
+        // All text written in such scenario would go to waste because such file couldn't be saved
+        if (!dirPathValid(Shell::activePart, Shell::activeDir, filePath))
+        {
+            print("Invalid directory path!\n");
+            return;
+        }
+
         // Set up the lines vector as if it were an empty file
         generateLinesEmpty();
     }
 
     // Lets us see all the debug messages that are displayed before the editors clears the screen
+    debug_memusage();
     debug_pause();
 
     // Start the editor itself

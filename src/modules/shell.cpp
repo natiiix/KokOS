@@ -104,9 +104,6 @@ namespace Shell
 		{
 			cmd_copy(strArgs);
 		}
-		// -- Compare the input string against each module command string --
-		// Disk operation module
-		// Syntax: disk <Action> <Arguments>
 		else if (strCmd.compare("disk"))
 		{
 			cmd_disk(strArgs);

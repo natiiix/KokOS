@@ -186,6 +186,7 @@ size_t bytesToClusterCount(const uint8_t partIdx, const uint32_t sizeInBytes);
 struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const name, const uint8_t attribMask, const uint8_t attrib);
 struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust);
+bool dirPathValid(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Read
 uint8_t* readFile(const struct FILE* const file);

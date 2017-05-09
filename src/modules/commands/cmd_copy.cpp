@@ -35,6 +35,12 @@ void cmd_copy(const string& strArgs)
         return;
     }
 
+    // Make sure the source file path is inside an existing directory
+    if (!dirPathValid(Shell::activePart, Shell::activeDir, vecArgs.at(1).c_str()))
+    {
+        print("Invalid target directory path!\n");
+    }
+
     // Check if the target file exists
     struct FILE* fileTarget = getFile(Shell::activePart, Shell::activeDir, vecArgs.at(1).c_str());
 

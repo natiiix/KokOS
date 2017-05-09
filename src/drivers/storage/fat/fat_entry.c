@@ -96,9 +96,15 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
     // Extract the directory and the file name from the path string
     extractPath(partIdx, baseDir, path, &targetDir, &pathName);
 
-    if (!targetDir || !pathName)
+    if (!pathName)
     {
-        debug_print("fat_entry.c | getFile() | Couldn't retrieve the file structure due to invalid path!");
+        debug_print("fat_entry.c | getFile() | File doesn't exist!");
+        return (struct FILE*)0;
+    }
+    else if (!targetDir)
+    {
+        debug_print("fat_entry.c | getFile() | Directory path is invalid!");
+        mem_free(pathName);
         return (struct FILE*)0;
     }
 
@@ -735,4 +741,21 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
     debug_print("fat_entry.c | writeFile() | File has been written successfully!");
 
     return file;
+}
+
+bool dirPathValid(const uint8_t partIdx, const uint32_t baseDir, const char* const path)
+{
+    uint32_t targetDir = 0;
+    char* pathName = (char*)0;
+
+    // Extract the directory and the file name from the path string
+    extractPath(partIdx, baseDir, path, &targetDir, &pathName);
+
+    if (pathName)
+    {
+        mem_free(pathName);
+    }
+
+    // Directory path doesn't exist if that returned target directory from extractPath() is 0
+    return !!targetDir;
 }
