@@ -1037,7 +1037,7 @@ void Program::breakScope(const size_t levelsToBreak)
     // Cannot break more scope levels than how many there currently are
     if (m_scope < levelsToBreak)
     {
-        Program::error("Unable to break the specified number of scopes!");
+        Program::error("Number of scopes to break is too high!");
         return;
     }
 
@@ -1051,6 +1051,7 @@ void Program::breakScope(const size_t levelsToBreak)
         if (endIndex)
         {
             m_counter = endIndex;
+            Program::scopePop();
         }
         // Unable to find the end of scope
         else
