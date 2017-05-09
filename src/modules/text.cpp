@@ -1022,23 +1022,10 @@ void editor(void)
     clear();
 }
 
-void cmd_text(const string& strArgs)
+void textEditorStart(const char* const filePath)
 {
-    vector<string> vecArgs = strArgs.split(' ', true);
-    
-    if (vecArgs.size() != 1)
-    {
-        print("Invalid arguments!\n");
-        print("Syntax: text <File Path>\n");
-        
-        vecArgs.dispose();
-        return;
-    }
-
-    struct FILE* file;
-
     // Find the file
-    file = getFile(Shell::activePart, Shell::activeDir, vecArgs.at(0).c_str());
+    struct FILE* file = getFile(Shell::activePart, Shell::activeDir, filePath);
 
     // File exists
     if (file)
@@ -1076,7 +1063,6 @@ void cmd_text(const string& strArgs)
     {
         debug_print("text.cpp | cmd_text() | The file hasn't been modified!");
         m_lines.dispose();
-        vecArgs.dispose();
         return;
     }
 
@@ -1091,23 +1077,19 @@ void cmd_text(const string& strArgs)
     if (!data)
     {
         debug_print("text.cpp | cmd_text() | Failed to generate data from lines!");
-        vecArgs.dispose();
         return;
     }
 
     // Write data to file
-    file = writeFile(Shell::activePart, Shell::activeDir, vecArgs[0].c_str(), data, dataSize);
+    file = writeFile(Shell::activePart, Shell::activeDir, filePath, data, dataSize);
 
     delete data;
 
     if (!file)
     {
         debug_print("text.cpp | cmd_text() | Failed to save the file!");
-        vecArgs.dispose();
         return;
     }
 
     delete file;
-
-    vecArgs.dispose();
 }

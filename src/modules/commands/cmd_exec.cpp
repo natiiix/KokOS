@@ -37,19 +37,19 @@ void cmd_exec(const string& strArgs)
             }
             else
             {
-                print("Failed to read the specified file!");
+                print("Failed to read the specified file!\n");
             }
         }
         else
         {
-            print("Cannot execute an empty file!");
+            print("Cannot execute an empty file!\n");
         }
 
         delete file;
     }
     else
     {
-        print("File doesn't exist!");
+        print("File doesn't exist!\n");
     }
 
     vecArgs.dispose();
