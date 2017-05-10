@@ -20,30 +20,32 @@
 - keyboard input using interrupts
 - simple memory management (malloc, free,..)
 - basic cstring operations
-- partial C &lt;stdlib.h&gt; implementation
-- partial C &lt;stdio.h&gt; implementation
-- C++ &lt;string&gt; implementation
-- C++ &lt;vector&gt; implementation
+- partial C <a href="http://www.cplusplus.com/reference/cstdlib/">&lt;stdlib.h&gt;</a> implementation
+- partial C <a href="http://www.cplusplus.com/reference/cstdio/">&lt;stdio.h&gt;</a> implementation
+- C++ <a href="http://www.cplusplus.com/reference/string/string/">&lt;string&gt;</a> implementation
+- C++ <a href="http://www.cplusplus.com/reference/vector/vector/">&lt;vector&gt;</a> implementation
 - basic shell commands (help, clear)
-- basic file/directory operation commands (mkfile, mkdir, delete)
+- basic file/directory operation commands (mkfile, mkdir, delete, copy)
 - prevents you from deleting a non-empty directory
 - shell supports both absolute and relative path addressing
 - shell command history (using up/down arrows, up to 16 commands)
 - currently up-to-date help command
 - repetitive validity checks should prevent unexpected behavior
-- FAT file system support (some operations haven't been implemented, see TODO)
+- <a href="https://en.wikipedia.org/wiki/File_Allocation_Table">FAT file system</a> support (some operations haven't been implemented, see TODO)
 - basic text file editor (selections and copy-pasting may be implemented later)
+- OS-specific programming language called Kok (based on <a href="https://en.wikipedia.org/wiki/Fortran">Fortran</a>, <a href="https://en.wikipedia.org/wiki/BASIC">BASIC</a> and <a href="https://en.wikipedia.org/wiki/C_(programming_language)">C</a>)
 
 ## In progress
-- simple OS-specific programming language and its interpreter
+- Kok programming language (adding new features, fixing whatever bugs I can find)
 
 ## TODO
-- copy / move / rename commands for both files and directoties
+- documentation for Kok programming language
 - moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
+- move / rename commands for both files and directoties (low priority, both can be sort of done using copy and delete commands)
 
 ## On Hold
-- AHCI driver (I wasn't able to make it work and it's not of high importance to me)
+- <a href="https://en.wikipedia.org/wiki/Advanced_Host_Controller_Interface">AHCI</a> driver (I wasn't able to make it work and it's not of high importance to me)
 - implement more C/C++ libraries (it doesn't seem necessary at the moment)
 
 ## Links
-<div>Inspiration / based upon: <a href="http://wiki.osdev.org/Main_Page">OSDev Wiki</a></div>
+Inspiration / based upon: <a href="http://wiki.osdev.org/Main_Page">OSDev Wiki</a>
