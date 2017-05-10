@@ -17,15 +17,18 @@ void cmd_help(const string& strArgs)
     }
 
     print("COMMAND <REQUIRED ARGUMENT> [OPTIONAL ARGUMENT]\n");
-    print("help - Displays available commands and their syntax\n");
-    print("clear - Clears the terminal screen\n");
     print("<Partition Letter>: - Changes active partition\n");
     print("cd <Directory Path> - Changes active directory\n");
-    print("dir [Directory Path] - Displays content of a directory\n");
-    print("mkfile <File Path> - Creates a new file\n");
-    print("mkdir <Directory Path> - Creates a new directory\n");
-    print("delete <File/Directory Path> - Deletes a file/directory\n");
-    print("disk <Action> <Arguments> - Performs a disk-related operation\n");
+    print("clear - Clears the terminal screen\n");
+    print("copy <Source File Path> <Target File Path> - Copies source file to target path\n");
+    print("delete <File/Directory Path> - Deletes file or directory\n");
+    print("dir [Directory Path] - Displays content of directory\n");
+    print("disk <Argument> - Prints disk-related information\n");
+    print("exec <File Path> - Executes program file\n");
+    print("help - Displays available commands and their syntax\n");
+    print("mkdir <Directory Path> - Creates new directory\n");
+    print("mkfile <File Path> - Creates new file\n");
+    print("text <File Path> - Opens or creates file for text editing\n");
 
     vecArgs.dispose();
 }

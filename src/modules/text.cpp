@@ -58,12 +58,16 @@ EDITOR_SCREEN m_screen;
 size_t m_menuLine; // index of currently selected line in the menu
 static const size_t MENU_LINE_COUNT = 4; // the total number of lines in menu
 
+// Used when the text file is empty / doesn't exist
+// Generates a single empty line in the line vector
 void generateLinesEmpty(void)
 {
     m_lines = vector<string>();
     m_lines.push_back(string());
 }
 
+// Used when the text file exists and isn't empty
+// Generates line vector from the data read from the file
 void generateLines(const uint8_t* const data)
 {
     // Convert the data to a string object
@@ -77,6 +81,8 @@ void generateLines(const uint8_t* const data)
     strData.dispose();
 }
 
+// Used when saving modified content of the file
+// Converts the line vector into linear data bytes
 void generateData(uint8_t** const data, size_t* dataSize)
 {
     // Join the lines to create a string containing all the data
@@ -89,11 +95,11 @@ void generateData(uint8_t** const data, size_t* dataSize)
     // strData must NOT be disposed now, because the cstring held by it is used when writing the file
 }
 
+// Used in editor mode
+// Updates the editor view so that the cursor is on the screen
+// If the cursor is on the streen it does nothing
 void updateView(void)
 {
-    // The cursor is outside the screen boundaries
-    // Move the view to fit the cursor on the screen
-
     // Left
     if (m_cursorCol < m_viewCol)
     {
@@ -119,6 +125,8 @@ void updateView(void)
     }
 }
 
+// Used when left arrow key is pressed
+// Moves cursor to the left
 void moveLeft(void)
 {
     // The cursor is not at the beginning of the line
@@ -139,6 +147,8 @@ void moveLeft(void)
     }
 }
 
+// Used when right arrow key is pressed
+// Moves cursor to the right
 void moveRight(void)
 {
     // The cursor is not end the end of the line
@@ -170,6 +180,8 @@ void fixFlyingCursor(void)
     }
 }
 
+// Used when up arrow key is pressed
+// Moves cursor one line up if possible
 void moveUp(void)
 {
     // The cursor is already at the first line
@@ -183,6 +195,8 @@ void moveUp(void)
     fixFlyingCursor();
 }
 
+// Used when down arrow key is pressed
+// Moves cursor one line down if possible
 void moveDown(void)
 {
     // The cursor is already at the last line
@@ -196,6 +210,8 @@ void moveDown(void)
     fixFlyingCursor();
 }
 
+// Used in editor mode
+// Displays the current content of line within the view on screen
 void renderView(void)
 {
     // Update the view-related information
@@ -246,6 +262,8 @@ void renderView(void)
     m_renderRequired = false;
 }
 
+// Used in menu mode
+// Changes the active color to one with a higher value
 uint8_t colorUp(const uint8_t oldColor)
 {
     if (oldColor == 0xF)
@@ -260,6 +278,8 @@ uint8_t colorUp(const uint8_t oldColor)
     }
 }
 
+// Used in menu mode
+// Changes the active color to one with a lower value
 uint8_t colorDown(const uint8_t oldColor)
 {
     if (oldColor == 0x0)
@@ -274,6 +294,8 @@ uint8_t colorDown(const uint8_t oldColor)
     }
 }
 
+// Used in menu mode
+// Generates a cstring containing the name of a color from its value
 char* colorToStr(const uint8_t color)
 {
     char* strColor = (char*)malloc(32);
@@ -352,11 +374,15 @@ char* colorToStr(const uint8_t color)
     return strColor;
 }
 
+// Used when exitting menu mode
+// Updates the color scheme used in editor mode
 void updateColorScheme(void)
 {
     m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
 }
 
+// Used in menu mode
+// Sets render colors according to whether the rendered line is currently selected or not
 void setMenuLineColor(const size_t renderLine)
 {
     if (renderLine == m_menuLine)
@@ -369,6 +395,8 @@ void setMenuLineColor(const size_t renderLine)
     }
 }
 
+// Used in menu mode
+// Renders the content of the menu screen
 void renderMenu()
 {
     clear(); // clear the screen
@@ -421,6 +449,106 @@ void renderMenu()
     m_renderRequired = false;
 }
 
+// Used in editor mode
+// Inserts a character at the current cursor position
+void editorInsertChar(const char c)
+{
+    // If the cursor isn't at the end of the line
+    if (m_cursorCol < m_lines[m_cursorRow].size())
+    {
+        // Insert the character into the string
+        m_lines[m_cursorRow].insert(c, m_cursorCol);
+    }
+    // If the cursor is at the very end of the line
+    else
+    {
+        // Append the character to the end of the line
+        m_lines[m_cursorRow].push_back(c);
+    }
+
+    // Character has been added to the string, the cursor must be moved to the right as well
+    m_cursorCol++;
+
+    m_modified = true;
+}
+
+// Used in editor mode
+// Creates a new line at the current cursor position
+// If there was any text on the right of the cursor, it will be moved to the new line
+void editorNewLine(void)
+{
+    // The cursor is at the very beginning of the line
+    // We can make things easier by simple inserting an empty life before the current line
+    // instead of adding one after it and then copying the entire line and clearing it
+    if (!m_cursorCol)
+    {
+        // Insert a new empty line before the current line
+        m_lines.insert(string(), m_cursorRow);
+
+        // Move the cursor to the new line
+        m_cursorRow++;
+    }
+    else
+    {
+        // This is the last line
+        if (m_cursorRow + 1 == m_lines.size())
+        {
+            // Append an empty line at the end of the vector
+            m_lines.push_back(string());
+        }
+        // This isn't the last line
+        else
+        {
+            // Insert a new empty line after this line
+            m_lines.insert(string(), m_cursorRow + 1);
+        }
+
+        // The cursor is somewhere in the middle of the line
+        // The part of the line on the right the cursor must be copied to a new line and removed from the old line
+        if (m_cursorCol < m_lines[m_cursorRow].size())
+        {
+            // Copy the part of this line after the cursor to the new empty line
+            m_lines[m_cursorRow + 1].push_back(&m_lines[m_cursorRow].c_str()[m_cursorCol]);
+            // Remove that part of the line from this line
+            m_lines[m_cursorRow].remove(m_cursorCol, m_lines[m_cursorRow].size() - m_cursorCol);
+        }
+
+        // Move the cursor to the new line
+        m_cursorRow++;
+        // When a new line is created the cursor must be at its beginning
+        m_cursorCol = 0;
+    }
+
+    m_modified = true;
+}
+
+// Used in editor mode
+// Counts the amount of leading spaces on a specified line
+size_t editorCountSpaces(const size_t line)
+{
+    size_t spaceCount = 0;
+    size_t prevLineLen = m_lines.at(line).size();
+    
+    for (size_t i = 0; i < prevLineLen; i++)
+    {
+        // Character is a space
+        if (m_lines.at(line).at(i) == ' ')
+        {
+            spaceCount++;
+        }
+        // Character is NOT a space
+        else
+        {
+            // Stop the counting
+            break;
+        }
+    }
+
+    return spaceCount;
+}
+
+// Used in editor mode
+// Handles keypresses and re-renders the screen whenever necessary
 void screenText(void)
 {
     struct keyevent ke;
@@ -439,72 +567,15 @@ void screenText(void)
             // Character Key
             if (ke.keychar > 0)
             {
-                // If the cursor isn't at the end of the line
-                if (m_cursorCol < m_lines[m_cursorRow].size())
-                {
-                    // Insert the character into the string
-                    m_lines[m_cursorRow].insert(ke.keychar, m_cursorCol);
-                }
-                // If the cursor is at the very end of the line
-                else
-                {
-                    // Append the character to the end of the line
-                    m_lines[m_cursorRow].push_back(ke.keychar);
-                }
-
-                // Character has been added to the string, the cursor must be moved to the right as well
-                m_cursorCol++;
-
-                m_modified = true;
+                editorInsertChar(ke.keychar);
             }
             // Enter
             else if (ke.scancode == KEY_ENTER && !ke.modifiers)
             {
-                // The cursor is at the very beginning of the line
-                // We can make things easier by simple inserting an empty life before the current line
-                // instead of adding one after it and then copying the entire line and clearing it
-                if (!m_cursorCol)
-                {
-                    // Insert a new empty line before the current line
-                    m_lines.insert(string(), m_cursorRow);
-
-                    // Move the cursor to the new line
-                    m_cursorRow++;
-                }
-                else
-                {
-                    // This is the last line
-                    if (m_cursorRow + 1 == m_lines.size())
-                    {
-                        // Append an empty line at the end of the vector
-                        m_lines.push_back(string());
-                    }
-                    // This isn't the last line
-                    else
-                    {
-                        // Insert a new empty line after this line
-                        m_lines.insert(string(), m_cursorRow + 1);
-                    }
-
-                    // The cursor is somewhere in the middle of the line
-                    // The part of the line on the right the cursor must be copied to a new line and removed from the old line
-                    if (m_cursorCol < m_lines[m_cursorRow].size())
-                    {
-                        // Copy the part of this line after the cursor to the new empty line
-                        m_lines[m_cursorRow + 1].push_back(&m_lines[m_cursorRow].c_str()[m_cursorCol]);
-                        // Remove that part of the line from this line
-                        m_lines[m_cursorRow].remove(m_cursorCol, m_lines[m_cursorRow].size() - m_cursorCol);
-                    }
-
-                    // Move the cursor to the new line
-                    m_cursorRow++;
-                    // When a new line is created the cursor must be at its beginning
-                    m_cursorCol = 0;
-                }
-
-                m_modified = true;
+                editorNewLine();
             }
             // Backspace
+            // Deletes the character before the cursor is there is any
             else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
             {
                 // If the cursor isn't at the beginning of the line
@@ -546,6 +617,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Delete
+            // Deletes the character after the cursor if there is any
             else if (ke.scancode == KEY_DELETE && !ke.modifiers)
             {
                 // The cursor isn't at the end of the line
@@ -573,7 +645,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Ctrl + Delete
-            // Delete the whole current line
+            // Deletes the whole current line
             else if (ke.scancode == KEY_DELETE && ke.modifiers == MODIFIER_CTRL)
             {
                 // If the current line isn't the last line of the file
@@ -595,6 +667,7 @@ void screenText(void)
                 m_modified = true;
             }
             // Escape
+            // Switches from editor mode to menu mode
             else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
             {
                 // Switch to the settings screen
@@ -602,38 +675,58 @@ void screenText(void)
                 break;
             }
             // Left Arrow
+            // Moves the cursor one character back
             else if (ke.scancode == KEY_ARROW_LEFT && !ke.modifiers)
             {
                 moveLeft();
             }
             // Right Arrow
+            // Moves the cursor one character forward
             else if (ke.scancode == KEY_ARROW_RIGHT && !ke.modifiers)
             {
                 moveRight();
             }
             // Up Arrow
+            // Moves the cursor one line up
             else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
             {
                 moveUp();
             }
             // Down Arrow
+            // Moves the cursor one line down
             else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
             {
                 moveDown();
             }
             // Home
+            // Moves the cursor to the beginning of the line
             else if (ke.scancode == KEY_HOME && !ke.modifiers)
             {
-                // Move the cursor to the beginning of the line
-                m_cursorCol = 0;
+                // Count leading spaces on this line
+                size_t leadingSpaces = editorCountSpaces(m_cursorRow);
+
+                // If the cursor is at the end of the leading spaces
+                if (m_cursorCol == leadingSpaces)
+                {
+                    // Move it to the very beginning of the line
+                    m_cursorCol = 0;
+                }
+                // If the cursor is anywhere else
+                else
+                {
+                    // Move it to past the leading spaces
+                    m_cursorCol = leadingSpaces;
+                }
             }
             // End
+            // Moves the cursor to the end of the current line
             else if (ke.scancode == KEY_END && !ke.modifiers)
             {
                 // Move the cursor to the end of the line
                 m_cursorCol = m_lines[m_cursorRow].size();
             }
             // Page Up
+            // Scrolls the view by N lines up (doesn't move the cursor unless necessary)            
             else if (ke.scancode == KEY_PAGE_UP && !ke.modifiers)
             {
                 // If there are lines above the current view
@@ -662,6 +755,7 @@ void screenText(void)
                 }
             }
             // Page Down
+            // Scrolls the view by N lines down (doesn't move the cursor unless necessary)
             else if (ke.scancode == KEY_PAGE_DOWN && !ke.modifiers)
             {
                 // If the view can be moved lower
@@ -689,12 +783,84 @@ void screenText(void)
                     }
                 }
             }
+            // Tab
+            // Used for convenient alignment of text (mainly when programming)
+            // Text will be aligned by an even number of spaces (2, 4, 6, 8,...)
+            else if (ke.scancode == KEY_TAB && !ke.modifiers)
+            {
+                bool tabAligned = false;
+
+                // Cursor is NOT on the first line
+                // Try to align this line with the previous line
+                if (m_cursorRow)
+                {
+                    // Count the number of leading spaces on the previous line
+                    size_t spaceCount = editorCountSpaces(m_cursorRow - 1);
+
+                    // There are spaces beyond the current cursor position on the previous line
+                    if (m_cursorCol < spaceCount)
+                    {
+                        // Insert the number of spaces required to make the lines aligned
+                        size_t spacesToInsert = spaceCount - m_cursorCol;
+
+                        for (size_t i = 0; i < spacesToInsert; i++)
+                        {
+                            editorInsertChar(' ');
+                        }
+
+                        // Line has been aligned with the previous line
+                        tabAligned = true;
+                    }
+                }
+
+                // Couldn't align this line with the previous
+                // This is the first line or the cursor is further than the last space on the previous line
+                if (!tabAligned)
+                {
+                    // At least one space is always inserted
+                    editorInsertChar(' ');
+
+                    // Insert another space if the cursor isn't 2 space aligned
+                    if (m_cursorCol % 2)
+                    {
+                        editorInsertChar(' ');
+                    }
+                }
+            }
+            // Shift + Tab
+            // Used to decrease the number of leading spaces
+            // Removes just 1 space if there is an odd number of them, 2 spaces if the number is even
+            else if (ke.scancode == KEY_TAB && ke.modifiers == MODIFIER_SHIFT)
+            {
+                // Count the number of leading spaces on this line
+                size_t spaceCount = editorCountSpaces(m_cursorRow);
+
+                // Can't decrease the number of leading spaces if there are none
+                if (spaceCount)
+                {                    
+                    // Make the number of leading space even again
+                    size_t spacesToRemove = 2 - (spaceCount % 2);
+                    m_lines[m_cursorRow].remove(0, spacesToRemove);
+
+                    // Also move the cursor accordingly
+                    if (m_cursorCol > spacesToRemove)
+                    {
+                        m_cursorCol -= spacesToRemove;
+                    }
+                    else
+                    {
+                        m_cursorCol = 0;
+                    }
+                }
+            }
 
             m_renderRequired = true;
         }
     }
 }
 
+// Used in menu mode
+// Handles keypresses and re-renders the screen whenever necessary
 void screenMenu(void)
 {
     struct keyevent ke;
@@ -800,6 +966,8 @@ void screenMenu(void)
     }
 }
 
+// Used when entering editor mode for the first time
+// Set all the variable to their default values
 void presetVariables(void)
 {
     m_cursorCol = 0;
@@ -820,6 +988,8 @@ void presetVariables(void)
     m_menuLine = 0;
 }
 
+// Loop that keeps the editor alive
+// The loop is broken once the user requests an exit via menu
 void editor(void)
 {
     presetVariables();
@@ -829,14 +999,17 @@ void editor(void)
         // The screen must always be rendered after switching between screens
         m_renderRequired = true;
 
+        // Editor menu
         if (m_screen == SCREEN_TEXT)
         {
             screenText();
         }
+        // Menu mode
         else if (m_screen == SCREEN_MENU)
         {
             screenMenu();
         }
+        // Exit requested
         else
         {
             break;
@@ -849,23 +1022,10 @@ void editor(void)
     clear();
 }
 
-void cmd_text(const string& strArgs)
+void textEditorStart(const char* const filePath)
 {
-    vector<string> vecArgs = strArgs.split(' ', true);
-    
-    if (vecArgs.size() != 1)
-    {
-        print("Invalid arguments!\n");
-        print("Syntax: text <File Path>\n");
-        
-        vecArgs.dispose();
-        return;
-    }
-
-    struct FILE* file;
-
     // Find the file
-    file = getFile(Shell::activePart, Shell::activeDir, vecArgs.at(0).c_str());
+    struct FILE* file = getFile(Shell::activePart, Shell::activeDir, filePath);
 
     // File exists
     if (file)
@@ -889,11 +1049,20 @@ void cmd_text(const string& strArgs)
     // File doesn't exist
     else
     {
+        // Make the file path doesn't lead to a non-existent directory path
+        // All text written in such scenario would go to waste because such file couldn't be saved
+        if (!dirPathValid(Shell::activePart, Shell::activeDir, filePath))
+        {
+            print("Invalid directory path! Unable create a new file there!\n");
+            return;
+        }
+
         // Set up the lines vector as if it were an empty file
         generateLinesEmpty();
     }
 
     // Lets us see all the debug messages that are displayed before the editors clears the screen
+    debug_memusage();
     debug_pause();
 
     // Start the editor itself
@@ -903,7 +1072,6 @@ void cmd_text(const string& strArgs)
     {
         debug_print("text.cpp | cmd_text() | The file hasn't been modified!");
         m_lines.dispose();
-        vecArgs.dispose();
         return;
     }
 
@@ -918,23 +1086,19 @@ void cmd_text(const string& strArgs)
     if (!data)
     {
         debug_print("text.cpp | cmd_text() | Failed to generate data from lines!");
-        vecArgs.dispose();
         return;
     }
 
     // Write data to file
-    file = writeFile(Shell::activePart, Shell::activeDir, vecArgs[0].c_str(), data, dataSize);
+    file = writeFile(Shell::activePart, Shell::activeDir, filePath, data, dataSize);
 
     delete data;
 
     if (!file)
     {
         debug_print("text.cpp | cmd_text() | Failed to save the file!");
-        vecArgs.dispose();
         return;
     }
 
     delete file;
-
-    vecArgs.dispose();
 }
