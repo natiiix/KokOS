@@ -409,13 +409,15 @@ void Program::executeCommand(void)
             return;
         }
     }
-    // break scope
+    // break out of the current scope
     else if (cmd[0].compare("break") && cmd.size() == 1)
     {
-        breakScope(1);
-        return;
+        if (!breakScope(1, true))
+        {
+            return;
+        }
     }
-    // break N scope levels
+    // break out of N scope levels
     else if (cmd[0].compare("break") && cmd.size() == 2)
     {
         INTEGER breakLevels = 0;
@@ -424,7 +426,39 @@ void Program::executeCommand(void)
         {
             if (breakLevels > 0)
             {
-                breakScope(breakLevels);
+                if (!breakScope(breakLevels, true))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                Program::error("Cannot break a non-positive number of scope levels!");
+                return;
+            }
+        }
+        // Symbol is not a valid integer
+        else
+        {
+            return;
+        }
+    }
+    // continue at the end of the current scope
+    else if (cmd[0].compare("continue") && cmd.size() == 1)
+    {
+        breakScope(1, false);
+        return;
+    }
+    // continue at the end of the Nth scope
+    else if (cmd[0].compare("continue") && cmd.size() == 2)
+    {
+        INTEGER continueLevels = 0;
+        
+        if (Program::symbolToInteger(cmd[1], &continueLevels))
+        {
+            if (continueLevels > 0)
+            {
+                breakScope(continueLevels, false);
             }
             else
             {
@@ -433,6 +467,46 @@ void Program::executeCommand(void)
         }
 
         return;
+    }
+    // Prints words to the terminal
+    else if (cmd[0].compare("echo"))
+    {
+        // Get the number of words after the echo command
+        size_t echoWordCount = cmd.size() - 1;
+
+        // Print out each word
+        for (size_t i = 0; i < echoWordCount; i++)
+        {
+            // Make spaces between words
+            if (i)
+            {
+                print(" ");
+            }
+
+            // Print out the word itself
+            sprint (cmd[1 + i]);
+        }
+
+        // Break the line
+        newline();
+    }
+    // Increments an integer variable
+    else if (cmd.size() == 2 && cmd[1].compare("++"))
+    {
+        // Find the variable
+        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+
+        // Increment the value of the variable
+        (*varPtr)++;
+    }
+    // Decrements an integer variable
+    else if (cmd.size() == 2 && cmd[1].compare("--"))
+    {
+        // Find the variable
+        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+
+        // Decrement the value of the variable
+        (*varPtr)--;
     }
     // Unrecognized command
     else
@@ -472,8 +546,9 @@ void Program::executeCommand(void)
 
 void Program::varDeclare(const string& name, const DataType type)
 {
+    // Disabled to make recursive subroutines possible
     // Each variable must have a different name
-    if (Program::varFind(name))
+    /*if (Program::varFind(name))
     {
         string strError;
         strError.clear();
@@ -485,7 +560,7 @@ void Program::varDeclare(const string& name, const DataType type)
         Program::error(strError);
         strError.dispose();
         return;
-    }
+    }*/
 
     // Keywords cannot be used as variable names
     if (Program::varNameIsKeyword(name))
@@ -527,11 +602,16 @@ Variable* Program::varFind(const string& name)
     
     for (size_t i = 0; i < varsize; i++)
     {
+        // Variables are being searched from back to front to make sure that
+        // when multiple variables share the same name (due to recursion for example)
+        // the last declared variable with the name is returned
+        size_t varIdx = varsize - 1 - i;
+
         // Find the variable with the specified name
-        if (m_variables[i].Name.compare(name))
+        if (m_variables[varIdx].Name.compare(name))
         {
             // Return pointer to the variable
-            return &m_variables[i];
+            return &m_variables[varIdx];
         }
     }
 
@@ -551,7 +631,9 @@ bool Program::varNameIsKeyword(const string& name)
         name.compare("if") ||
         name.compare("else") ||
         name.compare("end") ||
-        name.compare("break"))
+        name.compare("break") ||
+        name.compare("continue") ||
+        name.compare("echo"))
     {
         return true;
     }
@@ -1034,13 +1116,13 @@ void Program::elseLoop(void)
     }
 }
 
-void Program::breakScope(const size_t levelsToBreak)
+bool Program::breakScope(const size_t levelsToBreak, const bool breakLast)
 {
     // Cannot break more scope levels than how many there currently are
     if (m_scope < levelsToBreak)
     {
-        Program::error("Number of scopes to break is too high!");
-        return;
+        Program::error("Number of scopes exceeds scope depth!");
+        return false;
     }
 
     // Break out of scopes one by one
@@ -1053,15 +1135,41 @@ void Program::breakScope(const size_t levelsToBreak)
         if (endIndex)
         {
             m_counter = endIndex;
-            Program::scopePop();
+
+            // continue command doesn't break the last scope
+            // The last end statement is processed in the next iteration
+            if (i < levelsToBreak - 1 || breakLast)
+            {
+                Program::scopePop();
+            }
         }
         // Unable to find the end of scope
         else
         {
-            return;
+            return false;
         }
     }
 
-    // Move to the next command after the end of the last scope we've broken out of
-    m_counter++;
+    return true;
+}
+
+INTEGER* Program::varGetIntegerPtr(const string& varName)
+{
+    Variable* varTarget = Program::varFind(varName);
+
+    // Target variable doesn't exist
+    if (!varTarget)
+    {
+        Program::errorVarUndeclared(varName);
+        return nullptr;
+    }
+
+    // Target variable must be integer
+    if (varTarget->Type != DataType::Integer)
+    {
+        Program::error("Expected an integer!");
+        return nullptr;
+    }
+
+    return (INTEGER*)varTarget->Pointer;
 }

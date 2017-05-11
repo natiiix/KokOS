@@ -54,6 +54,7 @@ private:
     Variable* varFind(const string& name); // finds a variable by name and returns a pointer to it, returns nullptr on failure
     bool varNameIsKeyword(const string& name); // check variable name against a list of keywords
     bool varNameInvalidChar(const string& name); // check if variable name consists of valid characters only
+    INTEGER* varGetIntegerPtr(const string& varName);
 
     void exit(void); // stops the program execution
     void error(const char* const str); // prints an error message and exits the program
@@ -73,5 +74,5 @@ private:
     size_t findElse(void);
 
     void elseLoop(void);
-    void breakScope(const size_t levelsToBreak);
+    bool breakScope(const size_t levelsToBreak, const bool breakLast);
 };
