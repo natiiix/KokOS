@@ -434,6 +434,28 @@ void Program::executeCommand(void)
 
         return;
     }
+    // Prints words to the terminal
+    else if (cmd[0].compare("echo"))
+    {
+        // Get the number of words after the echo command
+        size_t echoWordCount = cmd.size() - 1;
+
+        // Print out each word
+        for (size_t i = 0; i < echoWordCount; i++)
+        {
+            // Make spaces between words
+            if (i)
+            {
+                print(" ");
+            }
+
+            // Print out the word itself
+            sprint (cmd[i]);
+        }
+
+        // Break the line
+        newline();
+    }
     // Unrecognized command
     else
     {
