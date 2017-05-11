@@ -409,13 +409,15 @@ void Program::executeCommand(void)
             return;
         }
     }
-    // break scope
+    // break out of the current scope
     else if (cmd[0].compare("break") && cmd.size() == 1)
     {
-        breakScope(1);
-        return;
+        if (!breakScope(1, true))
+        {
+            return;
+        }
     }
-    // break N scope levels
+    // break out of N scope levels
     else if (cmd[0].compare("break") && cmd.size() == 2)
     {
         INTEGER breakLevels = 0;
@@ -424,7 +426,39 @@ void Program::executeCommand(void)
         {
             if (breakLevels > 0)
             {
-                breakScope(breakLevels);
+                if (!breakScope(breakLevels, true))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                Program::error("Cannot break a non-positive number of scope levels!");
+                return;
+            }
+        }
+        // Symbol is not a valid integer
+        else
+        {
+            return;
+        }
+    }
+    // continue at the end of the current scope
+    else if (cmd[0].compare("continue") && cmd.size() == 1)
+    {
+        breakScope(1, false);
+        return;
+    }
+    // continue at the end of the Nth scope
+    else if (cmd[0].compare("continue") && cmd.size() == 2)
+    {
+        INTEGER continueLevels = 0;
+        
+        if (Program::symbolToInteger(cmd[1], &continueLevels))
+        {
+            if (continueLevels > 0)
+            {
+                breakScope(continueLevels, false);
             }
             else
             {
@@ -1074,13 +1108,13 @@ void Program::elseLoop(void)
     }
 }
 
-void Program::breakScope(const size_t levelsToBreak)
+bool Program::breakScope(const size_t levelsToBreak, const bool breakLast)
 {
     // Cannot break more scope levels than how many there currently are
     if (m_scope < levelsToBreak)
     {
         Program::error("Number of scopes to break is too high!");
-        return;
+        return false;
     }
 
     // Break out of scopes one by one
@@ -1093,17 +1127,22 @@ void Program::breakScope(const size_t levelsToBreak)
         if (endIndex)
         {
             m_counter = endIndex;
-            Program::scopePop();
+
+            // continue command doesn't break the last scope
+            // The last end statement is processed in the next iteration
+            if (i < levelsToBreak - 1 || breakLast)
+            {
+                Program::scopePop();
+            }
         }
         // Unable to find the end of scope
         else
         {
-            return;
+            return false;
         }
     }
 
-    // Move to the next command after the end of the last scope we've broken out of
-    m_counter++;
+    return true;
 }
 
 INTEGER* Program::varGetIntegerPtr(const string& varName)

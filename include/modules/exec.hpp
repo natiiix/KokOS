@@ -74,5 +74,5 @@ private:
     size_t findElse(void);
 
     void elseLoop(void);
-    void breakScope(const size_t levelsToBreak);
+    bool breakScope(const size_t levelsToBreak, const bool breakLast);
 };
