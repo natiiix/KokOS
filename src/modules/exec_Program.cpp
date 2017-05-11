@@ -456,6 +456,24 @@ void Program::executeCommand(void)
         // Break the line
         newline();
     }
+    // Increments an integer variable
+    else if (cmd.size() == 2 && cmd[1].compare("++"))
+    {
+        // Find the variable
+        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+
+        // Increment the value of the variable
+        (*varPtr)++;
+    }
+    // Decrements an integer variable
+    else if (cmd.size() == 2 && cmd[1].compare("--"))
+    {
+        // Find the variable
+        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+
+        // Decrement the value of the variable
+        (*varPtr)--;
+    }
     // Unrecognized command
     else
     {
@@ -1086,4 +1104,25 @@ void Program::breakScope(const size_t levelsToBreak)
 
     // Move to the next command after the end of the last scope we've broken out of
     m_counter++;
+}
+
+INTEGER* Program::varGetIntegerPtr(const string& varName)
+{
+    Variable* varTarget = Program::varFind(varName);
+
+    // Target variable doesn't exist
+    if (!varTarget)
+    {
+        Program::errorVarUndeclared(varName);
+        return nullptr;
+    }
+
+    // Target variable must be integer
+    if (varTarget->Type != DataType::Integer)
+    {
+        Program::error("Expected an integer!");
+        return nullptr;
+    }
+
+    return (INTEGER*)varTarget->Pointer;
 }
