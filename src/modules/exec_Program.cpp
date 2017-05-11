@@ -1113,7 +1113,7 @@ bool Program::breakScope(const size_t levelsToBreak, const bool breakLast)
     // Cannot break more scope levels than how many there currently are
     if (m_scope < levelsToBreak)
     {
-        Program::error("Number of scopes to break is too high!");
+        Program::error("Number of scopes exceeds scope depth!");
         return false;
     }
 
