@@ -546,8 +546,9 @@ void Program::executeCommand(void)
 
 void Program::varDeclare(const string& name, const DataType type)
 {
+    // Disabled to make recursive subroutines possible
     // Each variable must have a different name
-    if (Program::varFind(name))
+    /*if (Program::varFind(name))
     {
         string strError;
         strError.clear();
@@ -559,7 +560,7 @@ void Program::varDeclare(const string& name, const DataType type)
         Program::error(strError);
         strError.dispose();
         return;
-    }
+    }*/
 
     // Keywords cannot be used as variable names
     if (Program::varNameIsKeyword(name))
@@ -601,11 +602,16 @@ Variable* Program::varFind(const string& name)
     
     for (size_t i = 0; i < varsize; i++)
     {
+        // Variables are being searched from back to front to make sure that
+        // when multiple variables share the same name (due to recursion for example)
+        // the last declared variable with the name is returned
+        size_t varIdx = varsize - 1 - i;
+
         // Find the variable with the specified name
-        if (m_variables[i].Name.compare(name))
+        if (m_variables[varIdx].Name.compare(name))
         {
             // Return pointer to the variable
-            return &m_variables[i];
+            return &m_variables[varIdx];
         }
     }
 
