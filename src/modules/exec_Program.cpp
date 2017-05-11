@@ -450,7 +450,7 @@ void Program::executeCommand(void)
             }
 
             // Print out the word itself
-            sprint (cmd[i]);
+            sprint (cmd[1 + i]);
         }
 
         // Break the line
