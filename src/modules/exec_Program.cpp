@@ -631,7 +631,9 @@ bool Program::varNameIsKeyword(const string& name)
         name.compare("if") ||
         name.compare("else") ||
         name.compare("end") ||
-        name.compare("break"))
+        name.compare("break") ||
+        name.compare("continue") ||
+        name.compare("echo"))
     {
         return true;
     }
