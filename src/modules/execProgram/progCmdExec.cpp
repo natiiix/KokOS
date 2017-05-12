@@ -447,17 +447,60 @@ void Program::executeCommand(void)
             return;
         }
 
+        // Read input from the terminal
         string strInput = readline();
 
         // Integer target variable
         if (varTarget->Type == DataType::Integer)
         {
+            INTEGER inputValue = 0;
 
+            if (strInput.parseInt32(&inputValue))
+            {
+                varTarget->set(inputValue);
+            }
+            // Integer parsing failed
+            else
+            {
+                string strError;
+                strError.clear();
+
+                strError.push_back("Symbol \"");
+                strError.push_back(strInput);
+                strInput.dispose();
+                strError.push_back("\" doesn't represent a valid integer value!");
+
+                Program::error(strError);
+                strError.dispose();
+
+                return;
+            }
         }
         // Logical target variable
         else if (varTarget->Type == DataType::Logical)
         {
+            LOGICAL inputValue = 0;
 
+            if (strInput.parseBool(&inputValue))
+            {
+                varTarget->set(inputValue);
+            }
+            // Logical value parsing failed
+            else
+            {
+                string strError;
+                strError.clear();
+
+                strError.push_back("Symbol \"");
+                strError.push_back(strInput);
+                strInput.dispose();
+                strError.push_back("\" doesn't represent a valid logical value!");
+
+                Program::error(strError);
+                strError.dispose();
+
+                return;
+            }
         }
 
         strInput.dispose();
