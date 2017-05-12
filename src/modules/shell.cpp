@@ -104,6 +104,10 @@ namespace Shell
 		{
 			cmd_copy(strArgs);
 		}
+		else if (strCmd.compare("rename"))
+		{
+			cmd_rename(strArgs);
+		}
 		else if (strCmd.compare("disk"))
 		{
 			cmd_disk(strArgs);
