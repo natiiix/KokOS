@@ -22,6 +22,7 @@ void strtoupper(char* const str);
 void strtolower(char* const str);
 size_t strfirst(const char* const str, const char c);
 size_t strlast(const char* const str, const char c);
+char* strfill(const char c, const size_t count);
 
 #if defined(__cplusplus)
 }

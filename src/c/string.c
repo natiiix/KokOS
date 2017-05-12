@@ -287,3 +287,16 @@ size_t strlast(const char* const str, const char c)
     debug_print("string.c | strlast() | String doesn't contain specified character!");
     return ~((size_t)0);
 }
+
+char* strfill(const char c, const size_t count)
+{
+    char* strFillChars = (char*)mem_alloc(count + 1);
+    strFillChars[count] = '\0';
+    
+    for (size_t i = 0; i < count; i++)
+    {
+        strFillChars[i] = c;
+    }
+
+    return strFillChars;
+}

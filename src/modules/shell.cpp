@@ -127,19 +127,6 @@ namespace Shell
 		strArgs.dispose();
 	}
 
-	char* _generate_spaces(const size_t count)
-	{
-		char* strspaces = (char*)malloc(count + 1);
-		strspaces[count] = '\0';
-		
-		for (size_t i = 0; i < count; i++)
-		{
-			strspaces[i] = ' ';
-		}
-
-		return strspaces;
-	}
-
 	void historyAppend(const string& strInput)
 	{
 		// Don't append empty string to the history vector
@@ -270,7 +257,7 @@ namespace Shell
 					historyIdx = HISTORY_INDEX_DEFAULT;
 
 					// Generate spaces to clear the input line on the screen
-					char* strspaces = _generate_spaces(VGA_WIDTH);
+					char* strspaces = strfill(' ', VGA_WIDTH);
 					printat(strspaces, 0, row);
 					delete strspaces;
 
@@ -323,7 +310,7 @@ namespace Shell
 
 			if (emptySpace > 0)
 			{
-				char* strspaces = _generate_spaces(emptySpace);
+				char* strspaces = strfill(' ', emptySpace);
 				printat(strspaces, rowend, row);
 				delete strspaces;
 			}

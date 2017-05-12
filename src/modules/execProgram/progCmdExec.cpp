@@ -435,6 +435,33 @@ void Program::executeCommand(void)
         // Decrement the value of the variable
         (*varPtr)--;
     }
+    // Read variable value from terminal
+    else if (cmd[0].compare("read") && cmd.size() == 2)
+    {
+        // Find the variable in which the value is supposed to be stored
+        Variable* varTarget = Program::varFind(cmd[1]);
+
+        // Check if the target variable exists
+        if (!varTarget)
+        {
+            return;
+        }
+
+        string strInput = readline();
+
+        // Integer target variable
+        if (varTarget->Type == DataType::Integer)
+        {
+
+        }
+        // Logical target variable
+        else if (varTarget->Type == DataType::Logical)
+        {
+
+        }
+
+        strInput.dispose();
+    }
     // Unrecognized command
     else
     {
