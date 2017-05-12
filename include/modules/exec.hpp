@@ -62,6 +62,7 @@ private:
     void errorSymbolUnresolved(const string& name); // "unable to resolve symbol" error
     void errorTypesIncompatible(void); // "variables don't have matching data types" error
     void errorOperatorInvalid(const string& strOperator); // "symbol is not a valid operator" error
+    void errorDivisionByZero(void); // "cannot divide by zero" error
 
     // progExpression
     bool symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError = true);

@@ -120,12 +120,49 @@ bool Program::evaluateInteger(const string& strSymbol1, const string& strOperato
     // Integer division
     else if (strOperator.compare("/"))
     {
+        if (valueSource2 == 0)
+        {
+            Program::errorDivisionByZero();
+            return false;
+        }
+
         (*output) = (valueSource1 / valueSource2);
     }
     // Remainder after integer division
     else if (strOperator.compare("%"))
     {
+        if (valueSource2 == 0)
+        {
+            Program::errorDivisionByZero();
+            return false;
+        }
+
         (*output) = (valueSource1 % valueSource2);
+    }
+    // Bit shift left
+    else if (strOperator.compare("<<"))
+    {
+        (*output) = (valueSource1 << valueSource2);
+    }
+    // Bit shift right
+    else if (strOperator.compare(">>"))
+    {
+        (*output) = (valueSource1 >> valueSource2);
+    }
+    // Bitwise AND
+    else if (strOperator.compare("&"))
+    {
+        (*output) = (valueSource1 & valueSource2);
+    }
+    // Bitwise OR
+    else if (strOperator.compare("|"))
+    {
+        (*output) = (valueSource1 | valueSource2);
+    }
+    // Bitwise XOR
+    else if (strOperator.compare("^"))
+    {
+        (*output) = (valueSource1 ^ valueSource2);
     }
     else
     {

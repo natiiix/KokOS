@@ -60,3 +60,8 @@ void Program::errorOperatorInvalid(const string& strOperator)
     Program::error(strError);
     strError.dispose();
 }
+
+void Program::errorDivisionByZero(void)
+{
+    Program::error("Cannot divide by zero!");
+}

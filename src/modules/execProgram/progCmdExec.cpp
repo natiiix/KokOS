@@ -399,94 +399,6 @@ void Program::executeCommand(void)
 
         strInput.dispose();
     }
-    // Variable value definition by direct assignment
-    else if (cmd.size() == 3 && cmd[1].compare("="))
-    {
-        Variable* varTarget = Program::varFind(cmd[0]);
-        
-        // Target variable doesn't exist
-        if (!varTarget)
-        {
-            Program::errorVarUndeclared(cmd[0]);
-            return;
-        }
-
-        switch (varTarget->Type)
-        {
-            case DataType::Integer:
-            {
-                INTEGER value = 0;
-
-                if (Program::symbolToInteger(cmd[2], &value))
-                {
-                    varTarget->set(value);
-                }
-                else
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            case DataType::Logical:
-            {
-                LOGICAL value = 0;
-
-                if (Program::symbolToLogical(cmd[2], &value))
-                {
-                    varTarget->set(value);
-                }
-                else
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            default:
-                break;
-        }
-    }
-    // Variable value definition by performing an operation
-    else if (cmd.size() == 5 && cmd[1].compare("="))
-    {
-        Variable* varTarget = Program::varFind(cmd[0]);
-
-        // Target variable doesn't exist
-        if (!varTarget)
-        {
-            Program::errorVarUndeclared(cmd[0]);
-            return;
-        }
-
-        switch (varTarget->Type)
-        {
-            case DataType::Integer:
-            {
-                if (!Program::evaluateInteger(cmd[2], cmd[3], cmd[4], (INTEGER*)varTarget->Pointer))
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            case DataType::Logical:
-            {
-                if (!Program::evaluateLogical(cmd[2], cmd[3], cmd[4], (LOGICAL*)varTarget->Pointer))
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            default:
-                break;
-        }
-    }
     // Increments an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("++"))
     {
@@ -504,6 +416,158 @@ void Program::executeCommand(void)
 
         // Decrement the value of the variable
         (*varPtr)--;
+    }
+    // Variable value assignment
+    else if (cmd.size() == 3 || cmd.size() == 5)
+    {
+        // Find target variable
+        Variable* varTarget = Program::varFind(cmd[0]);
+        
+        // Target variable doesn't exist
+        if (!varTarget)
+        {
+            Program::errorVarUndeclared(cmd[0]);
+            return;
+        }
+
+        switch (varTarget->Type)
+        {
+            // Target variable is integer
+            case DataType::Integer:
+            {
+                INTEGER oldValue = varTarget->getInteger();
+                INTEGER operandValue = 0;
+
+                if ((cmd.size() == 3 && Program::symbolToInteger(cmd[2], &operandValue)) ||
+                    (cmd.size() == 5 && Program::evaluateInteger(cmd[2], cmd[3], cmd[4], &operandValue)))
+                {
+                    // Value assignment
+                    if (cmd[1].compare("="))
+                    {
+                        varTarget->set(operandValue);
+                    }
+                    // Add operand value to itself
+                    else if (cmd[1].compare("+="))
+                    {
+                        varTarget->set(oldValue + operandValue);
+                    }
+                    // Subtract operand value from itself
+                    else if (cmd[1].compare("-="))
+                    {
+                        varTarget->set(oldValue - operandValue);
+                    }
+                    // Multiply itself by operand value
+                    else if (cmd[1].compare("*="))
+                    {
+                        varTarget->set(oldValue * operandValue);
+                    }
+                    // Perform integer division by operand value on itself
+                    else if (cmd[1].compare("/="))
+                    {
+                        if (operandValue == 0)
+                        {
+                            Program::errorDivisionByZero();
+                            return;
+                        }
+
+                        varTarget->set(oldValue / operandValue);
+                    }
+                    // Set itself to the remained after integer division by the operand value
+                    else if (cmd[1].compare("%="))
+                    {
+                        if (operandValue == 0)
+                        {
+                            Program::errorDivisionByZero();
+                            return;
+                        }
+
+                        varTarget->set(oldValue % operandValue);
+                    }
+                    // Bit shift itself left
+                    else if (cmd[1].compare("<<="))
+                    {
+                        varTarget->set(oldValue << operandValue);
+                    }
+                    // Bit shift itself right
+                    else if (cmd[1].compare(">>="))
+                    {
+                        varTarget->set(oldValue >> operandValue);
+                    }
+                    // Self-cast bitwise AND
+                    else if (cmd[1].compare("&="))
+                    {
+                        varTarget->set(oldValue & operandValue);
+                    }
+                    // Self-cast bitwise OR
+                    else if (cmd[1].compare("|="))
+                    {
+                        varTarget->set(oldValue | operandValue);
+                    }
+                    // Self-cast bitwise XOR
+                    else if (cmd[1].compare("^="))
+                    {
+                        varTarget->set(oldValue ^ operandValue);
+                    }
+                    // Not a valid integer operator
+                    else
+                    {
+                        Program::errorOperatorInvalid(cmd[1]);
+                        return;
+                    }
+                }
+                // Invalid right side operand symbol
+                else
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            // Target variable is logical
+            case DataType::Logical:
+            {
+                LOGICAL oldValue = varTarget->getLogical();
+                LOGICAL operandValue = 0;
+
+                if ((cmd.size() == 3 && Program::symbolToLogical(cmd[2], &operandValue)) ||
+                    (cmd.size() == 5 && Program::evaluateLogical(cmd[2], cmd[3], cmd[4], &operandValue)))
+                {
+                    // Value assignment
+                    if (cmd[1].compare("="))
+                    {
+                        varTarget->set(operandValue);
+                    }
+                    // Self-cast AND
+                    else if (cmd[1].compare("&&="))
+                    {
+                        varTarget->set(oldValue && operandValue);
+                    }
+                    // Self-cast OR
+                    else if (cmd[1].compare("||="))
+                    {
+                        varTarget->set(oldValue || operandValue);
+                    }
+                    // Not a valid logical operator
+                    else
+                    {
+                        Program::errorOperatorInvalid(cmd[1]);
+                        return;
+                    }
+                }
+                // Invalid right side operand symbol
+                else
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            default:
+                Program::error("Invalid variable data type!");
+                return;
+        }
     }
     // Unrecognized command
     else
