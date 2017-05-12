@@ -28,6 +28,8 @@ void cmd_help(const string& strArgs)
     print("help - Displays available commands and their syntax\n");
     print("mkdir <Directory Path> - Creates new directory\n");
     print("mkfile <File Path> - Creates new file\n");
+    print("move <Source File Path> <Target File Path> - Moves source file to target path\n");
+    print("rename <Old Name> <New Name> - Renames file or directory\n");
     print("text <File Path> - Opens or creates file for text editing\n");
 
     vecArgs.dispose();
