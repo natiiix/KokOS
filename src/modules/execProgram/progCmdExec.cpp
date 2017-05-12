@@ -118,94 +118,6 @@ void Program::executeCommand(void)
     {
         Program::scopePop();
     }
-    // Variable value definition by direct assignment
-    else if (cmd.size() == 3 && cmd[1].compare("="))
-    {
-        Variable* varTarget = Program::varFind(cmd[0]);
-        
-        // Target variable doesn't exist
-        if (!varTarget)
-        {
-            Program::errorVarUndeclared(cmd[0]);
-            return;
-        }
-
-        switch (varTarget->Type)
-        {
-            case DataType::Integer:
-            {
-                INTEGER value = 0;
-
-                if (Program::symbolToInteger(cmd[2], &value))
-                {
-                    varTarget->set(value);
-                }
-                else
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            case DataType::Logical:
-            {
-                LOGICAL value = 0;
-
-                if (Program::symbolToLogical(cmd[2], &value))
-                {
-                    varTarget->set(value);
-                }
-                else
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            default:
-                break;
-        }
-    }
-    // Variable value definition by performing an operation
-    else if (cmd.size() == 5 && cmd[1].compare("="))
-    {
-        Variable* varTarget = Program::varFind(cmd[0]);
-
-        // Target variable doesn't exist
-        if (!varTarget)
-        {
-            Program::errorVarUndeclared(cmd[0]);
-            return;
-        }
-
-        switch (varTarget->Type)
-        {
-            case DataType::Integer:
-            {
-                if (!Program::evaluateInteger(cmd[2], cmd[3], cmd[4], (INTEGER*)varTarget->Pointer))
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            case DataType::Logical:
-            {
-                if (!Program::evaluateLogical(cmd[2], cmd[3], cmd[4], (LOGICAL*)varTarget->Pointer))
-                {
-                    return;
-                }
-
-                break;
-            }
-
-            default:
-                break;
-        }
-    }
     // Variable value print
     else if (cmd[0].compare("print") && cmd.size() == 2)
     {
@@ -417,24 +329,6 @@ void Program::executeCommand(void)
         // Break the line
         newline();
     }
-    // Increments an integer variable
-    else if (cmd.size() == 2 && cmd[1].compare("++"))
-    {
-        // Find the variable
-        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
-
-        // Increment the value of the variable
-        (*varPtr)++;
-    }
-    // Decrements an integer variable
-    else if (cmd.size() == 2 && cmd[1].compare("--"))
-    {
-        // Find the variable
-        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
-
-        // Decrement the value of the variable
-        (*varPtr)--;
-    }
     // Read variable value from terminal
     else if (cmd[0].compare("read") && cmd.size() == 2)
     {
@@ -504,6 +398,112 @@ void Program::executeCommand(void)
         }
 
         strInput.dispose();
+    }
+    // Variable value definition by direct assignment
+    else if (cmd.size() == 3 && cmd[1].compare("="))
+    {
+        Variable* varTarget = Program::varFind(cmd[0]);
+        
+        // Target variable doesn't exist
+        if (!varTarget)
+        {
+            Program::errorVarUndeclared(cmd[0]);
+            return;
+        }
+
+        switch (varTarget->Type)
+        {
+            case DataType::Integer:
+            {
+                INTEGER value = 0;
+
+                if (Program::symbolToInteger(cmd[2], &value))
+                {
+                    varTarget->set(value);
+                }
+                else
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            case DataType::Logical:
+            {
+                LOGICAL value = 0;
+
+                if (Program::symbolToLogical(cmd[2], &value))
+                {
+                    varTarget->set(value);
+                }
+                else
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+    // Variable value definition by performing an operation
+    else if (cmd.size() == 5 && cmd[1].compare("="))
+    {
+        Variable* varTarget = Program::varFind(cmd[0]);
+
+        // Target variable doesn't exist
+        if (!varTarget)
+        {
+            Program::errorVarUndeclared(cmd[0]);
+            return;
+        }
+
+        switch (varTarget->Type)
+        {
+            case DataType::Integer:
+            {
+                if (!Program::evaluateInteger(cmd[2], cmd[3], cmd[4], (INTEGER*)varTarget->Pointer))
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            case DataType::Logical:
+            {
+                if (!Program::evaluateLogical(cmd[2], cmd[3], cmd[4], (LOGICAL*)varTarget->Pointer))
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+    // Increments an integer variable
+    else if (cmd.size() == 2 && cmd[1].compare("++"))
+    {
+        // Find the variable
+        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+
+        // Increment the value of the variable
+        (*varPtr)++;
+    }
+    // Decrements an integer variable
+    else if (cmd.size() == 2 && cmd[1].compare("--"))
+    {
+        // Find the variable
+        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+
+        // Decrement the value of the variable
+        (*varPtr)--;
     }
     // Unrecognized command
     else
