@@ -643,7 +643,7 @@ string string::toString(const int32_t value)
 
     return strout;
 }
-
+//
 string string::toString(const bool value)
 {
     string strout;
@@ -656,6 +656,29 @@ string string::toString(const bool value)
     else
     {
         strout.push_back("false");
+    }
+
+    return strout;
+}
+//
+static string toString(const double value)
+{
+    string strout;
+    strout.clear();
+
+    // Get the absolute value of the input value
+    double absValue = absDouble(value);
+
+    // Determine how many digits are there before the decimal dot
+    // If the value is lower than 1 get the number of zeros to add before the first non-zero digit
+    int32_t digitsBeforeDot = 0;
+
+    if (absValue >= 1.0)
+    {
+        while (absValue >= 1.0)
+        {
+            absValue /= 10;
+        }
     }
 
     return strout;

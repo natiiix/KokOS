@@ -109,6 +109,7 @@ public:
 	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
 	static string toString(const int32_t value);
 	static string toString(const bool value);
+	static string toString(const double value);
 
 private:
     void* m_ptr;
