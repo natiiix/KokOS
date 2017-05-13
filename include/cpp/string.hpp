@@ -88,6 +88,8 @@ public:
 	bool parseInt32(int32_t* const output) const;
 	// Parses a boolean value from the string
 	bool parseBool(bool* const output) const;
+	// Parses a double precision decimal value from the string
+	bool parseDouble(double* const output) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)

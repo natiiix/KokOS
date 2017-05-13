@@ -464,6 +464,82 @@ bool string::parseBool(bool* const output) const
         return false;
     }
 }
+//
+bool string::parseDouble(double* const output) const
+{
+    // String is empty, therefore it cannot contain a valid double value
+    if (!m_size)
+    {
+        return false;
+    }
+
+    bool negative = false;
+    bool dotFound = false;
+    size_t dotIdx = 0;
+
+    char digits[256];
+    size_t digitCount = 0;
+
+    // Check if string contains a valid double value
+    for (size_t i = 0; i < m_size; i++)
+    {
+        // Check the first character in the string for minus sign
+        if (!i && m_ptrC[i] == '-')
+        {
+            negative = true;
+        }
+        // Decimal dot reached
+        else if (!dotFound && m_ptrC[i] == '.')
+        {
+            dotFound = true;
+            dotIdx = i;
+        }
+        // Valid digit character
+        else if (m_ptrC[i] >= '0' && m_ptrC[i] <= '9')
+        {
+            digits[digitCount++] = m_ptrC[i];
+        }
+        // Unexpected character found
+        else
+        {
+            return false;
+        }
+    }
+
+    double value = 0.0;
+    int32_t exponent = dotIdx - 1;
+
+    // Translate digits into the actual double value
+    for (size_t i = 0; i < digitCount; i++)
+    {
+        if (digits[i] != '0')
+        {
+            // Convert the digit character to its value
+            double digitValue = ((double)(digits[i] - '0')) * powDouble(10.0, exponent);
+            double tmpValue = value + digitValue;
+
+            // The precision limit has been hit
+            // Further digits wouldn't change the output value due to their insignificance
+            if (tmpValue == value)
+            {
+                break;
+            }
+            // Digit is significant enough
+            else
+            {
+                // Update the value
+                value = tmpValue;
+            }
+        }
+        
+        // Decrement the exponent
+        exponent--;
+    }
+
+    // Set the output variable to the parsed value
+    (*output) = (negative ? -value : value);
+    return true;
+}
 
 // Operator overloads
 bool string::operator==(const string& str) const
