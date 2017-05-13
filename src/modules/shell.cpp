@@ -124,6 +124,27 @@ namespace Shell
 		{
 			cmd_exec(strArgs);
 		}
+		else if (strCmd.compare("double"))
+		{
+			double doubleValue = 0.0;
+			
+			if (strArgs.parseDouble(&doubleValue))
+			{
+				print("Parsing was successful!\n");
+				
+				printint((size_t)doubleValue);
+				print(" ... ");
+				
+				string strValue = string::toString(doubleValue);
+				sprint(strValue);
+				print("\n");
+				strValue.dispose();
+			}
+			else
+			{
+				print("Parsing has failed!\n");
+			}
+		}
 		else
 		{
 			print("Invalid command: \"");

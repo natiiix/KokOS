@@ -661,10 +661,16 @@ string string::toString(const bool value)
     return strout;
 }
 //
-static string toString(const double value)
+string string::toString(const double value)
 {
     string strout;
     strout.clear();
+
+    // Put minus sign at the beginning of the string if the value is negative
+    if (value < 0.0)
+    {
+        strout.push_back('-');
+    }
 
     // Get the absolute value of the input value
     double absValue = absDouble(value);
@@ -673,12 +679,59 @@ static string toString(const double value)
     // If the value is lower than 1 get the number of zeros to add before the first non-zero digit
     int32_t digitsBeforeDot = 0;
 
+    // There is at least 1 digit before the dot
     if (absValue >= 1.0)
     {
+        // Keep dividing the value by 10 until it has no digits before the decimal dot
         while (absValue >= 1.0)
         {
+            digitsBeforeDot++;
             absValue /= 10;
         }
+    }
+    // There are no digits before the dot
+    else
+    {
+        // Keep multiplying the value by 10 until it's high enough to have a digit before the dot
+        while (absValue < 1.0)
+        {
+            digitsBeforeDot--;
+            absValue *= 10;
+        }
+    }
+
+    // Write leading zeros
+    if (digitsBeforeDot <= 0)
+    {
+        // Write the zero at the units position
+        strout.push_back("0.");
+
+        // Write all the decimal zeros
+        while (digitsBeforeDot < 0)
+        {
+            digitsBeforeDot++;
+            strout.push_back('0');
+        }
+    }
+    
+    while (absValue > 0.0)
+    {
+        if (digitsBeforeDot > 0)
+        {
+            digitsBeforeDot--;
+
+            if (digitsBeforeDot == 0)
+            {                
+                // Push the decimal dot to the string
+                strout.push_back('.');
+            }
+        }
+        
+        uint8_t digitValue = (uint8_t)absValue;
+        strout.push_back('0' + digitValue);
+
+        absValue -= (double)digitValue;
+        absValue *= 10;
     }
 
     return strout;
