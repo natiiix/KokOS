@@ -484,15 +484,26 @@ bool string::parseDouble(double* const output) const
     for (size_t i = 0; i < m_size; i++)
     {
         // Check the first character in the string for minus sign
-        if (!i && m_ptrC[i] == '-')
+        if (!i && m_ptrC[0] == '-')
         {
             negative = true;
         }
         // Decimal dot reached
         else if (!dotFound && m_ptrC[i] == '.')
         {
+            // There is no digit before the decimal dot
+            // Add an artificial 0 to the beginning as if it were there
+            if (!digitCount)
+            {
+                digits[digitCount++] = '0';
+                dotIdx = 1;
+            }
+            else
+            {
+                dotIdx = i;
+            }
+
             dotFound = true;
-            dotIdx = i;
         }
         // Valid digit character
         else if (m_ptrC[i] >= '0' && m_ptrC[i] <= '9')
@@ -504,6 +515,12 @@ bool string::parseDouble(double* const output) const
         {
             return false;
         }
+    }
+
+    // If there is no decimal dot assume the number is integer
+    if (!dotFound)
+    {
+        dotIdx = digitCount;
     }
 
     double value = 0.0;
@@ -666,6 +683,13 @@ string string::toString(const double value)
     string strout;
     strout.clear();
 
+    // The value is exactly zero
+    if (value == 0.0)
+    {
+        strout.push_back("0.0");
+        return strout;
+    }
+
     // Put minus sign at the beginning of the string if the value is negative
     if (value < 0.0)
     {
@@ -679,7 +703,7 @@ string string::toString(const double value)
     // If the value is lower than 1 get the number of zeros to add before the first non-zero digit
     int32_t digitsBeforeDot = 0;
 
-    // There is at least 1 digit before the dot
+    // There is at least 1 digit before the decimal dot
     if (absValue >= 1.0)
     {
         // Keep dividing the value by 10 until it has no digits before the decimal dot
@@ -689,11 +713,11 @@ string string::toString(const double value)
             absValue /= 10;
         }
     }
-    // There are no digits before the dot
-    else
+    // All of the digits are after the decimal dot
+    else if (absValue > 0.0)
     {
-        // Keep multiplying the value by 10 until it's high enough to have a digit before the dot
-        while (absValue < 1.0)
+        // Keep multiplying the value by 10 until it's high enough to have a digit right after the dot
+        while (absValue < 0.1)
         {
             digitsBeforeDot--;
             absValue *= 10;
@@ -713,25 +737,100 @@ string string::toString(const double value)
             strout.push_back('0');
         }
     }
-    
-    while (absValue > 0.0)
-    {
-        if (digitsBeforeDot > 0)
-        {
-            digitsBeforeDot--;
 
-            if (digitsBeforeDot == 0)
-            {                
-                // Push the decimal dot to the string
-                strout.push_back('.');
+    size_t zeroChain = 0;
+    size_t nineChain = 0;
+    static const size_t chainLimit = 8;
+
+    size_t decimalCount = 0;
+    static const size_t decimalLimit = 20;
+
+    // Write the rest of the digits
+    while ((absValue > 0.0 && decimalCount < decimalLimit) || digitsBeforeDot > 0)
+    {
+        // Compute the value of this digit
+        absValue *= 10;
+        uint8_t digitValue = 0;
+
+        while (absValue > 1.0)
+        {
+            absValue -= 1.0;
+            digitValue++;
+        }
+
+        // Look out for repeating decimal digits
+        if (digitsBeforeDot == 0)
+        {
+            // Chain of zeros
+            if (digitValue == 0)
+            {
+                zeroChain++;
+                nineChain = 0;
+
+                // Chain length limit reached
+                if (zeroChain == chainLimit)
+                {
+                    // Pop all the redundant zeros
+                    strout.pop_back(chainLimit - 1);
+                    break;
+                }
             }
+            // Chain of nines
+            else if (digitValue == 9)
+            {
+                nineChain++;
+                zeroChain = 0;
+
+                // Chain length limit reached
+                if (nineChain == chainLimit)
+                {
+                    // Can't increment the pre-chain digit if the whole decimal part is the chain
+                    if (strout.at(strout.size() - chainLimit) != '.')
+                    {
+                        // Pop all the redundant nines
+                        strout.pop_back(chainLimit - 1);
+                        // Increment the last digit before the sequence of nines
+                        strout.back()++;
+                    }
+
+                    break;
+                }
+            }
+            else
+            {
+                zeroChain = 0;
+                nineChain = 0;
+            }
+            
+            decimalCount++;
         }
         
-        uint8_t digitValue = (uint8_t)absValue;
-        strout.push_back('0' + digitValue);
+        // Ignore zero at the end of the the decimal part
+        if (decimalCount != decimalLimit || digitValue != 0)
+        {
+            // Push the digit character to the string
+            strout.push_back('0' + digitValue);
+        }
 
-        absValue -= (double)digitValue;
-        absValue *= 10;
+        // If we're not in the decimal part yet
+        if (digitsBeforeDot > 0)
+        {
+            // Decrease the number of remaining whole part digits
+            digitsBeforeDot--;
+
+            // If this was the last whole part digit
+            if (digitsBeforeDot == 0)
+            {
+                // Push the decimal dot to the string
+                strout.push_back('.');
+
+                // If the value is an integer put a zero at the end of the string
+                if (absValue == 0.0)
+                {
+                    strout.push_back('0');
+                }
+            }
+        }
     }
 
     return strout;
