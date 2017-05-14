@@ -194,6 +194,15 @@ void Program::executeCommand(void)
                 break;
             }
 
+            case DataType::Real:
+            {
+                string strValue = string::toString(varSource->getReal());
+                sprint(strValue);
+                newline();
+                strValue.dispose();
+                break;
+            }
+
             default:
                 break;
         }

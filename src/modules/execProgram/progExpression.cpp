@@ -220,8 +220,8 @@ bool Program::evaluateInteger(const string& strSymbol1, const string& strOperato
 bool Program::evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output)
 {
     // Check input symbols for logical values
-    LOGICAL valueLogical1 = 0;
-    LOGICAL valueLogical2 = 0;
+    LOGICAL valueLogical1 = false;
+    LOGICAL valueLogical2 = false;
     bool source1Logical = false;
     bool source2Logical = false;
 
@@ -311,13 +311,64 @@ bool Program::evaluateLogical(const string& strSymbol1, const string& strOperato
         return true;
     }
 
+    // Check input symbols for real values
+    REAL valueReal1 = 0.0;
+    REAL valueReal2 = 0.0;
+    bool source1Real = false;
+    bool source2Real = false;
+
+    source1Real = Program::symbolToReal(strSymbol1, &valueReal1, false);
+    source2Real = Program::symbolToReal(strSymbol2, &valueReal2, false);
+    
+    // Both source symbols represent valid real values
+    if (source1Real && source2Real)
+    {
+        // Equality
+        if (strOperator.compare("=="))
+        {
+            (*output) = (valueReal1 == valueReal2);
+        }
+        // Inequality
+        else if (strOperator.compare("!="))
+        {
+            (*output) = (valueReal1 != valueReal2);
+        }
+        // Greater than
+        else if (strOperator.compare(">"))
+        {
+            (*output) = (valueReal1 > valueReal2);
+        }
+        // Less than
+        else if (strOperator.compare("<"))
+        {
+            (*output) = (valueReal1 < valueReal2);
+        }
+        // Greater than or equal to
+        else if (strOperator.compare(">="))
+        {
+            (*output) = (valueReal1 >= valueReal2);
+        }
+        // Less than or equal to
+        else if (strOperator.compare("<="))
+        {
+            (*output) = (valueReal1 <= valueReal2);
+        }
+        else
+        {
+            Program::errorOperatorInvalid(strOperator);
+            return false;
+        }
+
+        return true;
+    }
+
     // Failed to resolve the first source symbol
-    if (!source1Logical && !source1Integer)
+    if (!source1Logical && !source1Integer && !source1Real)
     {
         Program::errorSymbolUnresolved(strSymbol1);
     }
     // Failed to resolve the second source symbol
-    else if (!source2Logical && !source2Integer)
+    else if (!source2Logical && !source2Integer && !source2Real)
     {
         Program::errorSymbolUnresolved(strSymbol2);
     }
