@@ -496,11 +496,11 @@ bool string::parseDouble(double* const output) const
             if (!digitCount)
             {
                 digits[digitCount++] = '0';
-                dotIdx = 1;
+                dotIdx = 1 - negative;
             }
             else
             {
-                dotIdx = i;
+                dotIdx = i - negative;
             }
 
             dotFound = true;
@@ -784,8 +784,46 @@ string string::toString(const double value)
                 // Chain length limit reached
                 if (nineChain == chainLimit)
                 {
-                    // Can't increment the pre-chain digit if the whole decimal part is the chain
-                    if (strout.at(strout.size() - chainLimit) != '.')
+                    if (strout.at(strout.size() - chainLimit) == '.')
+                    {
+                        // Pop the decimal part containing the chain of redundant nines
+                        strout.pop_back(chainLimit - 1);
+
+                        // Index of the last digit of the whole part
+                        size_t carryIdx = strout.size() - 2;
+                        
+                        // Carry the value of the chain of nines until the last digit lower than 9 is reached
+                        while (true)
+                        {
+                            char carryDigit = strout.at(carryIdx);
+
+                            // Digit is lower than 9
+                            if (carryDigit >= '0' && carryDigit <= '8')
+                            {
+                                strout[carryIdx]++;
+                                break;
+                            }
+                            // Digit is 9, carry the value further
+                            else
+                            {
+                                strout[carryIdx] = '0';
+
+                                // There is another digit to which the value can be carried
+                                if (carryIdx > (strout.at(0) == '-'))
+                                {
+                                    carryIdx--;
+                                }
+                                // This is the first digit
+                                else
+                                {
+                                    // Put 1 at the beginning of the whole number
+                                    strout.insert('1', (strout.at(0) == '-'));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else
                     {
                         // Pop all the redundant nines
                         strout.pop_back(chainLimit - 1);
@@ -823,14 +861,14 @@ string string::toString(const double value)
             {
                 // Push the decimal dot to the string
                 strout.push_back('.');
-
-                // If the value is an integer put a zero at the end of the string
-                if (absValue == 0.0)
-                {
-                    strout.push_back('0');
-                }
             }
         }
+    }
+
+    // If the value is an integer put a zero at the end of the string
+    if (strout.back() == '.')
+    {
+        strout.push_back('0');
     }
 
     return strout;
