@@ -62,6 +62,19 @@ LOGICAL Variable::getLogical(void) const
     }
 }
 
+REAL Variable::getReal(void) const
+{
+    if (Variable::Type == DataType::Real)
+    {
+        return *(REAL*)Variable::Pointer;
+    }
+    else
+    {
+        debug_print("exec_Variable.cpp | Variable::getReal() | Variable was not declared as real!");
+        return false;
+    }
+}
+
 void Variable::set(const INTEGER value)
 {
     if (Variable::Type == DataType::Integer)
@@ -83,5 +96,17 @@ void Variable::set(const LOGICAL value)
     else
     {
         debug_print("exec_Variable.cpp | Variable::set() | Variable was not declared as logical!");
+    }
+}
+
+void Variable::set(const REAL value)
+{
+    if (Variable::Type == DataType::Real)
+    {        
+        (*(REAL*)Variable::Pointer) = value;
+    }
+    else
+    {
+        debug_print("exec_Variable.cpp | Variable::set() | Variable was not declared as real!");
     }
 }

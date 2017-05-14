@@ -5,6 +5,7 @@
 
 typedef int32_t INTEGER;
 typedef bool LOGICAL;
+typedef double REAL;
 
 static const size_t PROGRAM_COUNTER_EXIT = ~((size_t)0);
 
@@ -12,6 +13,7 @@ enum DataType
 {
     Integer,
     Logical,
+    Real,
 };
 
 class Variable
@@ -27,9 +29,11 @@ public:
 
     INTEGER getInteger(void) const;
     LOGICAL getLogical(void) const;
+    REAL getReal(void) const;
 
     void set(const INTEGER value);
     void set(const LOGICAL value);
+    void set(const REAL value);
 };
 
 class Program
@@ -52,7 +56,9 @@ private:
     // progVar
     bool varDeclare(const string& name, const DataType type); // declares a new variable with a specified name and data type
     Variable* varFind(const string& name); // finds a variable by name and returns a pointer to it, returns nullptr on failure
-    INTEGER* varGetIntegerPtr(const string& varName);
+    INTEGER* varGetIntegerPtr(const string& varName); // returns an integer value pointer
+    LOGICAL* varGetLogicalPtr(const string& varName); // returns a logical value pointer
+    REAL* varGetRealPtr(const string& varName); // returns a real value pointer
     bool nameValid(const string& name); // check if the variable name is valid (contains only valid characters and isn't a keyword)
 
     // progError
@@ -67,9 +73,11 @@ private:
     // progExpression
     bool symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError = true);
     bool symbolToLogical(const string& strSymbol, LOGICAL* const output, const bool throwError = true);
+    bool symbolToReal(const string& strSymbol, REAL* const output, const bool throwError = true);
 
     bool evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output);
     bool evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output);
+    bool evaluateReal(const string& strSymbol1, const string& strOperator, const string& strSymbol2, REAL* const output);
 
     // progScope
     void scopePush(void); // pushes current program counter onto the scope stack and incremenets the scope level

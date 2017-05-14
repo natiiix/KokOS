@@ -70,11 +70,53 @@ INTEGER* Program::varGetIntegerPtr(const string& varName)
     // Target variable must be integer
     if (varTarget->Type != DataType::Integer)
     {
-        Program::error("Expected an integer!");
+        Program::error("Expected an integer variable!");
         return nullptr;
     }
 
     return (INTEGER*)varTarget->Pointer;
+}
+
+LOGICAL* Program::varGetLogicalPtr(const string& varName)
+{
+    Variable* varTarget = Program::varFind(varName);
+
+    // Target variable doesn't exist
+    if (!varTarget)
+    {
+        Program::errorVarUndeclared(varName);
+        return nullptr;
+    }
+
+    // Target variable must be logical
+    if (varTarget->Type != DataType::Logical)
+    {
+        Program::error("Expected a logical variable!");
+        return nullptr;
+    }
+
+    return (LOGICAL*)varTarget->Pointer;
+}
+
+REAL* Program::varGetRealPtr(const string& varName)
+{
+    Variable* varTarget = Program::varFind(varName);
+
+    // Target variable doesn't exist
+    if (!varTarget)
+    {
+        Program::errorVarUndeclared(varName);
+        return nullptr;
+    }
+
+    // Target variable must be real
+    if (varTarget->Type != DataType::Real)
+    {
+        Program::error("Expected a real variable!");
+        return nullptr;
+    }
+
+    return (REAL*)varTarget->Pointer;
 }
 
 bool Program::nameValid(const string& name)
@@ -108,6 +150,9 @@ bool Program::nameValid(const string& name)
     if (name.compare("exit") ||        
         name.compare("integer") ||
         name.compare("logical") ||
+        name.compare("real") ||
+        name.compare("true") ||
+        name.compare("false") ||
         name.compare("push") ||
         name.compare("pop") ||
         name.compare("print") ||

@@ -89,6 +89,50 @@ bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output, co
     }
 }
 
+bool Program::symbolToReal(const string& strSymbol, REAL* const output, const bool throwError)
+{
+    // First check if the symbol is a variable name
+    Variable* varSource = Program::varFind(strSymbol);
+
+    // If the symbol represents an existing variable
+    if (varSource)
+    {
+        // And the variable has the desired data type
+        if (varSource->Type == DataType::Real)
+        {
+            // Set the output to the value of the variable
+            (*output) = varSource->getReal();
+
+            // Symbol represented a real variable and the value has been copied successfully
+            return true;
+        }
+        // Symbol represents a variable of different data type
+        else
+        {
+            if (throwError)
+            {
+                Program::errorTypesIncompatible();
+            }
+
+            return false;
+        }
+    }
+    // The symbol could also be a literal value
+    else
+    {
+        // Attempt to parse a real value from the symbol
+        bool validLiteral = strSymbol.parseDouble(output);
+
+        // Symbol parsing failed
+        if (!validLiteral && throwError)
+        {
+            Program::errorSymbolUnresolved(strSymbol);
+        }
+
+        return validLiteral;
+    }
+}
+
 bool Program::evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output)
 {
     INTEGER valueSource1 = 0;
@@ -284,4 +328,52 @@ bool Program::evaluateLogical(const string& strSymbol1, const string& strOperato
     }
 
     return false;
+}
+
+bool Program::evaluateReal(const string& strSymbol1, const string& strOperator, const string& strSymbol2, REAL* const output)
+{
+    REAL valueSource1 = 0;
+    REAL valueSource2 = 0;
+
+    // Resolve both source values
+    if (!Program::symbolToReal(strSymbol1, &valueSource1) ||
+        !Program::symbolToReal(strSymbol2, &valueSource2))
+    {
+        // Unable to resolve one of the symbols
+        return false;
+    }
+
+    // Addition
+    if (strOperator.compare("+"))
+    {
+        (*output) = (valueSource1 + valueSource2);
+    }
+    // Subtraction
+    else if (strOperator.compare("-"))
+    {
+        (*output) = (valueSource1 - valueSource2);
+    }
+    // Multiplication
+    else if (strOperator.compare("*"))
+    {
+        (*output) = (valueSource1 * valueSource2);
+    }
+    // Division
+    else if (strOperator.compare("/"))
+    {
+        if (valueSource2 == 0.0)
+        {
+            Program::errorDivisionByZero();
+            return false;
+        }
+
+        (*output) = (valueSource1 / valueSource2);
+    }
+    else
+    {
+        Program::errorOperatorInvalid(strOperator);
+        return false;
+    }
+
+    return true;
 }

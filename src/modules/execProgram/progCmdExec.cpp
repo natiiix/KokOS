@@ -108,6 +108,50 @@ void Program::executeCommand(void)
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
     }
+    // Real variable declaration
+    else if (cmd[0].compare("real") && cmd.size() == 2)
+    {
+        if (!Program::varDeclare(cmd[1], DataType::Real))
+        {
+            return;
+        }
+    }
+    // Real variable declaration with immediate value definition
+    else if (cmd[0].compare("real") && cmd.size() == 4 && cmd[2].compare("="))
+    {
+        REAL value = 0;
+        if (!Program::symbolToReal(cmd[3], &value))
+        {
+            return;
+        }
+
+        // Declare the variable
+        if (!Program::varDeclare(cmd[1], DataType::Real))
+        {
+            return;
+        }
+
+        // Assign the specified value to the recently reclared variable
+        m_variables.back().set(value);
+    }
+    // Real variable declaration with statement evaluation
+    else if (cmd[0].compare("real") && cmd.size() == 6 && cmd[2].compare("="))
+    {
+        REAL value = false;
+        if (!Program::evaluateReal(cmd[3], cmd[4], cmd[5], &value))
+        {
+            return;
+        }
+
+        // Declare the variable
+        if (!Program::varDeclare(cmd[1], DataType::Real))
+        {
+            return;
+        }
+
+        // Assign the specified value to the recently reclared variable
+        m_variables.back().set(value);
+    }
     // Scope push
     else if (cmd[0].compare("push") && cmd.size() == 1)
     {
