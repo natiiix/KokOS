@@ -391,6 +391,7 @@ void Program::executeCommand(void)
         // Check if the target variable exists
         if (!varTarget)
         {
+            Program::errorVarUndeclared(cmd[1]);
             return;
         }
 
@@ -442,6 +443,32 @@ void Program::executeCommand(void)
                 strError.push_back(strInput);
                 strInput.dispose();
                 strError.push_back("\" doesn't represent a valid logical value!");
+
+                Program::error(strError);
+                strError.dispose();
+
+                return;
+            }
+        }
+        // Real target variable
+        else if (varTarget->Type == DataType::Real)
+        {
+            REAL inputValue = 0;
+
+            if (strInput.parseDouble(&inputValue))
+            {
+                varTarget->set(inputValue);
+            }
+            // Real value parsing failed
+            else
+            {
+                string strError;
+                strError.clear();
+
+                strError.push_back("Symbol \"");
+                strError.push_back(strInput);
+                strInput.dispose();
+                strError.push_back("\" doesn't represent a valid real value!");
 
                 Program::error(strError);
                 strError.dispose();
@@ -602,6 +629,62 @@ void Program::executeCommand(void)
                         varTarget->set(oldValue || operandValue);
                     }
                     // Not a valid logical operator
+                    else
+                    {
+                        Program::errorOperatorInvalid(cmd[1]);
+                        return;
+                    }
+                }
+                // Invalid right side operand symbol
+                else
+                {
+                    return;
+                }
+
+                break;
+            }
+
+            // Target variable is real
+            case DataType::Real:
+            {
+                REAL oldValue = varTarget->getReal();
+                REAL operandValue = 0;
+
+                if ((cmd.size() == 3 && Program::symbolToReal(cmd[2], &operandValue)) ||
+                    (cmd.size() == 5 && Program::evaluateReal(cmd[2], cmd[3], cmd[4], &operandValue)))
+                {
+                    // Value assignment
+                    if (cmd[1].compare("="))
+                    {
+                        varTarget->set(operandValue);
+                    }
+                    // Add operand value to itself
+                    else if (cmd[1].compare("+="))
+                    {
+                        varTarget->set(oldValue + operandValue);
+                    }
+                    // Subtract operand value from itself
+                    else if (cmd[1].compare("-="))
+                    {
+                        varTarget->set(oldValue - operandValue);
+                    }
+                    // Multiply itself by operand value
+                    else if (cmd[1].compare("*="))
+                    {
+                        varTarget->set(oldValue * operandValue);
+                    }
+                    // Perform real number division by operand value on itself
+                    else if (cmd[1].compare("/="))
+                    {
+                        if (operandValue == 0)
+                        {
+                            Program::errorDivisionByZero();
+                            return;
+                        }
+
+                        varTarget->set(oldValue / operandValue);
+                    }
+                    // Not a valid real operator
                     else
                     {
                         Program::errorOperatorInvalid(cmd[1]);

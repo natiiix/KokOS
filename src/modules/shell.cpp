@@ -337,6 +337,12 @@ namespace Shell
 
 			shellPrefix.push_back('A' + activePart);
 			shellPrefix.push_back(':');
+			
+			if (activePath.size())
+			{
+				shellPrefix.push_back('/');
+			}
+			
 			shellPrefix.push_back(activePath);
 			shellPrefix.push_back('/');
 

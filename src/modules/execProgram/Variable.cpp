@@ -23,6 +23,11 @@ void Variable::declare(const string& name, const DataType type, const size_t sco
             (*(LOGICAL*)Pointer) = false;
             break;
 
+        case DataType::Real:
+            Pointer = malloc(sizeof(REAL));
+            (*(REAL*)Pointer) = false;
+            break;
+
         default:
             debug_print("exec_Variable.cpp | Variable::declare() | Invalid variable data type!");
             Pointer = nullptr;
