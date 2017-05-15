@@ -627,7 +627,7 @@ void Program::executeCommand(void)
         }
     }
     // Variable value assignment
-    else if ((cmd.size() == 3 || cmd.size() == 5) && cmd[1].contains('='))
+    else if ((cmd.size() >= 3 && cmd.size() <= 5) && cmd[1].contains('='))
     {
         // Find target variable
         Variable* varTarget = Program::varFind(cmd[0]);
@@ -644,6 +644,15 @@ void Program::executeCommand(void)
             // Target variable is integer
             case DataType::Integer:
             {
+                // Assignment with data type conversion
+                if (cmd.size() == 4 && cmd.at(2).compare("convert"))
+                {
+                    if (!Program::convertToInteger(cmd.at(3), varTarget))
+                    {
+                        return;
+                    }
+                }
+
                 INTEGER oldValue = varTarget->getInteger();
                 INTEGER operandValue = 0;
 
@@ -736,6 +745,15 @@ void Program::executeCommand(void)
             // Target variable is logical
             case DataType::Logical:
             {
+                // Assignment with data type conversion
+                if (cmd.size() == 4 && cmd.at(2).compare("convert"))
+                {
+                    if (!Program::convertToLogical(cmd.at(3), varTarget))
+                    {
+                        return;
+                    }
+                }
+
                 LOGICAL oldValue = varTarget->getLogical();
                 LOGICAL operandValue = 0;
 
@@ -776,6 +794,15 @@ void Program::executeCommand(void)
             // Target variable is real
             case DataType::Real:
             {
+                // Assignment with data type conversion
+                if (cmd.size() == 4 && cmd.at(2).compare("convert"))
+                {
+                    if (!Program::convertToReal(cmd.at(3), varTarget))
+                    {
+                        return;
+                    }
+                }
+
                 REAL oldValue = varTarget->getReal();
                 REAL operandValue = 0;
 
