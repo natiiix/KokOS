@@ -57,6 +57,7 @@ echo Compiling C++ code
 compileCpp cpp
 compileCpp modules
 compileCpp modules/commands
+compileCpp modules/execProgram
 
 echo Moving C++ object files to /obj/cpp/
 mv *.o $DIR_OBJECTS/cpp/

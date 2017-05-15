@@ -9,6 +9,8 @@ void cmd_mkfile(const string& strArgs);
 void cmd_mkdir(const string& strArgs);
 void cmd_delete(const string& strArgs);
 void cmd_copy(const string& strArgs);
+void cmd_move(const string& strArgs);
+void cmd_rename(const string& strArgs);
 
 void cmd_disk(const string& strArgs);
 void cmd_text(const string& strArgs);

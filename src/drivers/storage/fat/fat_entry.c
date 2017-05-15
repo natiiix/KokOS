@@ -241,7 +241,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
 
     // Write the file information into the proper directory entry
     stringToFileName(name, &dirsec->entries[entryIdx].fileName[0]);
-    dirsec->entries[entryIdx].attrib = attrib; // I don't know why, but all the files seem to have this
+    dirsec->entries[entryIdx].attrib = attrib;
     dirsec->entries[entryIdx].clusterHigh = (uint16_t)(firstCluster >> 0x10);
     dirsec->entries[entryIdx].clusterLow = (uint16_t)firstCluster;
     dirsec->entries[entryIdx].fileSize = size;
@@ -489,7 +489,7 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
                             mem_free(dircc);
                             mem_free(pathName);
 
-                            term_writeline("Can't delete a non-empty directory!", false);
+                            term_writeline("Cannot delete a non-empty directory!", false);
                             return false;
                         }
 
@@ -519,7 +519,7 @@ bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 		mem_free(dircc);
 		mem_free(pathName);
 		
-		term_writeline("Entry couldn't be found in the directory!", false);
+		term_writeline("Specified entry doesn't exist!", false);
 		return false;
 	}
 	
@@ -713,7 +713,7 @@ struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char
 
     if (!clusterChain)
     {
-        term_writeline("The cluster chain of the file is broken!", false);
+        debug_print("fat_entry.c | writeFile() | The cluster chain of the file is broken!");
         mem_free(file);
         return (struct FILE*)0;
     }
@@ -758,4 +758,105 @@ bool dirPathValid(const uint8_t partIdx, const uint32_t baseDir, const char* con
 
     // Directory path doesn't exist if that returned target directory from extractPath() is 0
     return !!targetDir;
+}
+
+bool renameEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const char* const newName)
+{
+	uint32_t targetDir = 0;
+	char* pathName = (char*)0;
+	
+	// Get the directory path and entry name from the full path
+	extractPath(partIdx, baseDir, path, &targetDir, &pathName);
+	
+	if (!pathName)
+	{
+		term_writeline("Invalid entry name!", false);
+		return false;
+	}
+	
+	if (!targetDir)
+	{
+        mem_free(pathName);
+		term_writeline("Invalid directory path!", false);
+		return false;
+	}
+
+    // Make sure the new name doesn't conflict with an existing file
+    struct DIR_ENTRY* existingEntry = findEntry(partIdx, targetDir, newName, 0, 0);
+
+    // Entry with specified name already exists in this directory
+    if (existingEntry)
+    {
+        term_writeline("Directory already contains an entry with specified name!", false);
+
+        mem_free(existingEntry);
+        mem_free(pathName);
+        return false;
+    }
+
+    // Get cluster chain
+    uint32_t* clusterChain = getClusterChain(partIdx, targetDir);
+
+    bool endOfDir = false;
+
+    // Search through the cluster chain until the end of the directory is reached
+    for (size_t chainIdx = 0; clusterChain[chainIdx] < CLUSTER_CHAIN_TERMINATOR && !endOfDir; chainIdx++)
+    {
+        // Convert cluster to sector for LBA addressing
+        uint64_t clusterBase = clusterToSector(partIdx, clusterChain[chainIdx]);
+
+        // Look through each sector within the cluster
+        for (size_t iSec = 0; iSec < partArray[partIdx].sectorsPerCluster && !endOfDir; iSec++)
+        {
+            // Read the sector from the drive
+            struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)hddRead(partArray[partIdx].hddIdx, clusterBase + iSec);
+
+            // Look through all the entries in the sector
+            for (size_t iEntry = 0; iEntry < 0x10 && !endOfDir; iEntry++)
+            {
+                // Get the first byte of the entry
+                // Used to find unused entries and the end of the directory
+                uint8_t entryFirstByte = *(uint8_t*)&(dirsec->entries[iEntry]);
+
+                // End of directory reached
+                if (entryFirstByte == DIR_ENTRY_END)
+                {
+                    endOfDir = true;
+                }
+                else if (entryFirstByte != DIR_ENTRY_UNUSED && // mustn't be an unused entry
+                    dirsec->entries[iEntry].attrib != FILE_ATTRIB_LONG_NAME) // mustn't be a long name entry
+                {
+                    char* strName = fileNameToString(dirsec->entries[iEntry].fileName);
+                    bool namesMatch = strcmp(pathName, strName);
+                    mem_free(strName);
+
+                    // Names match, rename the entry
+                    if (namesMatch)
+                    {
+                        // Generate file name from the string
+                        stringToFileName(newName, dirsec->entries[iEntry].fileName);
+
+                        // Write the updated directory sector to the disk
+                        hddWrite(partArray[partIdx].hddIdx, clusterBase + iSec, (uint8_t*)dirsec);
+
+                        mem_free(dirsec);
+                        mem_free(clusterChain);
+                        mem_free(pathName);
+
+                        debug_print("fat_entry.c | renameEntry() | Entry was renamed successfully!");
+                        return true;
+                    }
+                }
+            }
+
+            mem_free(dirsec);
+        }
+    }
+
+    mem_free(clusterChain);
+    mem_free(pathName);
+
+    // Entry not found
+    term_writeline("Directory doesn't contain specified entry!", false);
+    return false;
 }

@@ -76,6 +76,8 @@ public:
 	vector<string> split(const char cDelimiter, const bool removeEmpty = false) const;
 	// Splits the string, uses string as delimiter
 	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false) const;
+	// Returns true if the string sontains the specified character, false otherwise
+	bool contains(const char c) const;
 	// Returns true if the string contains the cstring str, false otherwise
 	bool contains(const char* const str) const;
 	// Removes a character / multiple characters from a specified position in the string
@@ -88,6 +90,8 @@ public:
 	bool parseInt32(int32_t* const output) const;
 	// Parses a boolean value from the string
 	bool parseBool(bool* const output) const;
+	// Parses a double precision decimal value from the string
+	bool parseDouble(double* const output) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
@@ -107,6 +111,7 @@ public:
 	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
 	static string toString(const int32_t value);
 	static string toString(const bool value);
+	static string toString(const double value);
 
 private:
     void* m_ptr;

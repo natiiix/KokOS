@@ -104,6 +104,14 @@ namespace Shell
 		{
 			cmd_copy(strArgs);
 		}
+		else if (strCmd.compare("move"))
+		{
+			cmd_move(strArgs);
+		}
+		else if (strCmd.compare("rename"))
+		{
+			cmd_rename(strArgs);
+		}
 		else if (strCmd.compare("disk"))
 		{
 			cmd_disk(strArgs);
@@ -125,19 +133,6 @@ namespace Shell
 
 		strCmd.dispose();
 		strArgs.dispose();
-	}
-
-	char* _generate_spaces(const size_t count)
-	{
-		char* strspaces = (char*)malloc(count + 1);
-		strspaces[count] = '\0';
-		
-		for (size_t i = 0; i < count; i++)
-		{
-			strspaces[i] = ' ';
-		}
-
-		return strspaces;
 	}
 
 	void historyAppend(const string& strInput)
@@ -270,7 +265,7 @@ namespace Shell
 					historyIdx = HISTORY_INDEX_DEFAULT;
 
 					// Generate spaces to clear the input line on the screen
-					char* strspaces = _generate_spaces(VGA_WIDTH);
+					char* strspaces = strfill(' ', VGA_WIDTH);
 					printat(strspaces, 0, row);
 					delete strspaces;
 
@@ -323,7 +318,7 @@ namespace Shell
 
 			if (emptySpace > 0)
 			{
-				char* strspaces = _generate_spaces(emptySpace);
+				char* strspaces = strfill(' ', emptySpace);
 				printat(strspaces, rowend, row);
 				delete strspaces;
 			}
@@ -342,6 +337,12 @@ namespace Shell
 
 			shellPrefix.push_back('A' + activePart);
 			shellPrefix.push_back(':');
+			
+			if (activePath.size())
+			{
+				shellPrefix.push_back('/');
+			}
+			
 			shellPrefix.push_back(activePath);
 			shellPrefix.push_back('/');
 

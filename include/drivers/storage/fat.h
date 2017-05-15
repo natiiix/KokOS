@@ -188,15 +188,18 @@ struct FILE* getFile(const uint8_t partIdx, const uint32_t baseDir, const char* 
 bool dirIsEmpty(const uint8_t partIdx, const uint32_t dirFirstClust);
 bool dirPathValid(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
-// Read
-uint8_t* readFile(const struct FILE* const file);
-
 // New
 struct FILE* newFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const size_t fileSize);
 struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
 
 // Delete
 bool deleteEntry(const uint8_t partIdx, const uint32_t baseDir, const char* const path);
+
+// Rename
+bool renameEntry(const uint8_t partIdx, const uint32_t baseDirCluster, const char* const oldName, const char* const newName);
+
+// Read
+uint8_t* readFile(const struct FILE* const file);
 
 // Write
 struct FILE* writeFile(const uint8_t partIdx, const uint32_t baseDir, const char* const path, const uint8_t* const data, const size_t dataSize);
