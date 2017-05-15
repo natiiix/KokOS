@@ -430,7 +430,7 @@ bool Program::evaluateReal(const string& strSymbol1, const string& strOperator, 
     return true;
 }
 
-bool Program::trySqrt(const string& strSourceSymbol, Variable* const outputVariable)
+bool Program::realSqrt(const string& strSourceSymbol, Variable* const outputVariable)
 {
     REAL sourceValue = 0.0;
 
@@ -452,4 +452,94 @@ bool Program::trySqrt(const string& strSourceSymbol, Variable* const outputVaria
     // Set the variable to the result of the square root of the source value
     outputVariable->set(sqrt(sourceValue));
     return true;
+}
+
+bool Program::convertToInteger(const string& strSourceSymbol, Variable* const outputVariable)
+{
+    LOGICAL sourceLogical = false;
+    REAL sourceReal = 0.0;
+
+    // Test source symbol for logical value
+    if (Program::symbolToLogical(strSourceSymbol, &sourceLogical, false))
+    {
+        // Source symbol is logical value
+        // Convert the logical value to an integer value and store it in the output variable
+        // false = 0; true = 1
+        outputVariable->set((INTEGER)sourceLogical);
+        return true;
+    }
+    // Test source symbol for real value
+    else if (Program::symbolToReal(strSourceSymbol, &sourceReal, false))
+    {
+        // Source symbol is real value
+        // Convert the real value to an integer value and store it in the output variable
+        outputVariable->set((INTEGER)sourceReal);
+        return true;
+    }
+    // Unable to resolve the source symbol
+    else
+    {
+        Program::errorSymbolUnresolved(strSourceSymbol);
+        return false;
+    }
+}
+
+bool Program::convertToLogical(const string& strSourceSymbol, Variable* const outputVariable)
+{
+    INTEGER sourceInteger = 0;
+    REAL sourceReal = 0.0;
+
+    // Test source symbol for integer value
+    if (Program::symbolToInteger(strSourceSymbol, &sourceInteger, false))
+    {
+        // Source symbol is integer value
+        // Convert the integer to a logical value and store it in the output variable
+        // 0 = false; else true
+        outputVariable->set((LOGICAL)sourceInteger);
+        return true;
+    }
+    // Test source symbol for real value
+    else if (Program::symbolToReal(strSourceSymbol, &sourceReal, false))
+    {
+        // Source symbol is real value
+        // Convert the real value to a logical value and store it in the output variable
+        outputVariable->set((LOGICAL)sourceReal);
+        return true;
+    }
+    // Unable to resolve the source symbol
+    else
+    {
+        Program::errorSymbolUnresolved(strSourceSymbol);
+        return false;
+    }
+}
+
+bool Program::convertToReal(const string& strSourceSymbol, Variable* const outputVariable)
+{
+    INTEGER sourceInteger = 0;
+    LOGICAL sourceLogical = false;
+
+    // Test source symbol for integer value
+    if (Program::symbolToInteger(strSourceSymbol, &sourceInteger, false))
+    {
+        // Source symbol is integer value
+        // Convert the integer to a real value and store it in the output variable
+        outputVariable->set((REAL)sourceInteger);
+        return true;
+    }
+    // Test source symbol for logical value
+    else if (Program::symbolToLogical(strSourceSymbol, &sourceLogical, false))
+    {
+        // Source symbol is logical value
+        // Convert the logical value to a real value and store it in the output variable
+        // false = 0.0; true = 1.0
+        outputVariable->set((REAL)sourceLogical);
+        return true;
+    }
+    // Unable to resolve the source symbol
+    else
+    {
+        Program::errorSymbolUnresolved(strSourceSymbol);
+        return false;
+    }
 }

@@ -79,7 +79,10 @@ private:
     bool evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output);
     bool evaluateReal(const string& strSymbol1, const string& strOperator, const string& strSymbol2, REAL* const output);
 
-    bool trySqrt(const string& strSourceSymbol, Variable* const outputVariable);
+    bool realSqrt(const string& strSourceSymbol, Variable* const outputVariable);
+    bool convertToInteger(const string& strSourceSymbol, Variable* const outputVariable);
+    bool convertToLogical(const string& strSourceSymbol, Variable* const outputVariable);
+    bool convertToReal(const string& strSourceSymbol, Variable* const outputVariable);
 
     // progScope
     void scopePush(void); // pushes current program counter onto the scope stack and incremenets the scope level

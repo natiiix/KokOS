@@ -46,6 +46,32 @@ void Program::executeCommand(void)
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
     }
+    // Integer variable declaration with value definition by performing a type conversion
+    else if (cmd[0].compare("integer") && cmd.size() == 5 && cmd[2].compare("="))
+    {
+        // Declare the variable
+        if (!Program::varDeclare(cmd[1], DataType::Integer))
+        {
+            return;
+        }
+
+        // Data type conversion
+        if (cmd[3].compare("convert"))
+        {
+            // Assign the converted value to the recently reclared variable
+            if (!Program::convertToInteger(cmd.at(4), &m_variables.back()))
+            {
+                // Unable to perform the type conversion
+                return;
+            }
+        }
+        // Unable to recognize the operation
+        else
+        {
+            Program::errorOperatorInvalid(cmd.at(2));
+            return;
+        }
+    }
     // Integer variable declaration with statement evaluation
     else if (cmd[0].compare("integer") && cmd.size() == 6 && cmd[2].compare("="))
     {
@@ -89,6 +115,32 @@ void Program::executeCommand(void)
 
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
+    }
+    // Logical variable declaration with value definition by performing a type conversion
+    else if (cmd[0].compare("logical") && cmd.size() == 5 && cmd[2].compare("="))
+    {
+        // Declare the variable
+        if (!Program::varDeclare(cmd[1], DataType::Logical))
+        {
+            return;
+        }
+
+        // Data type conversion
+        if (cmd[3].compare("convert"))
+        {
+            // Assign the converted value to the recently reclared variable
+            if (!Program::convertToLogical(cmd.at(4), &m_variables.back()))
+            {
+                // Unable to perform the type conversion
+                return;
+            }
+        }
+        // Unable to recognize the operation
+        else
+        {
+            Program::errorOperatorInvalid(cmd.at(2));
+            return;
+        }
     }
     // Logical variable declaration with statement evaluation
     else if (cmd[0].compare("logical") && cmd.size() == 6 && cmd[2].compare("="))
@@ -134,8 +186,8 @@ void Program::executeCommand(void)
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
     }
-    // Real variable declaration with value definition by performing square root
-    else if (cmd[0].compare("real") && cmd.size() == 5 && cmd[2].compare("=") && cmd[3].compare("sqrt"))
+    // Real variable declaration with value definition by performing an operation
+    else if (cmd[0].compare("real") && cmd.size() == 5 && cmd[2].compare("="))
     {
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Real))
@@ -143,10 +195,30 @@ void Program::executeCommand(void)
             return;
         }
 
-        // Assign the square root value to the recently reclared variable
-        if (!Program::trySqrt(cmd.at(4), &m_variables.back()))
+        // Square root
+        if (cmd[3].compare("sqrt"))
         {
-            // Unable to perform sqaure root
+            // Assign the square root value to the recently reclared variable
+            if (!Program::realSqrt(cmd.at(4), &m_variables.back()))
+            {
+                // Unable to perform sqaure root
+                return;
+            }
+        }
+        // Data type conversion
+        else if (cmd[3].compare("convert"))
+        {
+            // Assign the converted value to the recently reclared variable
+            if (!Program::convertToReal(cmd.at(4), &m_variables.back()))
+            {
+                // Unable to perform the type conversion
+                return;
+            }
+        }
+        // Unable to recognize the operation
+        else
+        {
+            Program::errorOperatorInvalid(cmd.at(2));
             return;
         }
     }
@@ -548,7 +620,7 @@ void Program::executeCommand(void)
         }
 
         // Perform the square root
-        if (!Program::trySqrt(cmd.at(3), varTarget))
+        if (!Program::realSqrt(cmd.at(3), varTarget))
         {
             // Square root failed
             return;
