@@ -153,6 +153,8 @@ bool Program::nameValid(const string& name)
         name.compare("real") ||
         name.compare("true") ||
         name.compare("false") ||
+        name.compare("sqrt") ||
+        name.compare("convert") ||
         name.compare("push") ||
         name.compare("pop") ||
         name.compare("print") ||
