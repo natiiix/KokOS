@@ -349,6 +349,19 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 	return vectout;
 }
 //
+bool string::contains(const char c) const
+{
+    for (size_t i = 0; i < m_size; i++)
+    {
+        if (m_ptrC[i] == c)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+//
 bool string::contains(const char* const str) const
 {
     size_t strlength = strlen(str);

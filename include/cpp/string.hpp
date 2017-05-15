@@ -76,6 +76,8 @@ public:
 	vector<string> split(const char cDelimiter, const bool removeEmpty = false) const;
 	// Splits the string, uses string as delimiter
 	vector<string> split(const char* const strDelimiter, const bool removeEmpty = false) const;
+	// Returns true if the string sontains the specified character, false otherwise
+	bool contains(const char c) const;
 	// Returns true if the string contains the cstring str, false otherwise
 	bool contains(const char* const str) const;
 	// Removes a character / multiple characters from a specified position in the string

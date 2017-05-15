@@ -1,5 +1,6 @@
 #include <modules/exec.hpp>
 #include <c/stdio.h>
+#include <c/math.h>
 
 void Program::executeCommand(void)
 {
@@ -485,8 +486,15 @@ void Program::executeCommand(void)
         // Find the variable
         INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
 
-        // Increment the value of the variable
-        (*varPtr)++;
+        if (varPtr)
+        {
+            // Increment the value of the variable
+            (*varPtr)++;
+        }
+        else
+        {
+            return;
+        }
     }
     // Decrements an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("--"))
@@ -494,11 +502,58 @@ void Program::executeCommand(void)
         // Find the variable
         INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
 
-        // Decrement the value of the variable
-        (*varPtr)--;
+        if (varPtr)
+        {
+            // Decrement the value of the variable
+            (*varPtr)--;
+        }
+        else
+        {
+            return;
+        }
+    }
+    // Stores the square root of a real value into a real variable
+    else if (cmd.size() == 4 && cmd[1].compare("=") && cmd[2].compare("sqrt"))
+    {
+        // Find target variable
+        Variable* varTarget = Program::varFind(cmd[0]);
+        
+        // Target variable doesn't exist
+        if (!varTarget)
+        {
+            Program::errorVarUndeclared(cmd[0]);
+            return;
+        }
+
+        // Square root can only be performend on real data type
+        if (varTarget->Type != DataType::Real)
+        {
+            Program::errorTypesIncompatible();
+            return;
+        }
+
+        REAL sourceValue = 0.0;
+
+        // Resolve the source symbol
+        if (!Program::symbolToReal(cmd[3], &sourceValue))
+        {
+            // Source symbol is not a valid real value
+            Program::errorSymbolUnresolved(cmd[3]);
+            return;
+        }
+
+        // Check for negative source value
+        if (sourceValue < 0.0)
+        {
+            Program::error("Cannot perform square root on a negative value!");
+            return;
+        }
+
+        // Set the variable to the result of the square root of the source value
+        varTarget->set(sqrt(sourceValue));
     }
     // Variable value assignment
-    else if (cmd.size() == 3 || cmd.size() == 5)
+    else if ((cmd.size() == 3 || cmd.size() == 5) && cmd[1].contains('='))
     {
         // Find target variable
         Variable* varTarget = Program::varFind(cmd[0]);
