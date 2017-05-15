@@ -24,14 +24,14 @@
 - partial C <a href="http://www.cplusplus.com/reference/cstdio/">&lt;stdio.h&gt;</a> implementation
 - C++ <a href="http://www.cplusplus.com/reference/string/string/">&lt;string&gt;</a> implementation
 - C++ <a href="http://www.cplusplus.com/reference/vector/vector/">&lt;vector&gt;</a> implementation
-- basic shell commands (help, clear)
-- basic file/directory operation commands (mkfile, mkdir, delete, copy)
+- basic internal shell commands (help, clear)
+- basic file/directory operation commands (mkfile, mkdir, delete, copy, move, rename)
 - prevents you from deleting a non-empty directory
 - shell supports both absolute and relative path addressing
 - shell command history (using up/down arrows, up to 16 commands)
 - currently up-to-date help command
 - repetitive validity checks should prevent unexpected behavior
-- <a href="https://en.wikipedia.org/wiki/File_Allocation_Table">FAT file system</a> support (some operations haven't been implemented, see TODO)
+- <a href="https://en.wikipedia.org/wiki/File_Allocation_Table">FAT file system</a> support
 - basic text file editor (selections and copy-pasting may be implemented later)
 - OS-specific programming language called Kok (based on <a href="https://en.wikipedia.org/wiki/Fortran">Fortran</a>, <a href="https://en.wikipedia.org/wiki/BASIC">BASIC</a> and <a href="https://en.wikipedia.org/wiki/C_(programming_language)">C</a>)
 
@@ -40,8 +40,8 @@
 
 ## TODO
 - documentation for Kok programming language
+- documentation for the text editor
 - moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
-- move / rename commands for both files and directoties (low priority, both can be sort of done using copy and delete commands)
 
 ## On Hold
 - <a href="https://en.wikipedia.org/wiki/Advanced_Host_Controller_Interface">AHCI</a> driver (I wasn't able to make it work and it's not of high importance to me)
