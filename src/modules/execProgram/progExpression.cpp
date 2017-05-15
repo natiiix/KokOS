@@ -1,5 +1,6 @@
 #include <modules/exec.hpp>
 #include <c/stdio.h>
+#include <c/math.h>
 
 bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError)
 {
@@ -426,5 +427,29 @@ bool Program::evaluateReal(const string& strSymbol1, const string& strOperator, 
         return false;
     }
 
+    return true;
+}
+
+bool Program::trySqrt(const string& strSourceSymbol, Variable* const outputVariable)
+{
+    REAL sourceValue = 0.0;
+
+    // Resolve the source symbol
+    if (!Program::symbolToReal(strSourceSymbol, &sourceValue))
+    {
+        // Source symbol is not a valid real value
+        Program::errorSymbolUnresolved(strSourceSymbol);
+        return false;
+    }
+
+    // Check for negative source value
+    if (sourceValue < 0.0)
+    {
+        Program::error("Cannot perform square root on negative value!");
+        return false;
+    }
+
+    // Set the variable to the result of the square root of the source value
+    outputVariable->set(sqrt(sourceValue));
     return true;
 }

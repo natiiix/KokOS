@@ -1,6 +1,5 @@
 #include <modules/exec.hpp>
 #include <c/stdio.h>
-#include <c/math.h>
 
 void Program::executeCommand(void)
 {
@@ -134,6 +133,22 @@ void Program::executeCommand(void)
 
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
+    }
+    // Real variable declaration with value definition by performing square root
+    else if (cmd[0].compare("real") && cmd.size() == 5 && cmd[2].compare("=") && cmd[3].compare("sqrt"))
+    {
+        // Declare the variable
+        if (!Program::varDeclare(cmd[1], DataType::Real))
+        {
+            return;
+        }
+
+        // Assign the square root value to the recently reclared variable
+        if (!Program::trySqrt(cmd.at(4), &m_variables.back()))
+        {
+            // Unable to perform sqaure root
+            return;
+        }
     }
     // Real variable declaration with statement evaluation
     else if (cmd[0].compare("real") && cmd.size() == 6 && cmd[2].compare("="))
@@ -532,25 +547,12 @@ void Program::executeCommand(void)
             return;
         }
 
-        REAL sourceValue = 0.0;
-
-        // Resolve the source symbol
-        if (!Program::symbolToReal(cmd[3], &sourceValue))
+        // Perform the square root
+        if (!Program::trySqrt(cmd.at(3), varTarget))
         {
-            // Source symbol is not a valid real value
-            Program::errorSymbolUnresolved(cmd[3]);
+            // Square root failed
             return;
         }
-
-        // Check for negative source value
-        if (sourceValue < 0.0)
-        {
-            Program::error("Cannot perform square root on a negative value!");
-            return;
-        }
-
-        // Set the variable to the result of the square root of the source value
-        varTarget->set(sqrt(sourceValue));
     }
     // Variable value assignment
     else if ((cmd.size() == 3 || cmd.size() == 5) && cmd[1].contains('='))
