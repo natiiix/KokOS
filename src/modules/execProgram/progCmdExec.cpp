@@ -651,6 +651,8 @@ void Program::executeCommand(void)
                     {
                         return;
                     }
+
+                    break;
                 }
 
                 INTEGER oldValue = varTarget->getInteger();
@@ -752,6 +754,8 @@ void Program::executeCommand(void)
                     {
                         return;
                     }
+                    
+                    break;
                 }
 
                 LOGICAL oldValue = varTarget->getLogical();
@@ -801,6 +805,8 @@ void Program::executeCommand(void)
                     {
                         return;
                     }
+                    
+                    break;
                 }
 
                 REAL oldValue = varTarget->getReal();
