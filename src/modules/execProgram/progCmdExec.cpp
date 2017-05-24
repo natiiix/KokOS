@@ -11,6 +11,28 @@ void Program::executeCommand(void)
         return;
     }
 
+    // Clear the input buffer
+    // If Escape was pressed terminate the program
+    keyevent ke;
+    do
+    {
+        // Read key from input buffer
+        ke = readKeyEvent();
+        
+        // Check if Escape key was pressed
+        if (ke.scancode == KEY_ESCAPE &&
+            ke.state &&
+            !ke.modifiers)
+        {
+            // Terminate the program
+            print("Program execution was manually terminated by user!\n");
+            m_counter = PROGRAM_COUNTER_EXIT;
+            return;
+        }
+    }
+    // Continue until the input buffer is empty
+    while (ke.scancode);
+
     // I figured out that a shortcut for the current command might be useful
     vector<string>& cmd = m_program[m_counter];
 
