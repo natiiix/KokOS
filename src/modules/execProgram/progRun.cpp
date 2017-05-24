@@ -22,18 +22,22 @@ void Program::run(const char* const codePtr)
     // Set program counter and scope depth
     m_counter = 0;
     m_scope = 0;
-    
-    // Execute commands one after another until the program finishes
-    while (m_counter < m_program.size())
-    {
-        Program::executeCommand();
-    }
 
-    // After the program execution is done the scope level should be 0
-    // This doesn't apply when the program is terminated via Program::exit()
-    if (m_scope && m_counter != PROGRAM_COUNTER_EXIT)
+    // Test the code for invalid commands
+    if (Program::scanThrough())
     {
-        Program::error("End of scope expected!");
+        // Execute commands one after another until the program finishes
+        while (m_counter < m_program.size())
+        {
+            Program::executeCommand();
+        }
+
+        // After the program execution is done the scope level should be 0
+        // This doesn't apply when the program is terminated via Program::exit()
+        if (m_scope && m_counter != PROGRAM_COUNTER_EXIT)
+        {
+            Program::error("End of scope expected!");
+        }
     }
     
     // Dispose the whole program code

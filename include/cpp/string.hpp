@@ -108,7 +108,7 @@ public:
     string operator+(const string& str);
 
 	//static void disposeVector(vector<string>& vec);
-	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
+	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty = false);
 	static string toString(const int32_t value);
 	static string toString(const bool value);
 	static string toString(const double value);

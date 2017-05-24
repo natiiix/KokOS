@@ -53,6 +53,9 @@ private:
     // progCmdExe
     void executeCommand(void); // executes the command at the current line
 
+    // progScan
+    bool scanThrough(void); // runs through the code, tries to find invalid commands (true = OK, false = Error)
+
     // progVar
     bool varDeclare(const string& name, const DataType type); // declares a new variable with a specified name and data type
     Variable* varFind(const string& name); // finds a variable by name and returns a pointer to it, returns nullptr on failure
