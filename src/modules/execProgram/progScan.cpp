@@ -28,6 +28,8 @@ bool Program::scanThrough(void)
             if (Program::subDefine(cmd[1], scanCounter))
             {
                 // Subroutine was successfully defined
+                // Incremenet the scope level because the scan is now going to go through the commands inside the subroutine
+                scopeLevel++;
                 continue;
             }
             else
@@ -48,6 +50,8 @@ bool Program::scanThrough(void)
             cmd[0].compare("continue") ||
             cmd[0].compare("echo") ||
             cmd[0].compare("read") ||
+            cmd[0].compare("call") ||
+            cmd[0].compare("return") ||
             (cmd.size() == 2 && cmd[1].compare("++")) || // variable incrementation
             (cmd.size() == 2 && cmd[1].compare("--")) || // variable decrementation
             (cmd.size() >= 3 && cmd.size() <= 5 && cmd[1].contains("="))) // variable assignment
@@ -59,6 +63,7 @@ bool Program::scanThrough(void)
         {
             // Increment the scope level depth
             scopeLevel++;
+            continue;
         }
         // End of a scope
         else if (cmd[0].compare("pop") || cmd[0].compare("end"))
@@ -67,11 +72,13 @@ bool Program::scanThrough(void)
             {
                 // Decremenet the scope level depth
                 scopeLevel--;
+                continue;
             }
             // End statement cannot be performed at 0 scope level because there is no scope to be popped
             else
             {
                 Program::errorScan(scanCounter, "Unexpected end of scope!");
+                return false;
             }
         }
 
@@ -90,6 +97,6 @@ bool Program::scanThrough(void)
     }
 
     // All commands are valid
-    debug_print("progScan.cpp | Program::scanThrough() | No invalid command found!");
+    debug_print("progScan.cpp | Program::scanThrough() | OK | No invalid command found!");
     return true;
 }

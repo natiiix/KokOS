@@ -167,7 +167,9 @@ enum PROGRAM_NAME Program::nameValid(const string& name)
         name.compare("break") ||
         name.compare("continue") ||
         name.compare("echo") ||
-        name.compare("sub"))
+        name.compare("sub") ||
+        name.compare("call") ||
+        name.compare("return"))
     {
         return PROGRAM_NAME_KEYWORD;
     }

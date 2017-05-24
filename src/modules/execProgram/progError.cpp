@@ -75,7 +75,9 @@ void Program::errorScan(const size_t index)
 
     // Print the line content
     string strLine = string::join(m_program.at(index), ' ');
+    print("\"");
     sprint(strLine);
+    print("\"");
     strLine.dispose();
     newline();
 }

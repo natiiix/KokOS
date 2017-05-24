@@ -631,6 +631,31 @@ void Program::executeCommand(void)
         m_counter = subCounter + 1;
         return;
     }
+    // Premature end of subroutine
+    else if (cmd[0].compare("return") && cmd.size() == 1)
+    {
+        while (m_scope)
+        {
+            // The subroutine is the currently deepest scope level
+            if (m_program[m_scopeStack.back()][0].compare("call"))
+            {
+                // Jump back to the call command
+                m_counter = m_scopeStack.back() + 1;
+                // Pop the subroutine scope
+                Program::scopePop();
+                return;
+            }
+            // Pop all the inner scopes (inside of the subroutine) until the subroutine call is reached
+            else
+            {
+                Program::scopePop();
+            }
+        }
+        
+        // Ran out of scope levels before finding the subroutine call
+        Program::error("Unexpected \"return\" statement!");
+        return;
+    }
     // Increments an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("++"))
     {
