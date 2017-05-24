@@ -3,34 +3,47 @@
 
 bool Program::varDeclare(const string& name, const DataType type)
 {
-    // Disabled to make recursive subroutines possible
-    // Each variable must have a different name
-    /*if (Program::varFind(name))
-    {
-        string strError;
-        strError.clear();
-
-        strError.push_back("Variable with the name \"");
-        strError.push_back(name);
-        strError.push_back("\" is already declared!");
-
-        Program::error(strError);
-        strError.dispose();
-        return;
-    }*/
-
     // Check variable name validity
-    if (Program::nameValid(name))
+    enum PROGRAM_NAME nameResult = Program::nameValid(name);
+    if (nameResult == PROGRAM_NAME_OK)
     {
+        // Push the new variable into the variable vector
         m_variables.push_back(Variable());
         m_variables.back().declare(name, type, m_scope);
 
         // Variable declared successfully
         return true;
     }
+    else
+    {
+        string strError;
+        strError.clear();
 
-    // Failed to declare a variable with specified name
-    return false;
+        strError.push_back("Variable name \"");
+        strError.push_back(name);
+        
+        // Name contain invalid character
+        if (nameResult == PROGRAM_NAME_INVALID_CHAR)
+        {
+            strError.push_back("\" contains an invalid character!\nValid characters: { a-z, A-Z, 0-9, _ }");
+        }
+        // Name is a keyword
+        else if (nameResult == PROGRAM_NAME_KEYWORD)
+        {
+            strError.push_back("\" conflicts with a keyword!");
+        }
+        // Unknown name-related error occurred
+        else
+        {
+            strError.push_back("\" is invalid for unknown reason!");
+        }
+
+        Program::error(strError);
+        strError.dispose();
+
+        // Failed to define a variable with specified name
+        return false;
+    }
 }
 
 Variable* Program::varFind(const string& name)
@@ -119,34 +132,24 @@ REAL* Program::varGetRealPtr(const string& varName)
     return (REAL*)varTarget->Pointer;
 }
 
-bool Program::nameValid(const string& name)
+enum PROGRAM_NAME Program::nameValid(const string& name)
 {
     size_t namelen = name.size();
 
     for (size_t i = 0; i < namelen; i++)
     {
         // Only lowercase letters, uppercase letter, numbers and underscores
-        // are considered as valid character in variable names
+        // are considered as valid character in names
         if ((name.at(i) < 'a' || name.at(i) > 'z') &&
             (name.at(i) < 'A' || name.at(i) > 'Z') &&
             (name.at(i) < '0' || name.at(i) > '9') &&
             name.at(i) != '_')
         {
-            string strError;
-            strError.clear();
-
-            strError.push_back("Variable name \"");
-            strError.push_back(name);
-            strError.push_back("\" contains an invalid character!\nValid characters: { a-z, A-Z, 0-9, _ }");
-
-            Program::error(strError);
-            strError.dispose();
-
-            return false;
+            return PROGRAM_NAME_INVALID_CHAR;
         }
     }
 
-    // Variable name must NOT be an existing keyword
+    // Name must NOT be an existing keyword
     if (name.compare("exit") ||        
         name.compare("integer") ||
         name.compare("logical") ||
@@ -163,21 +166,12 @@ bool Program::nameValid(const string& name)
         name.compare("end") ||
         name.compare("break") ||
         name.compare("continue") ||
-        name.compare("echo"))
+        name.compare("echo") ||
+        name.compare("sub"))
     {
-        string strError;
-        strError.clear();
-
-        strError.push_back("Variable name \"");
-        strError.push_back(name);
-        strError.push_back("\" conflicts with a keyword!");
-
-        Program::error(strError);
-        strError.dispose();
-
-        return false;
+        return PROGRAM_NAME_KEYWORD;
     }
 
-    // Variable name is OK and it can be safely used
-    return true;
+    // Name is OK and it can be safely used
+    return PROGRAM_NAME_OK;
 }

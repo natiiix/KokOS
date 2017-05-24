@@ -9,6 +9,13 @@ typedef double REAL;
 
 static const size_t PROGRAM_COUNTER_EXIT = ~((size_t)0);
 
+enum PROGRAM_NAME
+{
+    PROGRAM_NAME_OK,
+    PROGRAM_NAME_INVALID_CHAR,
+    PROGRAM_NAME_KEYWORD,
+};
+
 enum DataType
 {
     Integer,
@@ -36,6 +43,15 @@ public:
     void set(const REAL value);
 };
 
+class Subroutine
+{
+public:
+    string Name;
+    size_t Counter;
+
+    void define(const string& name, const size_t counter);
+};
+
 class Program
 {
 public:
@@ -45,6 +61,7 @@ public:
 private:
     vector<vector<string>> m_program; // lines of code
     vector<Variable> m_variables; // vector of all currently declared variables
+    vector<Subroutine> m_subroutines; // vector of all subroutines found in the code
 
     size_t m_counter; // program counter
     size_t m_scope; // current scope depth
@@ -62,7 +79,11 @@ private:
     INTEGER* varGetIntegerPtr(const string& varName); // returns an integer value pointer
     LOGICAL* varGetLogicalPtr(const string& varName); // returns a logical value pointer
     REAL* varGetRealPtr(const string& varName); // returns a real value pointer
-    bool nameValid(const string& name); // check if the variable name is valid (contains only valid characters and isn't a keyword)
+    enum PROGRAM_NAME nameValid(const string& name); // check if the variable name is valid (contains only valid characters and isn't a keyword)
+
+    // progSub
+    bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible
+    size_t subFind(const string& name); // returns counter index of a subroutine, return exit counter value if the subroutine doesn't exist
 
     // progError
     void error(const char* const str); // prints an error message and exits the program
@@ -72,6 +93,9 @@ private:
     void errorTypesIncompatible(void); // "variables don't have matching data types" error
     void errorOperatorInvalid(const string& strOperator); // "symbol is not a valid operator" error
     void errorDivisionByZero(void); // "cannot divide by zero" error
+    void errorScan(const size_t index); // error during pre-execution scan
+    void errorScan(const size_t index, const char* const message); // same as above with an extra error message
+    void errorSubUndefined(const string& strSubName);
 
     // progExpression
     bool symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError = true);

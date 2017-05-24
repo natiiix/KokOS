@@ -56,5 +56,14 @@ void Program::run(const char* const codePtr)
     }
     m_variables.dispose();
 
+    // Dispose all subroutines
+    while (m_subroutines.size())
+    {
+        m_subroutines.back().Name.dispose();
+        m_subroutines.pop_back();
+    }
+    m_subroutines.dispose();
+
+    // Dispose the scope index stack
     m_scopeStack.dispose();
 }

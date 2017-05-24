@@ -394,13 +394,22 @@ void Program::executeCommand(void)
     {
         if (m_scope)
         {
-            // If this end statements belongs to a while loop
-            if (m_program[m_scopeStack.back()][0].compare("while"))
+            // Create a shortcut for the command string from the last scope push event
+            string& strLastPushCmd = m_program[m_scopeStack.back()][0];
+
+            // End statement belongs to a while loop
+            if (strLastPushCmd.compare("while"))
             {
                 // Jump back to the beginning of the loop
                 m_counter = m_scopeStack.back();
                 Program::scopePop();
                 return;
+            }
+            // End statement belongs to a subroutine
+            else if (strLastPushCmd.compare("call"))
+            {
+                // Jump back to the call command
+                m_counter = m_scopeStack.back();
             }
 
             Program::scopePop();
@@ -588,6 +597,39 @@ void Program::executeCommand(void)
         }
 
         strInput.dispose();
+    }
+    // Subroutine code
+    else if (cmd[0].compare("sub") && cmd.size() == 2)
+    {
+        size_t endIdx = Program::findEnd();
+        
+        // End of the subroutine found
+        if (endIdx)
+        {
+            // Jump past the end of the subroutine
+            m_counter = endIdx + 1;
+        }
+
+        return;
+    }
+    // Subroutine call
+    else if (cmd[0].compare("call") && cmd.size() == 2)
+    {
+        // Find the subroutine by name
+        size_t subCounter = Program::subFind(cmd[1]);
+
+        // Undefined subroutine
+        if (subCounter == PROGRAM_COUNTER_EXIT)
+        {
+            Program::errorSubUndefined(cmd[1]);
+            return;
+        }
+
+        // Push the scope at current line
+        Program::scopePush();
+        // Jump into the subroutine
+        m_counter = subCounter + 1;
+        return;
     }
     // Increments an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("++"))
