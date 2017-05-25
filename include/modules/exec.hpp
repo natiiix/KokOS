@@ -52,6 +52,21 @@ public:
     void define(const string& name, const size_t counter);
 };
 
+class Array
+{
+public:
+    string Name;
+    DataType Type;
+    size_t Scope;
+    size_t Length;
+    void* Pointer;
+
+    void declare(const string& name, const DataType type, const size_t scope, const size_t length);
+    void dispose(void);
+
+    void* getElementPtr(const size_t index); // returns pointer to element with specified index
+};
+
 class Program
 {
 public:
@@ -62,6 +77,7 @@ private:
     vector<vector<string>> m_program; // lines of code
     vector<Variable> m_variables; // vector of all currently declared variables
     vector<Subroutine> m_subroutines; // vector of all subroutines found in the code
+    vector<Array> m_arrays; // vector of all currently declared arrays
 
     size_t m_counter; // program counter
     size_t m_scope; // current scope depth
@@ -120,4 +136,7 @@ private:
 
     void elseLoop(void);
     bool breakScope(const size_t levelsToBreak, const bool breakLast);
+    
+    // progArray
+    bool arrayDeclare(const string& name, const DataType type, const size_t length);
 };

@@ -18,6 +18,8 @@ public:
     void dispose(void);
 	// Returns a copy of this string
 	string copy(void);
+	// Sets the content of the string to a content of a string object
+	void set(const string& str);
 	// Sets the content of the string to a content of a cstring
 	void set(const char* const str);
 

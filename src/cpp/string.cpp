@@ -43,6 +43,12 @@ string string::copy(void)
     return strout;
 }
 
+void string::set(const string& str)
+{
+    string::clear();
+    string::push_back(str);
+}
+//
 void string::set(const char* const str)
 {
     string::clear();

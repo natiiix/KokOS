@@ -5,9 +5,7 @@
 
 void Variable::declare(const string& name, const DataType type, const size_t scope)
 {
-    Name.clear();
-    Name.push_back(name);
-
+    Name.set(name);
     Type = type;
     Scope = scope;
 
@@ -25,11 +23,11 @@ void Variable::declare(const string& name, const DataType type, const size_t sco
 
         case DataType::Real:
             Pointer = malloc(sizeof(REAL));
-            (*(REAL*)Pointer) = false;
+            (*(REAL*)Pointer) = 0.0;
             break;
 
         default:
-            debug_print("exec_Variable.cpp | Variable::declare() | Invalid variable data type!");
+            debug_print("Variable.cpp | Variable::declare() | Invalid variable data type!");
             Pointer = nullptr;
             break;
     }
@@ -38,7 +36,11 @@ void Variable::declare(const string& name, const DataType type, const size_t sco
 void Variable::dispose(void)
 {
     Name.dispose();
-    free(Pointer);
+    
+    if (Pointer)
+    {
+        free(Pointer);
+    }
 }
 
 INTEGER Variable::getInteger(void) const
@@ -49,7 +51,7 @@ INTEGER Variable::getInteger(void) const
     }
     else
     {
-        debug_print("exec_Variable.cpp | Variable::getInteger() | Variable was not declared as integer!");
+        debug_print("Variable.cpp | Variable::getInteger() | Variable was not declared as integer!");
         return 0;
     }
 }
@@ -62,7 +64,7 @@ LOGICAL Variable::getLogical(void) const
     }
     else
     {
-        debug_print("exec_Variable.cpp | Variable::getLogical() | Variable was not declared as logical!");
+        debug_print("Variable.cpp | Variable::getLogical() | Variable was not declared as logical!");
         return false;
     }
 }
@@ -75,8 +77,8 @@ REAL Variable::getReal(void) const
     }
     else
     {
-        debug_print("exec_Variable.cpp | Variable::getReal() | Variable was not declared as real!");
-        return false;
+        debug_print("Variable.cpp | Variable::getReal() | Variable was not declared as real!");
+        return 0.0;
     }
 }
 
@@ -88,7 +90,7 @@ void Variable::set(const INTEGER value)
     }
     else
     {
-        debug_print("exec_Variable.cpp | Variable::set() | Variable was not declared as integer!");
+        debug_print("Variable.cpp | Variable::set() | Variable was not declared as integer!");
     }
 }
 
@@ -100,7 +102,7 @@ void Variable::set(const LOGICAL value)
     }
     else
     {
-        debug_print("exec_Variable.cpp | Variable::set() | Variable was not declared as logical!");
+        debug_print("Variable.cpp | Variable::set() | Variable was not declared as logical!");
     }
 }
 
@@ -112,6 +114,6 @@ void Variable::set(const REAL value)
     }
     else
     {
-        debug_print("exec_Variable.cpp | Variable::set() | Variable was not declared as real!");
+        debug_print("Variable.cpp | Variable::set() | Variable was not declared as real!");
     }
 }
