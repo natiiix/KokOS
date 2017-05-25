@@ -95,7 +95,7 @@ private:
     INTEGER* varGetIntegerPtr(const string& varName); // returns an integer value pointer
     LOGICAL* varGetLogicalPtr(const string& varName); // returns a logical value pointer
     REAL* varGetRealPtr(const string& varName); // returns a real value pointer
-    enum PROGRAM_NAME nameValid(const string& name); // check if the variable name is valid (contains only valid characters and isn't a keyword)
+    enum PROGRAM_NAME nameValid(const string& name); // check if a name is valid (contains only valid characters and isn't a keyword)
 
     // progSub
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible

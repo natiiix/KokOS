@@ -94,6 +94,8 @@ public:
 	bool parseBool(bool* const output) const;
 	// Parses a double precision decimal value from the string
 	bool parseDouble(double* const output) const;
+	// Counts the number of characters' appearances in the string
+	size_t count(const char c) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
