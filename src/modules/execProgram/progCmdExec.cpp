@@ -704,7 +704,7 @@ void Program::executeCommand(void)
         // Square root can only be performend on real data type
         if (varTarget->Type != DataType::Real)
         {
-            Program::errorTypesIncompatible();
+            Program::errorTypeUnexpected();
             return;
         }
 

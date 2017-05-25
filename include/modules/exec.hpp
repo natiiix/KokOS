@@ -106,7 +106,7 @@ private:
     void error(const string& str); // overload of error() to make it easier to use string objects
     void errorVarUndeclared(const string& name); // "variable hasn't been declared" error
     void errorSymbolUnresolved(const string& name); // "unable to resolve symbol" error
-    void errorTypesIncompatible(void); // "variables don't have matching data types" error
+    void errorTypeUnexpected(void); // "variables don't have matching data types" error
     void errorOperatorInvalid(const string& strOperator); // "symbol is not a valid operator" error
     void errorDivisionByZero(void); // "cannot divide by zero" error
     void errorScan(const size_t index); // error during pre-execution scan
@@ -126,6 +126,9 @@ private:
     bool convertToInteger(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToLogical(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToReal(const string& strSourceSymbol, Variable* const outputVariable);
+
+    bool symbolToArrayInfo(const string& strSymbol, string& outName, size_t* const outAccessor);
+    //void* symbolToValue(const string& strSymbol, DataType* const outType);
 
     // progScope
     void scopePush(void); // pushes current program counter onto the scope stack and incremenets the scope level

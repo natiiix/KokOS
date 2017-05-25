@@ -24,7 +24,7 @@ bool Program::symbolToInteger(const string& strSymbol, INTEGER* const output, co
         {
             if (throwError)
             {
-                Program::errorTypesIncompatible();
+                Program::errorTypeUnexpected();
             }
 
             return false;
@@ -68,7 +68,7 @@ bool Program::symbolToLogical(const string& strSymbol, LOGICAL* const output, co
         {
             if (throwError)
             {
-                Program::errorTypesIncompatible();
+                Program::errorTypeUnexpected();
             }
 
             return false;
@@ -112,7 +112,7 @@ bool Program::symbolToReal(const string& strSymbol, REAL* const output, const bo
         {
             if (throwError)
             {
-                Program::errorTypesIncompatible();
+                Program::errorTypeUnexpected();
             }
 
             return false;
@@ -376,7 +376,7 @@ bool Program::evaluateLogical(const string& strSymbol1, const string& strOperato
     // Data types of source symbols do not match
     else
     {
-        Program::errorTypesIncompatible();
+        Program::errorTypeUnexpected();
     }
 
     return false;
@@ -543,3 +543,48 @@ bool Program::convertToReal(const string& strSourceSymbol, Variable* const outpu
         return false;
     }
 }
+
+bool Program::symbolToArrayInfo(const string& strSymbol, string& outName, size_t* const outAccessor)
+{
+    // Array syntax: <Name>@<Accessor>
+    if (strSymbol.count('@') != 2)
+    {
+        return false;
+    }
+
+    // Split the symbol parts
+    vector<string> vectParts = strSymbol.split('@', false);
+    
+    INTEGER iAccessor = 0;
+    
+    // Process the second part of the symbol into an accessor value
+    if (!Program::symbolToInteger(vectParts.at(1), &iAccessor, true))
+    {
+        // Unable to process the accessor part
+        vectParts.dispose();
+        return false;
+    }
+
+    // The accessor can never be negative
+    if (iAccessor < 0)
+    {
+        Program::error("Unexpected negative array accessor!");
+        vectParts.dispose();
+        return false;
+    }
+
+    // The first part of the symbol string (before the @ character) is the name of the array
+    // Copy the array name to the output name string
+    outName.set(vectParts.at(0));
+    // Convert the accessor value to size_t and copy it to the output variable
+    (*outAccessor) = (size_t)iAccessor;
+
+    vectParts.dispose();
+    return true;
+}
+
+// TODO - Universal function that processes a symbol and returns a pointer to the value and its data type
+/*void* Program::symbolToValue(const string& strSymbol, DataType* const outType)
+{
+    
+}*/
