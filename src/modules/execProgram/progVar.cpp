@@ -250,7 +250,7 @@ REAL Program::toReal(const void* const value, const DataType type)
     }
 }
 
-void Program::selfToInteger(void* value, DataType* const type)
+void Program::selfToInteger(void** const valueptr, DataType* const type)
 {
     // Performs data type conversion and updates information
     // Swaps the pointer to the wrong data type value with the new one
@@ -258,17 +258,17 @@ void Program::selfToInteger(void* value, DataType* const type)
     if (*type != DataType::Integer)
     {
         // Convert the value to integer
-        void* valueTemp = memstore(Program::toInteger(value, *type));
+        void* valueTemp = memstore(Program::toInteger(*valueptr, *type));
         // Updates the data type information
         (*type) = DataType::Integer;
         // Frees the memory spaced used by the old value
-        free(value);
+        free(*valueptr);
         // Updates the value pointer to the converted value
-        value = valueTemp;
+        (*valueptr) = valueTemp;
     }
 }
 
-void Program::selfToLogical(void* value, DataType* const type)
+void Program::selfToLogical(void** const valueptr, DataType* const type)
 {
     // Performs data type conversion and updates information
     // Swaps the pointer to the wrong data type value with the new one
@@ -276,17 +276,17 @@ void Program::selfToLogical(void* value, DataType* const type)
     if (*type != DataType::Logical)
     {
         // Convert the value to logical
-        void* valueTemp = memstore(Program::toLogical(value, *type));
+        void* valueTemp = memstore(Program::toLogical(*valueptr, *type));
         // Updates the data type information
         (*type) = DataType::Logical;
         // Frees the memory spaced used by the old value
-        free(value);
+        free(*valueptr);
         // Updates the value pointer to the converted value
-        value = valueTemp;
+        (*valueptr) = valueTemp;
     }
 }
 
-void Program::selfToReal(void* value, DataType* const type)
+void Program::selfToReal(void** const valueptr, DataType* const type)
 {
     // Performs data type conversion and updates information
     // Swaps the pointer to the wrong data type value with the new one
@@ -294,20 +294,20 @@ void Program::selfToReal(void* value, DataType* const type)
     if (*type != DataType::Real)
     {
         // Convert the value to real
-        void* valueTemp = memstore(Program::toReal(value, *type));
+        void* valueTemp = memstore(Program::toReal(*valueptr, *type));
         // Updates the data type information
         (*type) = DataType::Real;
         // Frees the memory spaced used by the old value
-        free(value);
+        free(*valueptr);
         // Updates the value pointer to the converted value
-        value = valueTemp;
+        (*valueptr) = valueTemp;
     }
 }
 
-void Program::toCommonType(void* value1, DataType* const type1, void* value2, DataType* const type2)
+void Program::toCommonType(void** const value1ptr, DataType* const type1, void** const value2ptr, DataType* const type2)
 {
     // Both input values have the same data type, there's no need for a conversion
-    if (type1 == type2)
+    if (*type1 == *type2)
     {
         return;
     }
@@ -318,21 +318,21 @@ void Program::toCommonType(void* value1, DataType* const type1, void* value2, Da
     // real and integer/logical
     if (*type1 == DataType::Real)
     {
-        Program::selfToReal(value2, type2);
+        Program::selfToReal(value2ptr, type2);
     }
     // integer/logical and real
     else if (*type2 == DataType::Real)
     {
-        Program::selfToReal(value1, type1);
+        Program::selfToReal(value1ptr, type1);
     }
     // integer and logical
     else if (*type1 == DataType::Integer)
     {
-        Program::selfToInteger(value2, type2);
+        Program::selfToInteger(value2ptr, type2);
     }
     // logical and integer
     else if (*type2 == DataType::Integer)
     {
-        Program::selfToInteger(value1, type1);
+        Program::selfToInteger(value1ptr, type1);
     }
 }

@@ -764,7 +764,7 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
         if (type1 != type2)
         {
             // Perform a type conversion to ensure both value have the same data type
-            Program::toCommonType(source1, &type1, source2, &type2);
+            Program::toCommonType(&source1, &type1, &source2, &type2);
         }
 
         // Shortcut for the operator element in the symbol vector

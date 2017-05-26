@@ -100,10 +100,10 @@ private:
     INTEGER toInteger(const void* const value, const DataType type); // converts a value to integer
     LOGICAL toLogical(const void* const value, const DataType type); // converts a value to logical
     REAL toReal(const void* const value, const DataType type); // converts a value to real value
-    void selfToInteger(void* value, DataType* const type); // converts itself to integer
-    void selfToLogical(void* value, DataType* const type); // converts itself to logical
-    void selfToReal(void* value, DataType* const type); // convert itself to real value
-    void toCommonType(void* value1, DataType* const type1, void* value2, DataType* const type2); // converts two variables to have the same data type
+    void selfToInteger(void** const valueptr, DataType* const type); // converts itself to integer
+    void selfToLogical(void** const valueptr, DataType* const type); // converts itself to logical
+    void selfToReal(void** const valueptr, DataType* const type); // convert itself to real value
+    void toCommonType(void** const value1ptr, DataType* const type1, void** const value2ptr, DataType* const type2); // converts two variables to have the same data type
 
     // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible
