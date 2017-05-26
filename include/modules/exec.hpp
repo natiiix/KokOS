@@ -126,9 +126,9 @@ private:
     bool symbolToLogical(const string& strSymbol, LOGICAL* const output, const bool throwError = true);
     bool symbolToReal(const string& strSymbol, REAL* const output, const bool throwError = true);
 
-    bool evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output);
+    /*bool evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output);
     bool evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output);
-    bool evaluateReal(const string& strSymbol1, const string& strOperator, const string& strSymbol2, REAL* const output);
+    bool evaluateReal(const string& strSymbol1, const string& strOperator, const string& strSymbol2, REAL* const output);*/
 
     bool realSqrt(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToInteger(const string& strSourceSymbol, Variable* const outputVariable);

@@ -134,7 +134,7 @@ bool Program::symbolToReal(const string& strSymbol, REAL* const output, const bo
     }
 }
 
-bool Program::evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output)
+/*bool Program::evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output)
 {
     INTEGER valueSource1 = 0;
     INTEGER valueSource2 = 0;
@@ -452,7 +452,7 @@ bool Program::realSqrt(const string& strSourceSymbol, Variable* const outputVari
     // Set the variable to the result of the square root of the source value
     outputVariable->set(sqrt(sourceValue));
     return true;
-}
+}*/
 
 bool Program::convertToInteger(const string& strSourceSymbol, Variable* const outputVariable)
 {
@@ -680,6 +680,7 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
     }
 
     // Operation on a single symbol
+    // Syntax: <Operation> <Input Symbol>
     if (symbolCount == 2)
     {
         // Create a shortcut for the operator and the input symbol
@@ -697,7 +698,6 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
         }
 
         // Perform square root on the second symbol
-        // Syntax: <Operation> <Input Symbol>
         if (strOperator.compare("sqrt"))
         {
             REAL realSourceValue = 0.0;
@@ -716,10 +716,46 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
 
             free(source);
 
+            // Square root of a negative value is underfined
+            if (realSourceValue < 0.0)
+            {
+                Program::error("Cannot perform square root on negative value!");
+                return nullptr;
+            }
+
             // Result of square root has always a real data type
             (*outType) = DataType::Real;
             // Perform the square root and store the result value in persistent memory and return a pointer to it
             return memstore(sqrt(realSourceValue));
+        }
+        // Determined the absolute value of the input value
+        else if (strOperator.compare("abs"))
+        {
+            switch (type)
+            {
+                case DataType::Integer:
+                {
+                    INTEGER valueInteger = *(INTEGER*)source;
+                    free(source);
+
+                    (*outType) = DataType::Integer;
+                    return memstore(absInt32(valueInteger));
+                }
+
+                case DataType::Real:
+                {
+                    REAL valueReal = *(REAL*)source;
+                    free(source);
+
+                    (*outType) = DataType::Real;
+                    return memstore(absDouble(valueReal));
+                }
+
+                default:
+                    Program::errorTypeUnexpected();
+                    free(source);
+                    return nullptr;
+            }
         }
         // Unable to resolve the operator
         else
@@ -888,7 +924,6 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
                     return nullptr;
                 }
             }
-            break;
 
             // Input values have logical data type
             case DataType::Logical:
@@ -927,7 +962,6 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
                     return nullptr;
                 }
             }
-            break;
 
             // Input values have real data type
             case DataType::Real:
@@ -1008,14 +1042,13 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
                     return nullptr;
                 }
             }
-            break;
 
             default:
-                break;
+                Program::errorTypeUnexpected();
+                free(source1);
+                free(source2);
+                return nullptr;
         }
-
-        free(source1);
-        free(source2);
     }
 
     // Invalid number of symbols
