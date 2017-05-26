@@ -583,8 +583,77 @@ bool Program::symbolToArrayInfo(const string& strSymbol, string& outName, size_t
     return true;
 }
 
-// TODO - Universal function that processes a symbol and returns a pointer to the value and its data type
-/*void* Program::symbolToValue(const string& strSymbol, DataType* const outType)
+void* Program::symbolToValuePtr(const string& strSymbol, DataType* const outType)
 {
-    
-}*/
+    // Test symbol for being related to an array
+    string arrayName;
+    size_t arrayAccessor = 0;
+
+    // If the symbol was successfully processed into array name and accessor
+    if (Program::symbolToArrayInfo(strSymbol, arrayName, &arrayAccessor))
+    {
+        // Try to find an array with specified name
+        Array* array = Program::arrayFind(arrayName);
+        arrayName.dispose();
+        
+        // Array was successfully found
+        if (array)
+        {
+            // Copy the array type to the output variable
+            (*outType) = array->Type;
+            // Return a pointer to the element specified by the accessor
+            return array->getElementPtr(arrayAccessor);
+        }
+        // Array with specified name couldn't be found
+        else
+        {
+            return nullptr;
+        }        
+    }
+
+    arrayName.dispose();
+
+    // Test symbol for being an array name
+    Variable* var = Program::varFind(strSymbol);
+
+    // Variable exists
+    if (var)
+    {
+        // Copy variable data type to output variable
+        (*outType) = var->Type;
+        // Return a pointer to the value of the variable
+        return var->Pointer;
+    }
+
+    // Test symbol for being a literal value
+    INTEGER valueInteger = 0;
+    LOGICAL valueLogical = false;
+    REAL valueReal = 0.0;
+
+    // If the literal value is successfully resolved
+    // set the data type output variable to its data type,
+    // clone the value of the literal into persistent
+    // memory space and return a pointer to it
+
+    // Symbol is an integer literal value
+    if (strSymbol.parseInt32(&valueInteger))
+    {
+        (*outType) = DataType::Integer;
+        return memstore(valueInteger);
+    }
+    // Symbol is a logical literal value
+    else if (strSymbol.parseBool(&valueLogical))
+    {
+        (*outType) = DataType::Logical;
+        return memstore(valueLogical);
+    }
+    // Symbol is a real literal value
+    else if (strSymbol.parseDouble(&valueReal))
+    {
+        (*outType) = DataType::Real;
+        return memstore(valueReal);
+    }
+
+    // Unable to resolve the symbol
+    return nullptr;
+}

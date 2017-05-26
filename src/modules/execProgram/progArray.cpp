@@ -52,3 +52,24 @@ bool Program::arrayDeclare(const string& name, const DataType type, const size_t
         return false;
     }
 }
+
+Array* Program::arrayFind(const string& name)
+{
+    size_t arraysize = m_arrays.size();
+    
+    for (size_t i = 0; i < arraysize; i++)
+    {
+        // Search is performed from back to front (explained in Variable equivalent of this method)
+        size_t arrayIdx = arraysize - 1 - i;
+
+        // Find the array with the specified name
+        if (m_arrays[arrayIdx].Name.compare(name))
+        {
+            // Return pointer to the array
+            return &m_arrays[arrayIdx];
+        }
+    }
+
+    // Return nullptr if there is no array with the specified name
+    return nullptr;
+}

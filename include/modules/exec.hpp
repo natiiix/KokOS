@@ -55,11 +55,11 @@ public:
 class Array
 {
 public:
-    string Name;
-    DataType Type;
-    size_t Scope;
-    size_t Length;
-    void* Pointer;
+    string Name; // name of the array
+    DataType Type; // data type of the array
+    size_t Scope; // scope level depth at which the array was declared
+    size_t Length; // number of elements in the array
+    void* Pointer; // pointer to the first element in the array
 
     void declare(const string& name, const DataType type, const size_t scope, const size_t length);
     void dispose(void);
@@ -70,7 +70,7 @@ public:
 class Program
 {
 public:
-    // progRun
+    // ---- progRun ----
     void run(const char* const codePtr);
 
 private:
@@ -83,13 +83,13 @@ private:
     size_t m_scope; // current scope depth
     vector<size_t> m_scopeStack; // contains indexes at which the program pushed the scope (used by while loop)
 
-    // progCmdExe
+    // ---- progCmdExe ----
     void executeCommand(void); // executes the command at the current line
 
-    // progScan
+    // ---- progScan ----
     bool scanThrough(void); // runs through the code, tries to find invalid commands (true = OK, false = Error)
 
-    // progVar
+    // ---- progVar ----
     bool varDeclare(const string& name, const DataType type); // declares a new variable with a specified name and data type
     Variable* varFind(const string& name); // finds a variable by name and returns a pointer to it, returns nullptr on failure
     INTEGER* varGetIntegerPtr(const string& varName); // returns an integer value pointer
@@ -97,11 +97,11 @@ private:
     REAL* varGetRealPtr(const string& varName); // returns a real value pointer
     enum PROGRAM_NAME nameValid(const string& name); // check if a name is valid (contains only valid characters and isn't a keyword)
 
-    // progSub
+    // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible
     size_t subFind(const string& name); // returns counter index of a subroutine, return exit counter value if the subroutine doesn't exist
 
-    // progError
+    // ---- progError ----
     void error(const char* const str); // prints an error message and exits the program
     void error(const string& str); // overload of error() to make it easier to use string objects
     void errorVarUndeclared(const string& name); // "variable hasn't been declared" error
@@ -113,7 +113,7 @@ private:
     void errorScan(const size_t index, const char* const message); // same as above with an extra error message
     void errorSubUndefined(const string& strSubName);
 
-    // progExpression
+    // ---- progExpression ----
     bool symbolToInteger(const string& strSymbol, INTEGER* const output, const bool throwError = true);
     bool symbolToLogical(const string& strSymbol, LOGICAL* const output, const bool throwError = true);
     bool symbolToReal(const string& strSymbol, REAL* const output, const bool throwError = true);
@@ -127,10 +127,12 @@ private:
     bool convertToLogical(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToReal(const string& strSourceSymbol, Variable* const outputVariable);
 
+    // Extracts array information from a symbol if possible
     bool symbolToArrayInfo(const string& strSymbol, string& outName, size_t* const outAccessor);
-    //void* symbolToValue(const string& strSymbol, DataType* const outType);
+    // Returns a pointer to the value represented by the symbol represents and determines the data type of the value
+    void* symbolToValuePtr(const string& strSymbol, DataType* const outType);
 
-    // progScope
+    // ---- progScope ----
     void scopePush(void); // pushes current program counter onto the scope stack and incremenets the scope level
     void scopePop(void); // decrements the scope level and disposes all variables that were declared in that scope
 
@@ -140,6 +142,7 @@ private:
     void elseLoop(void);
     bool breakScope(const size_t levelsToBreak, const bool breakLast);
     
-    // progArray
-    bool arrayDeclare(const string& name, const DataType type, const size_t length);
+    // ---- progArray ----
+    bool arrayDeclare(const string& name, const DataType type, const size_t length); // declares a new array at current scope
+    Array* arrayFind(const string& name); // finds an array by its name returns pointer to it
 };
