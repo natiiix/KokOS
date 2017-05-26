@@ -26,6 +26,19 @@ void Program::scopePop(void)
         m_variables.pop_back();
     }
 
+    // Same as above except for arrays
+    size_t arraysize = m_arrays.size();
+    for (size_t i = 0; i < arraysize; i++)
+    {
+        if (m_arrays[arraysize - 1 - i].Scope < m_scope)
+        {
+            break;
+        }
+
+        m_arrays.back().dispose();
+        m_arrays.pop_back();
+    }
+
     // Scope pop cannot be performed if the scope is already at 0 level
     if (m_scope)
     {
