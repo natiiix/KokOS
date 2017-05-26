@@ -1047,6 +1047,8 @@ INTEGER* Program::symbolMultiResolveInteger(const vector<string> vectSymbols, co
         valueInteger = Program::toInteger(value, type);
     }
 
+    free(value);
+
     return (INTEGER*)memstore(valueInteger);
 }
 
@@ -1074,6 +1076,8 @@ LOGICAL* Program::symbolMultiResolveLogical(const vector<string> vectSymbols, co
         valueLogical = Program::toLogical(value, type);
     }
 
+    free(value);
+
     return (LOGICAL*)memstore(valueLogical);
 }
 
@@ -1100,6 +1104,8 @@ REAL* Program::symbolMultiResolveReal(const vector<string> vectSymbols, const si
     {
         valueReal = Program::toReal(value, type);
     }
+
+    free(value);
 
     return (REAL*)memstore(valueReal);
 }
