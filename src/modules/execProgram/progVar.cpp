@@ -177,3 +177,21 @@ enum PROGRAM_NAME Program::nameValid(const string& name)
     // Name is OK and it can be safely used
     return PROGRAM_NAME_OK;
 }
+
+void* Program::valueCopy(const DataType type, const void* const source)
+{
+    switch (type)
+    {
+        case DataType::Integer:
+            return memstore(*(INTEGER*)source);
+
+        case DataType::Logical:
+            return memstore(*(LOGICAL*)source);
+
+        case DataType::Real:
+            return memstore(*(REAL*)source);
+
+        default:
+            return nullptr;
+    }
+}

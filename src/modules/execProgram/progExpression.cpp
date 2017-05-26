@@ -583,7 +583,7 @@ bool Program::symbolToArrayInfo(const string& strSymbol, string& outName, size_t
     return true;
 }
 
-void* Program::symbolToValuePtr(const string& strSymbol, DataType* const outType)
+void* Program::symbolToValue(const string& strSymbol, DataType* const outType)
 {
     // Test symbol for being related to an array
     string arrayName;
@@ -602,7 +602,7 @@ void* Program::symbolToValuePtr(const string& strSymbol, DataType* const outType
             // Copy the array type to the output variable
             (*outType) = array->Type;
             // Return a pointer to the element specified by the accessor
-            return array->getElementPtr(arrayAccessor);
+            return Program::valueCopy(array->Type, array->getElementPtr(arrayAccessor));
         }
         // Array with specified name couldn't be found
         else
@@ -622,7 +622,7 @@ void* Program::symbolToValuePtr(const string& strSymbol, DataType* const outType
         // Copy variable data type to output variable
         (*outType) = var->Type;
         // Return a pointer to the value of the variable
-        return var->Pointer;
+        return Program::valueCopy(var->Type, var->Pointer);
     }
 
     // Test symbol for being a literal value
@@ -655,5 +655,39 @@ void* Program::symbolToValuePtr(const string& strSymbol, DataType* const outType
     }
 
     // Unable to resolve the symbol
+    return nullptr;
+}
+
+void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t firstIndex, DataType* const outType)
+{
+    size_t vectsize = vectSymbols.size();
+    
+    // There must be at least one symbol to resolve
+    if (firstIndex >= vectsize)
+    {
+        return nullptr;
+    }
+
+    // Calculate the number of symbols to process
+    size_t symbolCount = vectsize - firstIndex;
+
+    // Single symbol can be resolved very easily
+    if (symbolCount == 1)
+    {
+        // Convert the symbol to value and return the pointer to it and its data type
+        return Program::symbolToValue(vectSymbols.at(firstIndex), outType);
+    }
+
+    if (symbolCount == 2)
+    {
+        // TODO: Operation with single operand
+    }
+
+    if (symbolCount == 3)
+    {
+        // TODO: Operation with two operands
+    }
+
+    // Invalid number of symbols
     return nullptr;
 }

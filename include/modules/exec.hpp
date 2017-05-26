@@ -96,6 +96,7 @@ private:
     LOGICAL* varGetLogicalPtr(const string& varName); // returns a logical value pointer
     REAL* varGetRealPtr(const string& varName); // returns a real value pointer
     enum PROGRAM_NAME nameValid(const string& name); // check if a name is valid (contains only valid characters and isn't a keyword)
+    void* valueCopy(const DataType type, const void* const source); // stores a value of specified data type in persistent memory space
 
     // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible
@@ -130,7 +131,9 @@ private:
     // Extracts array information from a symbol if possible
     bool symbolToArrayInfo(const string& strSymbol, string& outName, size_t* const outAccessor);
     // Returns a pointer to the value represented by the symbol represents and determines the data type of the value
-    void* symbolToValuePtr(const string& strSymbol, DataType* const outType);
+    void* symbolToValue(const string& strSymbol, DataType* const outType);
+    // Resolves one or more symbols and performs an operation depending on the symbols
+    void* symbolMultiResolve(const vector<string> vectSymbols, const size_t firstIndex, DataType* const outType);
 
     // ---- progScope ----
     void scopePush(void); // pushes current program counter onto the scope stack and incremenets the scope level
