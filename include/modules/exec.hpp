@@ -95,11 +95,15 @@ private:
     INTEGER* varGetIntegerPtr(const string& varName); // returns an integer value pointer
     LOGICAL* varGetLogicalPtr(const string& varName); // returns a logical value pointer
     REAL* varGetRealPtr(const string& varName); // returns a real value pointer
-    enum PROGRAM_NAME nameValid(const string& name); // check if a name is valid (contains only valid characters and isn't a keyword)
+    enum PROGRAM_NAME nameValid(const string& name); // checks if a name is valid (contains only valid characters and isn't a keyword)
     void* valueCopy(const DataType type, const void* const source); // stores a value of specified data type in persistent memory space
     INTEGER toInteger(const void* const value, const DataType type); // converts a value to integer
     LOGICAL toLogical(const void* const value, const DataType type); // converts a value to logical
     REAL toReal(const void* const value, const DataType type); // converts a value to real value
+    void selfToInteger(void* value, DataType* const type); // converts itself to integer
+    void selfToLogical(void* value, DataType* const type); // converts itself to logical
+    void selfToReal(void* value, DataType* const type); // convert itself to real value
+    void toCommonType(void* value1, DataType* const type1, void* value2, DataType* const type2); // converts two variables to have the same data type
 
     // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible

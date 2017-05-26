@@ -745,10 +745,9 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
         }
 
         // If the input data have different data types perform a conversion
-        // to the data type with the highest priority (real > integer > logical)
         if (type1 != type2)
         {
-
+            
         }
 
         free(source1);

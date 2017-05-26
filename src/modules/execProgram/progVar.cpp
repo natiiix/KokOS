@@ -249,3 +249,90 @@ REAL Program::toReal(const void* const value, const DataType type)
             return 0;
     }
 }
+
+void Program::selfToInteger(void* value, DataType* const type)
+{
+    // Performs data type conversion and updates information
+    // Swaps the pointer to the wrong data type value with the new one
+
+    if (*type != DataType::Integer)
+    {
+        // Convert the value to integer
+        void* valueTemp = memstore(Program::toInteger(value, *type));
+        // Updates the data type information
+        (*type) = DataType::Integer;
+        // Frees the memory spaced used by the old value
+        free(value);
+        // Updates the value pointer to the converted value
+        value = valueTemp;
+    }
+}
+
+void Program::selfToLogical(void* value, DataType* const type)
+{
+    // Performs data type conversion and updates information
+    // Swaps the pointer to the wrong data type value with the new one
+
+    if (*type != DataType::Logical)
+    {
+        // Convert the value to logical
+        void* valueTemp = memstore(Program::toLogical(value, *type));
+        // Updates the data type information
+        (*type) = DataType::Logical;
+        // Frees the memory spaced used by the old value
+        free(value);
+        // Updates the value pointer to the converted value
+        value = valueTemp;
+    }
+}
+
+void Program::selfToReal(void* value, DataType* const type)
+{
+    // Performs data type conversion and updates information
+    // Swaps the pointer to the wrong data type value with the new one
+
+    if (*type != DataType::Real)
+    {
+        // Convert the value to real
+        void* valueTemp = memstore(Program::toReal(value, *type));
+        // Updates the data type information
+        (*type) = DataType::Real;
+        // Frees the memory spaced used by the old value
+        free(value);
+        // Updates the value pointer to the converted value
+        value = valueTemp;
+    }
+}
+
+void Program::toCommonType(void* value1, DataType* const type1, void* value2, DataType* const type2)
+{
+    // Both input values have the same data type, there's no need for a conversion
+    if (type1 == type2)
+    {
+        return;
+    }
+
+    // Variable with lower data type prioroty is converted to the higher priority data type
+    // real > integer > logical
+
+    // real and integer/logical
+    if (*type1 == DataType::Real)
+    {
+        Program::selfToReal(value2, type2);
+    }
+    // integer/logical and real
+    else if (*type2 == DataType::Real)
+    {
+        Program::selfToReal(value1, type1);
+    }
+    // integer and logical
+    else if (*type1 == DataType::Integer)
+    {
+        Program::selfToInteger(value2, type2);
+    }
+    // logical and integer
+    else if (*type2 == DataType::Integer)
+    {
+        Program::selfToInteger(value1, type1);
+    }
+}
