@@ -104,6 +104,7 @@ private:
     void selfToLogical(void** const valueptr, DataType* const type); // converts itself to logical
     void selfToReal(void** const valueptr, DataType* const type); // convert itself to real value
     void toCommonType(void** const value1ptr, DataType* const type1, void** const value2ptr, DataType* const type2); // converts two variables to have the same data type
+    bool declare(const string& strSymbol, const DataType type); // declares either variable or array depending on the symbol
 
     // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible

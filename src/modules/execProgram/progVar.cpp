@@ -336,3 +336,34 @@ void Program::toCommonType(void** const value1ptr, DataType* const type1, void**
         Program::selfToInteger(value1ptr, type1);
     }
 }
+
+bool Program::declare(const string& strSymbol, const DataType type)
+{
+    string arrayName;
+    size_t arraySize = 0;
+    
+    // Extract array information from the symbol if possible
+    if (Program::symbolToArrayInfo(strSymbol, arrayName, &arraySize))
+    {
+        // Try to declare the specified array
+        if (!Program::arrayDeclare(arrayName, type, arraySize))
+        {
+            // Failed to declare the array
+            arrayName.dispose();
+            return false;
+        }
+    }
+
+    // Array name must be disposed even if the symbol doesn't represent an array
+    arrayName.dispose();
+
+    // Try to declare the specified variable
+    if (!Program::varDeclare(strSymbol, type))
+    {
+        // Failed to declare the variable
+        return false;
+    }
+
+    // Success
+    return true;
+}

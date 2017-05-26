@@ -42,13 +42,10 @@ void Program::executeCommand(void)
         m_counter = PROGRAM_COUNTER_EXIT;
         return;
     }
-    // Integer variable declaration
+    // Integer variable/array declaration
     else if (cmd[0].compare("integer") && cmd.size() == 2)
     {
-        if (!Program::varDeclare(cmd[1], DataType::Integer))
-        {
-            return;
-        }
+        Program::declare(cmd.at(1), DataType::Integer);
     }
     // Integer variable declaration with immediate value definition
     else if (cmd[0].compare("integer") && cmd.size() > 3 && cmd[2].compare("="))
@@ -73,13 +70,10 @@ void Program::executeCommand(void)
         m_variables.back().set(*value);
         delete value;
     }
-    // Logical variable declaration
+    // Logical variable/array declaration
     else if (cmd[0].compare("logical") && cmd.size() == 2)
     {
-        if (!Program::varDeclare(cmd[1], DataType::Logical))
-        {
-            return;
-        }
+        Program::declare(cmd.at(1), DataType::Logical);
     }
     // Logical variable declaration with immediate value definition
     else if (cmd[0].compare("logical") && cmd.size() > 3 && cmd[2].compare("="))
@@ -104,13 +98,10 @@ void Program::executeCommand(void)
         m_variables.back().set(*value);
         delete value;
     }
-    // Real variable declaration
+    // Real variable/array declaration
     else if (cmd[0].compare("real") && cmd.size() == 2)
     {
-        if (!Program::varDeclare(cmd[1], DataType::Real))
-        {
-            return;
-        }
+        Program::declare(cmd.at(1), DataType::Real);
     }
     // Real variable declaration with immediate value definition
     else if (cmd[0].compare("real") && cmd.size() > 3 && cmd[2].compare("="))
