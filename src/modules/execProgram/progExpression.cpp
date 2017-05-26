@@ -845,6 +845,42 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
                 {
                     return memstore(i1 ^ i2);
                 }
+
+                // The operation is not an integer operation
+                // Test the operation string against comparison operators
+                // When comparing the output data type is always logical
+                (*outType) = DataType::Logical;
+
+                // Equality
+                if (strOperator.compare("=="))
+                {
+                    return memstore(i1 == i2);
+                }
+                // Inequality
+                else if (strOperator.compare("!="))
+                {
+                    return memstore(i1 != i2);
+                }
+                // Greater than
+                else if (strOperator.compare(">"))
+                {
+                    return memstore(i1 > i2);
+                }
+                // Less than
+                else if (strOperator.compare("<"))
+                {
+                    return memstore(i1 < i2);
+                }
+                // Greater than or equal to
+                else if (strOperator.compare(">="))
+                {
+                    return memstore(i1 >= i2);
+                }
+                // Less than or equal to
+                else if (strOperator.compare("<="))
+                {
+                    return memstore(i1 <= i2);
+                }
                 else
                 {
                     Program::errorOperatorInvalid(strOperator);
@@ -928,6 +964,42 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
                     }
 
                     return memstore(r1 / r2);
+                }
+
+                // The operation is not a real value operation
+                // Test the operation string against comparison operators
+                // When comparing the output data type is always logical
+                (*outType) = DataType::Logical;
+
+                // Equality
+                if (strOperator.compare("=="))
+                {
+                    return memstore(r1 == r2);
+                }
+                // Inequality
+                else if (strOperator.compare("!="))
+                {
+                    return memstore(r1 != r2);
+                }
+                // Greater than
+                else if (strOperator.compare(">"))
+                {
+                    return memstore(r1 > r2);
+                }
+                // Less than
+                else if (strOperator.compare("<"))
+                {
+                    return memstore(r1 < r2);
+                }
+                // Greater than or equal to
+                else if (strOperator.compare(">="))
+                {
+                    return memstore(r1 >= r2);
+                }
+                // Less than or equal to
+                else if (strOperator.compare("<="))
+                {
+                    return memstore(r1 <= r2);
                 }
                 else
                 {
