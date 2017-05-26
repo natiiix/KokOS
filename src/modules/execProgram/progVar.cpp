@@ -157,7 +157,7 @@ enum PROGRAM_NAME Program::nameValid(const string& name)
         name.compare("true") ||
         name.compare("false") ||
         name.compare("sqrt") ||
-        name.compare("convert") ||
+        name.compare("abs") ||
         name.compare("push") ||
         name.compare("pop") ||
         name.compare("print") ||
@@ -352,18 +352,73 @@ bool Program::declare(const string& strSymbol, const DataType type)
             arrayName.dispose();
             return false;
         }
+
+        arrayName.dispose();
     }
-
-    // Array name must be disposed even if the symbol doesn't represent an array
-    arrayName.dispose();
-
-    // Try to declare the specified variable
-    if (!Program::varDeclare(strSymbol, type))
+    else
     {
-        // Failed to declare the variable
-        return false;
+        arrayName.dispose();
+
+        // Try to declare the specified variable
+        if (!Program::varDeclare(strSymbol, type))
+        {
+            // Failed to declare the variable
+            return false;
+        }
     }
 
     // Success
     return true;
+}
+
+void* Program::findStorage(const string& strSymbol, DataType* const type)
+{
+    string arrayName;
+    size_t arrayIdx = 0;
+    
+    // Extract array information from the symbol if possible
+    if (Program::symbolToArrayInfo(strSymbol, arrayName, &arrayIdx))
+    {
+        // Try to find an array with the specified name
+        Array* arrayPtr = Program::arrayFind(arrayName);
+        arrayName.dispose();
+
+        // Array found
+        if (arrayPtr)
+        {
+            // Copy the data type
+            (*type) = arrayPtr->Type;
+            // Return pointer to the specified element
+            void* elementPtr = arrayPtr->getElementPtr(arrayIdx);
+
+            if (elementPtr)
+            {
+                return elementPtr;
+            }
+            else
+            {
+                Program::error("Index is out of array boundaries!");
+                return nullptr;
+            }
+        }
+    }
+    // Unable to extract array information from the symbol
+    else
+    {
+        arrayName.dispose();
+        // Try to find a variable with the specified name
+        Variable* varPtr = Program::varFind(strSymbol);
+
+        if (varPtr)
+        {
+            // Copy the data type
+            (*type) = varPtr->Type;
+            // Return pointer to the value of the variable
+            return varPtr->Pointer;
+        }
+    }
+
+    // Unable to find a storage with the specified symbol
+    Program::errorVarUndeclared(strSymbol);
+    return nullptr;
 }

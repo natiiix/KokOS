@@ -105,6 +105,7 @@ private:
     void selfToReal(void** const valueptr, DataType* const type); // convert itself to real value
     void toCommonType(void** const value1ptr, DataType* const type1, void** const value2ptr, DataType* const type2); // converts two variables to have the same data type
     bool declare(const string& strSymbol, const DataType type); // declares either variable or array depending on the symbol
+    void* findStorage(const string& strSymbol, DataType* const type);
 
     // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible
@@ -127,11 +128,6 @@ private:
     bool symbolToLogical(const string& strSymbol, LOGICAL* const output, const bool throwError = true);
     bool symbolToReal(const string& strSymbol, REAL* const output, const bool throwError = true);
 
-    /*bool evaluateInteger(const string& strSymbol1, const string& strOperator, const string& strSymbol2, INTEGER* const output);
-    bool evaluateLogical(const string& strSymbol1, const string& strOperator, const string& strSymbol2, LOGICAL* const output);
-    bool evaluateReal(const string& strSymbol1, const string& strOperator, const string& strSymbol2, REAL* const output);*/
-
-    bool realSqrt(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToInteger(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToLogical(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToReal(const string& strSourceSymbol, Variable* const outputVariable);    
