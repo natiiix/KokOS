@@ -853,6 +853,90 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
             }
             break;
 
+            // Input values have logical data type
+            case DataType::Logical:
+            {
+                LOGICAL l1 = *(LOGICAL*)source1;
+                LOGICAL l2 = *(LOGICAL*)source2;
+                free(source1);
+                free(source2);
+
+                // Data type of the result is going to be logical
+                (*outType) = DataType::Logical;
+
+                // Boolean NXOR (equality check)
+                if (strOperator.compare("=="))
+                {
+                    return memstore(l1 == l2);
+                }
+                // Boolean XOR (inequality check)
+                else if (strOperator.compare("!="))
+                {
+                    return memstore(l1 != l2);
+                }
+                // Boolean AND
+                else if (strOperator.compare("&&"))
+                {
+                    return memstore(l1 && l2);
+                }
+                // Boolen OR
+                else if (strOperator.compare("||"))
+                {
+                    return memstore(l1 || l2);
+                }
+                else
+                {
+                    Program::errorOperatorInvalid(strOperator);
+                    return nullptr;
+                }
+            }
+            break;
+
+            // Input values have real data type
+            case DataType::Real:
+            {
+                REAL r1 = *(REAL*)source1;
+                REAL r2 = *(REAL*)source2;
+                free(source1);
+                free(source2);
+
+                // Data type of the result is going to be real
+                (*outType) = DataType::Real;
+
+                // Addition
+                if (strOperator.compare("+"))
+                {
+                    return memstore(r1 + r2);
+                }
+                // Subtraction
+                else if (strOperator.compare("-"))
+                {
+                    return memstore(r1 - r2);
+                }
+                // Multiplication
+                else if (strOperator.compare("*"))
+                {
+                    return memstore(r1 * r2);
+                }
+                // Division
+                else if (strOperator.compare("/"))
+                {
+                    if (r2 == 0.0)
+                    {
+                        Program::errorDivisionByZero();
+                        return nullptr;
+                    }
+
+                    return memstore(r1 / r2);
+                }
+                else
+                {
+                    Program::errorOperatorInvalid(strOperator);
+                    return nullptr;
+                }
+            }
+            break;
+
             default:
                 break;
         }
