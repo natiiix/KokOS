@@ -51,66 +51,33 @@ void Program::executeCommand(void)
         }
     }
     // Integer variable declaration with immediate value definition
-    else if (cmd[0].compare("integer") && cmd.size() == 4 && cmd[2].compare("="))
+    else if (cmd[0].compare("integer") && cmd.size() > 3 && cmd[2].compare("="))
     {
-        INTEGER value = 0;
-        if (!Program::symbolToInteger(cmd[3], &value))
-        {
-            return;
-        }
-
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Integer))
         {
             return;
+        }
+
+        DataType type;
+        void* value = Program::symbolMultiResolve(cmd, 3, &type);
+
+        // Symbol resolving failed
+        if (!value)
+        {
+            m_variables.pop_back();
+            return;
+        }
+
+        // If the input data type isn't integer, perform conversion
+        if (type != DataType::Integer)
+        {
+            Program::selfToInteger(value, &type);
         }
 
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
-    }
-    // Integer variable declaration with value definition by performing a type conversion
-    else if (cmd[0].compare("integer") && cmd.size() == 5 && cmd[2].compare("="))
-    {
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Integer))
-        {
-            return;
-        }
-
-        // Data type conversion
-        if (cmd[3].compare("convert"))
-        {
-            // Assign the converted value to the recently reclared variable
-            if (!Program::convertToInteger(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform the type conversion
-                return;
-            }
-        }
-        // Unable to recognize the operation
-        else
-        {
-            Program::errorOperatorInvalid(cmd.at(2));
-            return;
-        }
-    }
-    // Integer variable declaration with statement evaluation
-    else if (cmd[0].compare("integer") && cmd.size() == 6 && cmd[2].compare("="))
-    {
-        INTEGER value = false;
-        if (!Program::evaluateInteger(cmd[3], cmd[4], cmd[5], &value))
-        {
-            return;
-        }
-
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Integer))
-        {
-            return;
-        }
-
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
+        free(value);
     }
     // Logical variable declaration
     else if (cmd[0].compare("logical") && cmd.size() == 2)
@@ -121,25 +88,7 @@ void Program::executeCommand(void)
         }
     }
     // Logical variable declaration with immediate value definition
-    else if (cmd[0].compare("logical") && cmd.size() == 4 && cmd[2].compare("="))
-    {
-        LOGICAL value = false;
-        if (!Program::symbolToLogical(cmd[3], &value))
-        {
-            return;
-        }
-
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Logical))
-        {
-            return;
-        }
-
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
-    }
-    // Logical variable declaration with value definition by performing a type conversion
-    else if (cmd[0].compare("logical") && cmd.size() == 5 && cmd[2].compare("="))
+    else if (cmd[0].compare("logical") && cmd.size() > 3 && cmd[2].compare("="))
     {
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Logical))
@@ -147,36 +96,20 @@ void Program::executeCommand(void)
             return;
         }
 
-        // Data type conversion
-        if (cmd[3].compare("convert"))
+        DataType type;
+        void* value = Program::symbolMultiResolve(cmd, 3, &type);
+
+        // Symbol resolving failed
+        if (!value)
         {
-            // Assign the converted value to the recently reclared variable
-            if (!Program::convertToLogical(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform the type conversion
-                return;
-            }
-        }
-        // Unable to recognize the operation
-        else
-        {
-            Program::errorOperatorInvalid(cmd.at(2));
-            return;
-        }
-    }
-    // Logical variable declaration with statement evaluation
-    else if (cmd[0].compare("logical") && cmd.size() == 6 && cmd[2].compare("="))
-    {
-        LOGICAL value = false;
-        if (!Program::evaluateLogical(cmd[3], cmd[4], cmd[5], &value))
-        {
+            m_variables.pop_back();
             return;
         }
 
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Logical))
+        // If the input data type isn't logical, perform conversion
+        if (type != DataType::Logical)
         {
-            return;
+            Program::selfToLogical(value, &type);
         }
 
         // Assign the specified value to the recently reclared variable
@@ -191,76 +124,33 @@ void Program::executeCommand(void)
         }
     }
     // Real variable declaration with immediate value definition
-    else if (cmd[0].compare("real") && cmd.size() == 4 && cmd[2].compare("="))
+    else if (cmd[0].compare("real") && cmd.size() > 3 && cmd[2].compare("="))
     {
-        REAL value = 0;
-        if (!Program::symbolToReal(cmd[3], &value))
-        {
-            return;
-        }
-
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Real))
         {
             return;
+        }
+
+        DataType type;
+        void* value = Program::symbolMultiResolve(cmd, 3, &type);
+
+        // Symbol resolving failed
+        if (!value)
+        {
+            m_variables.pop_back();
+            return;
+        }
+
+        // If the input data type isn't real, perform conversion
+        if (type != DataType::Real)
+        {
+            Program::selfToReal(value, &type);
         }
 
         // Assign the specified value to the recently reclared variable
         m_variables.back().set(value);
-    }
-    // Real variable declaration with value definition by performing an operation
-    else if (cmd[0].compare("real") && cmd.size() == 5 && cmd[2].compare("="))
-    {
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Real))
-        {
-            return;
-        }
-
-        // Square root
-        if (cmd[3].compare("sqrt"))
-        {
-            // Assign the square root value to the recently reclared variable
-            if (!Program::realSqrt(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform sqaure root
-                return;
-            }
-        }
-        // Data type conversion
-        else if (cmd[3].compare("convert"))
-        {
-            // Assign the converted value to the recently reclared variable
-            if (!Program::convertToReal(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform the type conversion
-                return;
-            }
-        }
-        // Unable to recognize the operation
-        else
-        {
-            Program::errorOperatorInvalid(cmd.at(2));
-            return;
-        }
-    }
-    // Real variable declaration with statement evaluation
-    else if (cmd[0].compare("real") && cmd.size() == 6 && cmd[2].compare("="))
-    {
-        REAL value = false;
-        if (!Program::evaluateReal(cmd[3], cmd[4], cmd[5], &value))
-        {
-            return;
-        }
-
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Real))
-        {
-            return;
-        }
-
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
+        free(value);
     }
     // Scope push
     else if (cmd[0].compare("push") && cmd.size() == 1)

@@ -665,6 +665,7 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
     // There must be at least one symbol to resolve
     if (firstIndex >= vectsize)
     {
+        Program::error("Expected at least one input symbol!");
         return nullptr;
     }
 
