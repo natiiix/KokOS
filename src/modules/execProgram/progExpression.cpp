@@ -1022,3 +1022,84 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
     Program::error("Unexpected number of input symbols!");
     return nullptr;
 }
+
+INTEGER* Program::symbolMultiResolveInteger(const vector<string> vectSymbols, const size_t firstIndex)
+{
+    DataType type;
+    void* value = Program::symbolMultiResolve(vectSymbols, firstIndex, &type);
+    
+    // Failed to resolve the symbols
+    if (!value)
+    {
+        return nullptr;
+    }
+
+    INTEGER valueInteger = 0;
+
+    // Extract the value in correct data type from the pointer
+    if (type == DataType::Integer)
+    {
+        valueInteger = *(INTEGER*)value;
+    }
+    // Conversion is required
+    else
+    {
+        valueInteger = Program::toInteger(value, type);
+    }
+
+    return (INTEGER*)memstore(valueInteger);
+}
+
+LOGICAL* Program::symbolMultiResolveLogical(const vector<string> vectSymbols, const size_t firstIndex)
+{
+    DataType type;
+    void* value = Program::symbolMultiResolve(vectSymbols, firstIndex, &type);
+    
+    // Failed to resolve the symbols
+    if (!value)
+    {
+        return nullptr;
+    }
+
+    LOGICAL valueLogical = false;
+
+    // Extract the value in correct data type from the pointer
+    if (type == DataType::Logical)
+    {
+        valueLogical = *(LOGICAL*)value;
+    }
+    // Conversion is required
+    else
+    {
+        valueLogical = Program::toLogical(value, type);
+    }
+
+    return (LOGICAL*)memstore(valueLogical);
+}
+
+REAL* Program::symbolMultiResolveReal(const vector<string> vectSymbols, const size_t firstIndex)
+{
+    DataType type;
+    void* value = Program::symbolMultiResolve(vectSymbols, firstIndex, &type);
+    
+    // Failed to resolve the symbols
+    if (!value)
+    {
+        return nullptr;
+    }
+
+    REAL valueReal = 0.0;
+
+    // Extract the value in correct data type from the pointer
+    if (type == DataType::Real)
+    {
+        valueReal = *(REAL*)value;
+    }
+    // Conversion is required
+    else
+    {
+        valueReal = Program::toReal(value, type);
+    }
+
+    return (REAL*)memstore(valueReal);
+}

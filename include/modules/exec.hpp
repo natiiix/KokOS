@@ -133,7 +133,7 @@ private:
     bool realSqrt(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToInteger(const string& strSourceSymbol, Variable* const outputVariable);
     bool convertToLogical(const string& strSourceSymbol, Variable* const outputVariable);
-    bool convertToReal(const string& strSourceSymbol, Variable* const outputVariable);
+    bool convertToReal(const string& strSourceSymbol, Variable* const outputVariable);    
 
     // Extracts array information from a symbol if possible
     bool symbolToArrayInfo(const string& strSymbol, string& outName, size_t* const outAccessor);
@@ -141,6 +141,10 @@ private:
     void* symbolToValue(const string& strSymbol, DataType* const outType);
     // Resolves one or more symbols and performs an operation depending on the symbols
     void* symbolMultiResolve(const vector<string> vectSymbols, const size_t firstIndex, DataType* const outType);
+
+    INTEGER* symbolMultiResolveInteger(const vector<string> vectSymbols, const size_t firstIndex);
+    LOGICAL* symbolMultiResolveLogical(const vector<string> vectSymbols, const size_t firstIndex);
+    REAL* symbolMultiResolveReal(const vector<string> vectSymbols, const size_t firstIndex);
 
     // ---- progScope ----
     void scopePush(void); // pushes current program counter onto the scope stack and incremenets the scope level
