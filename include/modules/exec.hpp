@@ -97,6 +97,9 @@ private:
     REAL* varGetRealPtr(const string& varName); // returns a real value pointer
     enum PROGRAM_NAME nameValid(const string& name); // check if a name is valid (contains only valid characters and isn't a keyword)
     void* valueCopy(const DataType type, const void* const source); // stores a value of specified data type in persistent memory space
+    INTEGER toInteger(const void* const value, const DataType type); // converts a value to integer
+    LOGICAL toLogical(const void* const value, const DataType type); // converts a value to logical
+    REAL toReal(const void* const value, const DataType type); // converts a value to real value
 
     // ---- progSub ----
     bool subDefine(const string& name, const size_t counter); // defines a new subroutine if possible

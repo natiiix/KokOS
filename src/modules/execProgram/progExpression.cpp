@@ -678,14 +678,81 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
         return Program::symbolToValue(vectSymbols.at(firstIndex), outType);
     }
 
+    // Operation on a single symbol
     if (symbolCount == 2)
     {
-        // TODO: Operation with single operand
+        DataType type;
+        void* source = Program::symbolToValue(vectSymbols.at(firstIndex + 1), &type);
+
+        // The input symbol is invalid
+        if (!source)
+        {
+            return nullptr;
+        }
+
+        // Perform square root on the second symbol
+        // Syntax: <Operation> <Input Symbol>
+        if (vectSymbols.at(firstIndex).compare("sqrt"))
+        {
+            REAL realSourceValue = 0.0;
+
+            // The source value already has real data type
+            if (type == DataType::Real)
+            {
+                realSourceValue = *(REAL*)source;
+            }
+            // The source value doesn't have a real data type
+            // Convert it to it from whatever data type it has
+            else
+            {
+                realSourceValue = Program::toReal(source, type);
+            }
+
+            free(source);
+
+            // Result of square root has always a real data type
+            (*outType) = DataType::Real;
+            // Perform the square root and store the result value in persistent memory and return a pointer to it
+            return memstore(sqrt(realSourceValue));
+        }
+
+        free(source);
     }
 
+    // Operation with two input symbols
+    // Syntax: <First Symbol> <Operator> <Second Symbol>
     if (symbolCount == 3)
     {
-        // TODO: Operation with two operands
+        // Resolve the first input symbol
+        DataType type1;
+        void* source1 = Program::symbolToValue(vectSymbols.at(firstIndex), &type1);
+
+        // The first input symbol is invalid
+        if (!source1)
+        {
+            return nullptr;
+        }
+
+        // Resolve the second input symbol
+        DataType type2;
+        void* source2 = Program::symbolToValue(vectSymbols.at(firstIndex + 2), &type2);
+
+        // The second input symbol is invalid
+        if (!source2)
+        {
+            free(source1);
+            return nullptr;
+        }
+
+        // If the input data have different data types perform a conversion
+        // to the data type with the highest priority (real > integer > logical)
+        if (type1 != type2)
+        {
+
+        }
+
+        free(source1);
+        free(source2);
     }
 
     // Invalid number of symbols

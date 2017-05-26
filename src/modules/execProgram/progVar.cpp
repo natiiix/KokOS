@@ -195,3 +195,57 @@ void* Program::valueCopy(const DataType type, const void* const source)
             return nullptr;
     }
 }
+
+INTEGER Program::toInteger(const void* const value, const DataType type)
+{
+    switch (type)
+    {
+        case DataType::Integer:
+            return *(INTEGER*)value;
+
+        case DataType::Logical:
+            return (INTEGER)*(LOGICAL*)value;
+
+        case DataType::Real:
+            return (INTEGER)*(REAL*)value;
+
+        default:
+            return 0;
+    }
+}
+
+LOGICAL Program::toLogical(const void* const value, const DataType type)
+{
+    switch (type)
+    {
+        case DataType::Integer:
+            return (LOGICAL)*(INTEGER*)value;
+
+        case DataType::Logical:
+            return *(LOGICAL*)value;
+
+        case DataType::Real:
+            return (LOGICAL)*(REAL*)value;
+
+        default:
+            return 0;
+    }
+}
+
+REAL Program::toReal(const void* const value, const DataType type)
+{
+    switch (type)
+    {
+        case DataType::Integer:
+            return (REAL)*(INTEGER*)value;
+
+        case DataType::Logical:
+            return (REAL)*(LOGICAL*)value;
+
+        case DataType::Real:
+            return *(REAL*)value;
+
+        default:
+            return 0;
+    }
+}
