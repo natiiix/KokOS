@@ -681,18 +681,23 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
     // Operation on a single symbol
     if (symbolCount == 2)
     {
+        // Create a shortcut for the operator and the input symbol
+        const string& strOperator = vectSymbols.at(firstIndex);
+        const string& strSymbolInput = vectSymbols.at(firstIndex + 1);
+
         DataType type;
-        void* source = Program::symbolToValue(vectSymbols.at(firstIndex + 1), &type);
+        void* source = Program::symbolToValue(strSymbolInput, &type);
 
         // The input symbol is invalid
         if (!source)
         {
+            Program::errorSymbolUnresolved(strSymbolInput);
             return nullptr;
         }
 
         // Perform square root on the second symbol
         // Syntax: <Operation> <Input Symbol>
-        if (vectSymbols.at(firstIndex).compare("sqrt"))
+        if (strOperator.compare("sqrt"))
         {
             REAL realSourceValue = 0.0;
 
@@ -715,39 +720,141 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
             // Perform the square root and store the result value in persistent memory and return a pointer to it
             return memstore(sqrt(realSourceValue));
         }
-
-        free(source);
+        // Unable to resolve the operator
+        else
+        {
+            Program::errorOperatorInvalid(strOperator);
+            free(source);
+        }
     }
 
     // Operation with two input symbols
     // Syntax: <First Symbol> <Operator> <Second Symbol>
     if (symbolCount == 3)
     {
+        // Create shortcuts for both symbols
+        const string& strSymbol1 = vectSymbols.at(firstIndex);
+        const string& strSymbol2 = vectSymbols.at(firstIndex + 2);
+
         // Resolve the first input symbol
         DataType type1;
-        void* source1 = Program::symbolToValue(vectSymbols.at(firstIndex), &type1);
+        void* source1 = Program::symbolToValue(strSymbol1, &type1);
 
         // The first input symbol is invalid
         if (!source1)
         {
+            Program::errorSymbolUnresolved(strSymbol1);
             return nullptr;
         }
 
         // Resolve the second input symbol
         DataType type2;
-        void* source2 = Program::symbolToValue(vectSymbols.at(firstIndex + 2), &type2);
+        void* source2 = Program::symbolToValue(strSymbol2, &type2);
 
         // The second input symbol is invalid
         if (!source2)
         {
             free(source1);
+            Program::errorSymbolUnresolved(strSymbol2);
             return nullptr;
         }
 
-        // If the input data have different data types perform a conversion
+        // If the input data have different data types
         if (type1 != type2)
         {
-            
+            // Perform a type conversion to ensure both value have the same data type
+            Program::toCommonType(source1, &type1, source2, &type2);
+        }
+
+        // Shortcut for the operator element in the symbol vector
+        const string& strOperator = vectSymbols.at(firstIndex + 1);
+
+        // Possible operations differ based on the data type of input values
+        switch (type1)
+        {
+            // Input values have integer data type
+            case DataType::Integer:
+            {
+                INTEGER i1 = *(INTEGER*)source1;
+                INTEGER i2 = *(INTEGER*)source2;
+                free(source1);
+                free(source2);
+
+                // Data type of the result is going to be integer
+                (*outType) = DataType::Integer;
+
+                // Addition
+                if (strOperator.compare("+"))
+                {
+                    return memstore(i1 + i2);
+                }
+                // Subtraction
+                else if (strOperator.compare("-"))
+                {
+                    return memstore(i1 - i2);
+                }
+                // Multiplication
+                else if (strOperator.compare("*"))
+                {
+                    return memstore(i1 * i2);
+                }
+                // Integer division
+                else if (strOperator.compare("/"))
+                {
+                    if (i2 == 0)
+                    {
+                        Program::errorDivisionByZero();
+                        return nullptr;
+                    }
+
+                    return memstore(i1 / i2);
+                }
+                // Remainder after integer division
+                else if (strOperator.compare("%"))
+                {
+                    if (i2 == 0)
+                    {
+                        Program::errorDivisionByZero();
+                        return nullptr;
+                    }
+
+                    return memstore(i1 % i2);
+                }
+                // Bit shift left
+                else if (strOperator.compare("<<"))
+                {
+                    return memstore(i1 << i2);
+                }
+                // Bit shift right
+                else if (strOperator.compare(">>"))
+                {
+                    return memstore(i1 >> i2);
+                }
+                // Bitwise AND
+                else if (strOperator.compare("&"))
+                {
+                    return memstore(i1 & i2);
+                }
+                // Bitwise OR
+                else if (strOperator.compare("|"))
+                {
+                    return memstore(i1 | i2);
+                }
+                // Bitwise XOR
+                else if (strOperator.compare("^"))
+                {
+                    return memstore(i1 ^ i2);
+                }
+                else
+                {
+                    Program::errorOperatorInvalid(strOperator);
+                    return nullptr;
+                }
+            }
+            break;
+
+            default:
+                break;
         }
 
         free(source1);
@@ -755,5 +862,6 @@ void* Program::symbolMultiResolve(const vector<string> vectSymbols, const size_t
     }
 
     // Invalid number of symbols
+    Program::error("Unexpected number of input symbols!");
     return nullptr;
 }
