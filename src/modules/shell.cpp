@@ -11,6 +11,7 @@
 
 #include <drivers/storage/fat.h>
 #include <modules/commands.hpp>
+#include <modules/settings.hpp>
 
 namespace Shell
 {
@@ -18,11 +19,17 @@ namespace Shell
 	uint32_t activeDir; // first cluster of the active directory
 
 	string shellPrefix;
-	bool diskToolsEnabled; // false if there are no FAT partitions available
 	vector<string> pathStructure;
 
 	vector<string> cmdHistory;
 	uint8_t historyIdx;
+
+	uint16_t colorScheme;
+
+	void updateColorScheme(void)
+	{
+		colorScheme = (((uint16_t)Settings::Shell_Background) << 12) | (((uint16_t)Settings::Shell_Foreground) << 8);
+	}
 
 	void process(const string& strInput)
 	{
@@ -330,24 +337,21 @@ namespace Shell
 	void _update_prefix(void)
 	{
 		shellPrefix.clear();
+		
+		string activePath = string::join(pathStructure, '/', true);
 
-		if (diskToolsEnabled)
+		shellPrefix.push_back('A' + activePart);
+		shellPrefix.push_back(':');
+		
+		if (activePath.size())
 		{
-			string activePath = string::join(pathStructure, '/', true);
-
-			shellPrefix.push_back('A' + activePart);
-			shellPrefix.push_back(':');
-			
-			if (activePath.size())
-			{
-				shellPrefix.push_back('/');
-			}
-			
-			shellPrefix.push_back(activePath);
 			shellPrefix.push_back('/');
-
-			activePath.dispose();
 		}
+		
+		shellPrefix.push_back(activePath);
+		shellPrefix.push_back('/');
+
+		activePath.dispose();
 
 		shellPrefix.push_back('>');
 	}
@@ -369,21 +373,19 @@ void shell_init(void)
 	Shell::cmdHistory = vector<string>();
 	Shell::historyIdx = Shell::HISTORY_INDEX_DEFAULT;
 
-	Shell::diskToolsEnabled = (partCount > 0);
+	if (!partCount)
+	{
+		kernel_panic("Failed to initialize Shell!\nNo disk with a FAT partition detected!");
+	}
 
-	if (Shell::diskToolsEnabled)
-	{
-		Shell::activePart = 0;
-		Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
-		Shell::pathStructure.clear();
-		Shell::_update_prefix();
-	}
-	else
-	{
-		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
-		Shell::shellPrefix.clear();
-		Shell::shellPrefix.push_back('>');
-	}
+	Shell::activePart = 0;
+	Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
+	Shell::pathStructure.clear();
+	Shell::_update_prefix();
+
+	// Load settings
+	Settings::load();
+	Shell::updateColorScheme();
 
     while (true)
     {

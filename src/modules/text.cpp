@@ -11,6 +11,7 @@
 
 #include <drivers/storage/fat.h>
 #include <modules/shell_global.hpp>
+#include <modules/settings.hpp>
 
 #include <kernel.h>
 
@@ -42,8 +43,6 @@ bool m_renderRequired;
 
 // Used for VGA buffer filling
 uint16_t m_colorScheme;
-uint8_t m_colBG;
-uint8_t m_colFG;
 
 enum EDITOR_SCREEN
 {
@@ -378,7 +377,7 @@ char* colorToStr(const uint8_t color)
 // Updates the color scheme used in editor mode
 void updateColorScheme(void)
 {
-    m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
+    m_colorScheme = (((uint16_t)Settings::TextEditor_Background) << 12) | (((uint16_t)Settings::TextEditor_Foreground) << 8);
 }
 
 // Used in menu mode
@@ -410,7 +409,7 @@ void renderMenu()
     lineIdx += 4;
     setMenuLineColor(0);
     printat("Background Color: ", MENU_PADDING_LEFT, lineIdx);
-    char* strBG = colorToStr(m_colBG);
+    char* strBG = colorToStr(Settings::TextEditor_Background);
     printat(strBG, MENU_PADDING_LEFT + 18, lineIdx);
     delete strBG;
 
@@ -418,7 +417,7 @@ void renderMenu()
     lineIdx += 2;
     setMenuLineColor(1);
     printat("Foreground Color: ", MENU_PADDING_LEFT, lineIdx);
-    char* strFG = colorToStr(m_colFG);
+    char* strFG = colorToStr(Settings::TextEditor_Foreground);
     printat(strFG, MENU_PADDING_LEFT + 18, lineIdx);
     delete strFG;
 
@@ -892,11 +891,11 @@ void screenMenu(void)
                 switch (m_menuLine)
                 {
                     case 0:
-                        m_colBG = colorDown(m_colBG);
+                        Settings::TextEditor_Background = colorDown(Settings::TextEditor_Background);
                         break;
 
                     case 1:
-                        m_colFG = colorDown(m_colFG);
+                        Settings::TextEditor_Foreground = colorDown(Settings::TextEditor_Foreground);
                         break;
 
                     default:
@@ -909,11 +908,11 @@ void screenMenu(void)
                 switch (m_menuLine)
                 {
                     case 0:
-                        m_colBG = colorUp(m_colBG);
+                        Settings::TextEditor_Background = colorUp(Settings::TextEditor_Background);
                         break;
 
                     case 1:
-                        m_colFG = colorUp(m_colFG);
+                        Settings::TextEditor_Foreground = colorUp(Settings::TextEditor_Foreground);
                         break;
 
                     default:
@@ -978,9 +977,7 @@ void presetVariables(void)
 
     m_modified = false;
 
-    // Same as terminal (black background, grey foreground)
-    m_colBG = 0x0;
-    m_colFG = 0x7;
+    // Background and foreground color are stored in Settings module
     updateColorScheme();
 
     m_screen = SCREEN_TEXT;

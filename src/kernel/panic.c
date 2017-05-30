@@ -17,5 +17,8 @@ void kernel_panic(const char* const str)
     // it shouldn't really matter since it's not expected to recover
     term_write(strcenter(strjoin(&strHeader[0], str)), false);
 
-    hlt();
+    while (true)
+    {
+        hlt();
+    }
 }
