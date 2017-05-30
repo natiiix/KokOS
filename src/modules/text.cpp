@@ -10,7 +10,7 @@
 #include <drivers/io/keyboard_global.h>
 
 #include <drivers/storage/fat.h>
-#include <modules/shell_global.hpp>
+#include <modules/shell.hpp>
 #include <modules/settings.hpp>
 
 #include <kernel.h>
@@ -403,6 +403,7 @@ void renderMenu()
 
     // Header line
     size_t lineIdx = 2;
+    setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
     printat("  -- MENU --", MENU_PADDING_LEFT, lineIdx);
 
     // Background Color setting line
@@ -1020,6 +1021,8 @@ void editor(void)
 
     // Update the settings file to store the text editor color scheme
     Settings::save();
+    // Revert the color scheme back to the one used by shell
+    Shell::updateColorScheme();
 }
 
 void textEditorStart(const char* const filePath)

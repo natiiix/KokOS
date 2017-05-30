@@ -4,6 +4,7 @@
 #include <cpp/vector.hpp>
 
 #include <modules/settings.hpp>
+#include <modules/shell.hpp>
 
 void cmd_color(const string& strArgs)
 {
@@ -24,13 +25,13 @@ void cmd_color(const string& strArgs)
     // Prase background color
     if (!vecArgs.at(0).parseInt32(&colorBG))
     {
-        print("Invalid background color value!");
+        print("Invalid background color value!\n");
         vecArgs.dispose();
         return;
     }
     else if (colorBG < 0 || colorBG > 15)
     {
-        print("Background color must be a number between 0 and 15!");
+        print("Background color must be a number between 0 and 15!\n");
         vecArgs.dispose();
         return;
     }
@@ -38,13 +39,13 @@ void cmd_color(const string& strArgs)
     // Prase foreground color
     if (!vecArgs.at(1).parseInt32(&colorFG))
     {
-        print("Invalid foreground color value!");
+        print("Invalid foreground color value!\n");
         vecArgs.dispose();
         return;
     }
     else if (colorFG < 0 || colorFG > 15)
     {
-        print("Foreground color must be a number between 0 and 15!");
+        print("Foreground color must be a number between 0 and 15!\n");
         vecArgs.dispose();
         return;
     }
@@ -52,7 +53,7 @@ void cmd_color(const string& strArgs)
     // Background color must NOT be the same as the foreground color
     if (colorBG == colorFG)
     {
-        print("Background color and foreground color must not be the same!");
+        print("Background color and foreground color must not be the same!\n");
         vecArgs.dispose();
         return;
     }
@@ -60,6 +61,7 @@ void cmd_color(const string& strArgs)
     // Update the shell color scheme
     Settings::Shell_Background = (uint8_t)colorBG;
     Settings::Shell_Foreground = (uint8_t)colorFG;
+    Shell::updateColorScheme();
 
     // Store the new shell color settings into the settings file
     Settings::save();

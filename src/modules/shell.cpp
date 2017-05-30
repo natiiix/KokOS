@@ -24,11 +24,9 @@ namespace Shell
 	vector<string> cmdHistory;
 	uint8_t historyIdx;
 
-	uint16_t colorScheme;
-
 	void updateColorScheme(void)
 	{
-		colorScheme = (((uint16_t)Settings::Shell_Background) << 12) | (((uint16_t)Settings::Shell_Foreground) << 8);
+		setcolor((VGA_COLOR)Settings::Shell_Foreground, (VGA_COLOR)Settings::Shell_Background);
 	}
 
 	void process(const string& strInput)

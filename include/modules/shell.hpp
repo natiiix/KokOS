@@ -16,6 +16,8 @@ namespace Shell
     // This value is present in historyIdx whenever history isn't being browsed
     static const uint8_t HISTORY_INDEX_DEFAULT = 0xFF;
 
+    void updateColorScheme(void);
+
     void process(const string& strInput);
 
     // Internal shell calls

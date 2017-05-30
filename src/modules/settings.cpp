@@ -72,6 +72,7 @@ namespace Settings
             // Convert the data to a string object
             string strData;
             strData.push_back((char*)data);
+            delete data;
 
             // Split the string into separate lines
             vector<string> lines = strData.split('\n', false);
