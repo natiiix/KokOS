@@ -3,7 +3,7 @@
 
 void Program::error(const char* const str)
 {
-    print("Error on line ");
+    print("Runtime error on line ");
     printint(m_counter);
     newline();
     print(str);
@@ -43,9 +43,9 @@ void Program::errorSymbolUnresolved(const string& strSymbol)
     strError.dispose();
 }
 
-void Program::errorTypesIncompatible(void)
+void Program::errorTypeUnexpected(void)
 {
-    Program::error("Variables do not have matching data types!");
+    Program::error("Unexpected data type!");
 }
 
 void Program::errorOperatorInvalid(const string& strOperator)
@@ -64,4 +64,42 @@ void Program::errorOperatorInvalid(const string& strOperator)
 void Program::errorDivisionByZero(void)
 {
     Program::error("Cannot divide by zero!");
+}
+
+void Program::errorScan(const size_t index)
+{
+    print("Error on line ");
+    // Print the line index
+    printint(index);
+    newline();
+
+    // Print the line content
+    string strLine = string::join(m_program.at(index), ' ');
+    print("\"");
+    sprint(strLine);
+    print("\"");
+    strLine.dispose();
+    newline();
+}
+
+void Program::errorScan(const size_t index, const char* const message)
+{
+    Program::errorScan(index);
+    
+    // Print the error message
+    print(message);
+    newline();
+}
+
+void Program::errorSubUndefined(const string& strSubName)
+{
+    string strErrorMsg;
+    strErrorMsg.clear();
+    
+    strErrorMsg.push_back("Subroutine \"");
+    strErrorMsg.push_back(strSubName);
+    strErrorMsg.push_back("\" is undefined!");
+
+    Program::error(strErrorMsg);
+    strErrorMsg.dispose();
 }

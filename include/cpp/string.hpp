@@ -18,6 +18,8 @@ public:
     void dispose(void);
 	// Returns a copy of this string
 	string copy(void);
+	// Sets the content of the string to a content of a string object
+	void set(const string& str);
 	// Sets the content of the string to a content of a cstring
 	void set(const char* const str);
 
@@ -92,6 +94,8 @@ public:
 	bool parseBool(bool* const output) const;
 	// Parses a double precision decimal value from the string
 	bool parseDouble(double* const output) const;
+	// Counts the number of characters' appearances in the string
+	size_t count(const char c) const;
 
     // ---- OPERATOR OVERLOADS ----
 	// Synonymous to compare(const string& str)
@@ -108,7 +112,7 @@ public:
     string operator+(const string& str);
 
 	//static void disposeVector(vector<string>& vec);
-	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty);
+	static string join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty = false);
 	static string toString(const int32_t value);
 	static string toString(const bool value);
 	static string toString(const double value);

@@ -43,6 +43,12 @@ string string::copy(void)
     return strout;
 }
 
+void string::set(const string& str)
+{
+    string::clear();
+    string::push_back(str);
+}
+//
 void string::set(const char* const str)
 {
     string::clear();
@@ -569,6 +575,21 @@ bool string::parseDouble(double* const output) const
     // Set the output variable to the parsed value
     (*output) = (negative ? -value : value);
     return true;
+}
+//
+size_t string::count(const char c) const
+{
+    size_t charCount = 0;
+
+    for (size_t i = 0; i < m_size; i++)
+    {
+        if (m_ptrC[i] == c)
+        {
+            charCount++;
+        }
+    }
+
+    return charCount;
 }
 
 // Operator overloads

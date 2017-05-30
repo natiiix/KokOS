@@ -26,6 +26,19 @@ void Program::scopePop(void)
         m_variables.pop_back();
     }
 
+    // Same as above except for arrays
+    size_t arraysize = m_arrays.size();
+    for (size_t i = 0; i < arraysize; i++)
+    {
+        if (m_arrays[arraysize - 1 - i].Scope < m_scope)
+        {
+            break;
+        }
+
+        m_arrays.back().dispose();
+        m_arrays.pop_back();
+    }
+
     // Scope pop cannot be performed if the scope is already at 0 level
     if (m_scope)
     {
@@ -130,35 +143,29 @@ void Program::elseLoop(void)
 
         if (elseIndex)
         {
+            // else if statement
             if (m_program[elseIndex][0].compare("else") &&
-                (m_program[elseIndex].size() == 3 || m_program[elseIndex].size() == 5) &&
+                m_program[elseIndex].size() >= 3 &&
                 m_program[elseIndex][1].compare("if"))
             {
-                LOGICAL elseCondition = false;
-                    
-                // else if statement using a single symbol condition
-                if (m_program[elseIndex].size() == 3)
+                // Resolve the condition symbol
+                LOGICAL* conditionPtr = Program::symbolMultiResolveLogical(m_program[elseIndex], 2);
+
+                // Unable to resolve the symbol
+                if (!conditionPtr)
                 {
-                    if (!Program::symbolToLogical(m_program[elseIndex][2], &elseCondition))
-                    {
-                        break;
-                    }
-                }
-                // else if statement that uses a comparison as a condition
-                else if (m_program[elseIndex].size() == 5)
-                {
-                    if (!Program::evaluateLogical(m_program[elseIndex][2], m_program[elseIndex][3], m_program[elseIndex][4], &elseCondition))
-                    {
-                        break;
-                    }
+                    return;
                 }
 
+                LOGICAL condition = *conditionPtr;
+                delete conditionPtr;
+
                 // Condition of this else if is satisfied, continue the code execution
-                if (elseCondition)
+                if (condition)
                 {
                     m_counter = elseIndex + 1;
                     Program::scopePush();
-                    break;
+                    return;
                 }
                 // Condition is not satisfied, look for the next else if / else / end statement
                 else
@@ -171,11 +178,11 @@ void Program::elseLoop(void)
             // Simple else only statement or end statement reached
             // The only thing that can be done is to continue
             m_counter = elseIndex + 1;
-            break;
+            return;
         }
         else
         {
-            break;
+            return;
         }
     }
 }
