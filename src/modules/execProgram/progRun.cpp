@@ -64,6 +64,14 @@ void Program::run(const char* const codePtr)
     }
     m_subroutines.dispose();
 
+    // Dispose all arrays
+    while (m_arrays.size())
+    {
+        m_arrays.back().dispose();
+        m_arrays.pop_back();
+    }
+    m_arrays.dispose();
+
     // Dispose the scope index stack
     m_scopeStack.dispose();
 }

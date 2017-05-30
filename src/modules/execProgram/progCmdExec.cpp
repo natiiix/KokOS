@@ -42,19 +42,22 @@ void Program::executeCommand(void)
         m_counter = PROGRAM_COUNTER_EXIT;
         return;
     }
-    // Integer variable declaration
+    // Integer variable/array declaration
     else if (cmd[0].compare("integer") && cmd.size() == 2)
     {
-        if (!Program::varDeclare(cmd[1], DataType::Integer))
+        if (!Program::declare(cmd.at(1), DataType::Integer))
         {
             return;
         }
     }
     // Integer variable declaration with immediate value definition
-    else if (cmd[0].compare("integer") && cmd.size() == 4 && cmd[2].compare("="))
+    else if (cmd[0].compare("integer") && cmd.size() > 3 && cmd[2].compare("="))
     {
-        INTEGER value = 0;
-        if (!Program::symbolToInteger(cmd[3], &value))
+        // Resolve the input value from symbols
+        INTEGER* value = Program::symbolMultiResolveInteger(cmd, 3);
+
+        // Symbol resolving failed
+        if (!value)
         {
             return;
         }
@@ -62,69 +65,30 @@ void Program::executeCommand(void)
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Integer))
         {
+            delete value;
             return;
         }
 
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
+        // Set the variable value to the input value
+        m_variables.back().set(*value);
+        delete value;
     }
-    // Integer variable declaration with value definition by performing a type conversion
-    else if (cmd[0].compare("integer") && cmd.size() == 5 && cmd[2].compare("="))
-    {
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Integer))
-        {
-            return;
-        }
-
-        // Data type conversion
-        if (cmd[3].compare("convert"))
-        {
-            // Assign the converted value to the recently reclared variable
-            if (!Program::convertToInteger(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform the type conversion
-                return;
-            }
-        }
-        // Unable to recognize the operation
-        else
-        {
-            Program::errorOperatorInvalid(cmd.at(2));
-            return;
-        }
-    }
-    // Integer variable declaration with statement evaluation
-    else if (cmd[0].compare("integer") && cmd.size() == 6 && cmd[2].compare("="))
-    {
-        INTEGER value = false;
-        if (!Program::evaluateInteger(cmd[3], cmd[4], cmd[5], &value))
-        {
-            return;
-        }
-
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Integer))
-        {
-            return;
-        }
-
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
-    }
-    // Logical variable declaration
+    // Logical variable/array declaration
     else if (cmd[0].compare("logical") && cmd.size() == 2)
     {
-        if (!Program::varDeclare(cmd[1], DataType::Logical))
+        if (!Program::declare(cmd.at(1), DataType::Logical))
         {
             return;
         }
     }
     // Logical variable declaration with immediate value definition
-    else if (cmd[0].compare("logical") && cmd.size() == 4 && cmd[2].compare("="))
+    else if (cmd[0].compare("logical") && cmd.size() > 3 && cmd[2].compare("="))
     {
-        LOGICAL value = false;
-        if (!Program::symbolToLogical(cmd[3], &value))
+        // Resolve the input value from symbols
+        LOGICAL* value = Program::symbolMultiResolveLogical(cmd, 3);
+
+        // Symbol resolving failed
+        if (!value)
         {
             return;
         }
@@ -132,69 +96,30 @@ void Program::executeCommand(void)
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Logical))
         {
+            delete value;
             return;
         }
 
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
+        // Set the variable value to the input value
+        m_variables.back().set(*value);
+        delete value;
     }
-    // Logical variable declaration with value definition by performing a type conversion
-    else if (cmd[0].compare("logical") && cmd.size() == 5 && cmd[2].compare("="))
-    {
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Logical))
-        {
-            return;
-        }
-
-        // Data type conversion
-        if (cmd[3].compare("convert"))
-        {
-            // Assign the converted value to the recently reclared variable
-            if (!Program::convertToLogical(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform the type conversion
-                return;
-            }
-        }
-        // Unable to recognize the operation
-        else
-        {
-            Program::errorOperatorInvalid(cmd.at(2));
-            return;
-        }
-    }
-    // Logical variable declaration with statement evaluation
-    else if (cmd[0].compare("logical") && cmd.size() == 6 && cmd[2].compare("="))
-    {
-        LOGICAL value = false;
-        if (!Program::evaluateLogical(cmd[3], cmd[4], cmd[5], &value))
-        {
-            return;
-        }
-
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Logical))
-        {
-            return;
-        }
-
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
-    }
-    // Real variable declaration
+    // Real variable/array declaration
     else if (cmd[0].compare("real") && cmd.size() == 2)
     {
-        if (!Program::varDeclare(cmd[1], DataType::Real))
+        if (!Program::declare(cmd.at(1), DataType::Real))
         {
             return;
         }
     }
     // Real variable declaration with immediate value definition
-    else if (cmd[0].compare("real") && cmd.size() == 4 && cmd[2].compare("="))
+    else if (cmd[0].compare("real") && cmd.size() > 3 && cmd[2].compare("="))
     {
-        REAL value = 0;
-        if (!Program::symbolToReal(cmd[3], &value))
+        // Resolve the input value from symbols
+        REAL* value = Program::symbolMultiResolveReal(cmd, 3);
+
+        // Symbol resolving failed
+        if (!value)
         {
             return;
         }
@@ -202,65 +127,13 @@ void Program::executeCommand(void)
         // Declare the variable
         if (!Program::varDeclare(cmd[1], DataType::Real))
         {
+            delete value;
             return;
         }
 
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
-    }
-    // Real variable declaration with value definition by performing an operation
-    else if (cmd[0].compare("real") && cmd.size() == 5 && cmd[2].compare("="))
-    {
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Real))
-        {
-            return;
-        }
-
-        // Square root
-        if (cmd[3].compare("sqrt"))
-        {
-            // Assign the square root value to the recently reclared variable
-            if (!Program::realSqrt(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform sqaure root
-                return;
-            }
-        }
-        // Data type conversion
-        else if (cmd[3].compare("convert"))
-        {
-            // Assign the converted value to the recently reclared variable
-            if (!Program::convertToReal(cmd.at(4), &m_variables.back()))
-            {
-                // Unable to perform the type conversion
-                return;
-            }
-        }
-        // Unable to recognize the operation
-        else
-        {
-            Program::errorOperatorInvalid(cmd.at(2));
-            return;
-        }
-    }
-    // Real variable declaration with statement evaluation
-    else if (cmd[0].compare("real") && cmd.size() == 6 && cmd[2].compare("="))
-    {
-        REAL value = false;
-        if (!Program::evaluateReal(cmd[3], cmd[4], cmd[5], &value))
-        {
-            return;
-        }
-
-        // Declare the variable
-        if (!Program::varDeclare(cmd[1], DataType::Real))
-        {
-            return;
-        }
-
-        // Assign the specified value to the recently reclared variable
-        m_variables.back().set(value);
+        // Set the variable value to the input value
+        m_variables.back().set(*value);
+        delete value;
     }
     // Scope push
     else if (cmd[0].compare("push") && cmd.size() == 1)
@@ -272,23 +145,24 @@ void Program::executeCommand(void)
     {
         Program::scopePop();
     }
-    // Variable value print
-    else if (cmd[0].compare("print") && cmd.size() == 2)
+    // Print the value of the input symbol
+    else if (cmd[0].compare("print") && cmd.size() >= 2)
     {
-        Variable* varSource = Program::varFind(cmd[1]);
+        // Resolve the input symbol
+        DataType type;
+        void* valuePtr = Program::symbolMultiResolve(cmd, 1, &type);
         
-        // Source variable doesn't exist
-        if (!varSource)
+        // Invalid input symbol
+        if (!valuePtr)
         {
-            Program::errorVarUndeclared(cmd[1]);
             return;
         }
 
-        switch (varSource->Type)
+        switch (type)
         {
             case DataType::Integer:
             {
-                string strValue = string::toString(varSource->getInteger());
+                string strValue = string::toString(*(INTEGER*)valuePtr);
                 sprint(strValue);
                 newline();
                 strValue.dispose();
@@ -297,7 +171,7 @@ void Program::executeCommand(void)
 
             case DataType::Logical:
             {
-                string strValue = string::toString(varSource->getLogical());
+                string strValue = string::toString(*(LOGICAL*)valuePtr);
                 sprint(strValue);
                 newline();
                 strValue.dispose();
@@ -306,7 +180,7 @@ void Program::executeCommand(void)
 
             case DataType::Real:
             {
-                string strValue = string::toString(varSource->getReal());
+                string strValue = string::toString(*(REAL*)valuePtr);
                 sprint(strValue);
                 newline();
                 strValue.dispose();
@@ -316,33 +190,24 @@ void Program::executeCommand(void)
             default:
                 break;
         }
+
+        free(valuePtr);
     }
     // if statement / while loop
     else if (cmd[0].compare("if") || cmd[0].compare("while"))
     {
-        LOGICAL condition = false;
+        // Resolve the condition
+        LOGICAL* conditionPtr = Program::symbolMultiResolveLogical(cmd, 1);
 
-        if (cmd.size() == 2)
+        // Unable to resolve the condition
+        if (!conditionPtr)
         {
-            // Single symbol condition format
-            if (!Program::symbolToLogical(cmd[1], &condition))
-            {
-                return;
-            }
-        }
-        else if (cmd.size() == 4)
-        {
-            // Condition via comparison of 2 symbols format
-            if (!Program::evaluateLogical(cmd[1], cmd[2], cmd[3], &condition))
-            {
-                return;
-            }
-        }
-        else
-        {
-            Program::error("Unexpected condition format!");
             return;
         }
+
+        // Extract the logical value from the pointer
+        LOGICAL condition = *conditionPtr;
+        delete conditionPtr;
 
         // Condition is true, just continue the code execution
         if (condition)
@@ -429,28 +294,33 @@ void Program::executeCommand(void)
         }
     }
     // break out of N scope levels
-    else if (cmd[0].compare("break") && cmd.size() == 2)
+    else if (cmd[0].compare("break") && cmd.size() >= 2)
     {
-        INTEGER breakLevels = 0;
+        // Resolve the number of levels to break
+        INTEGER* levelsPtr = Program::symbolMultiResolveInteger(cmd, 1);
         
-        if (Program::symbolToInteger(cmd[1], &breakLevels))
+        // Failed to resolve the number
+        if (!levelsPtr)
         {
-            if (breakLevels > 0)
+            return;
+        }
+
+        // Extract the integer value from the pointer
+        INTEGER levels = *levelsPtr;
+        delete levelsPtr;
+
+        // Check if the number of scopes to break is positive
+        if (levels > 0)
+        {
+            // Try to break the specified number of scope levels
+            if (!breakScope(levels, true))
             {
-                if (!breakScope(breakLevels, true))
-                {
-                    return;
-                }
-            }
-            else
-            {
-                Program::error("Cannot break a non-positive number of scope levels!");
                 return;
             }
         }
-        // Symbol is not a valid integer
         else
         {
+            Program::error("Cannot break a non-positive number of scope levels!");
             return;
         }
     }
@@ -463,18 +333,26 @@ void Program::executeCommand(void)
     // continue at the end of the Nth scope
     else if (cmd[0].compare("continue") && cmd.size() == 2)
     {
-        INTEGER continueLevels = 0;
+        // Resolve the number of levels to continue after
+        INTEGER* levelsPtr = Program::symbolMultiResolveInteger(cmd, 1);
         
-        if (Program::symbolToInteger(cmd[1], &continueLevels))
+        // Failed to resolve the number
+        if (!levelsPtr)
         {
-            if (continueLevels > 0)
-            {
-                breakScope(continueLevels, false);
-            }
-            else
-            {
-                Program::error("Cannot break a non-positive number of scope levels!");
-            }
+            return;
+        }
+
+        // Extract the integer value from the pointer
+        INTEGER levels = *levelsPtr;
+        delete levelsPtr;
+
+        if (levels > 0)
+        {
+            breakScope(levels, false);
+        }
+        else
+        {
+            Program::error("Cannot continue after a non-positive number of scope levels!");
         }
 
         return;
@@ -495,7 +373,7 @@ void Program::executeCommand(void)
             }
 
             // Print out the word itself
-            sprint (cmd[1 + i]);
+            sprint(cmd[1 + i]);
         }
 
         // Break the line
@@ -505,12 +383,12 @@ void Program::executeCommand(void)
     else if (cmd[0].compare("read") && cmd.size() == 2)
     {
         // Find the variable in which the value is supposed to be stored
-        Variable* varTarget = Program::varFind(cmd[1]);
+        DataType type;
+        void* targetPtr = Program::findStorage(cmd.at(1), &type);
 
         // Check if the target variable exists
-        if (!varTarget)
+        if (!targetPtr)
         {
-            Program::errorVarUndeclared(cmd[1]);
             return;
         }
 
@@ -518,13 +396,13 @@ void Program::executeCommand(void)
         string strInput = readline();
 
         // Integer target variable
-        if (varTarget->Type == DataType::Integer)
+        if (type == DataType::Integer)
         {
             INTEGER inputValue = 0;
 
             if (strInput.parseInt32(&inputValue))
             {
-                varTarget->set(inputValue);
+                (*(INTEGER*)targetPtr) = inputValue;
             }
             // Integer parsing failed
             else
@@ -544,13 +422,13 @@ void Program::executeCommand(void)
             }
         }
         // Logical target variable
-        else if (varTarget->Type == DataType::Logical)
+        else if (type == DataType::Logical)
         {
             LOGICAL inputValue = 0;
 
             if (strInput.parseBool(&inputValue))
             {
-                varTarget->set(inputValue);
+                (*(LOGICAL*)targetPtr) = inputValue;
             }
             // Logical value parsing failed
             else
@@ -570,13 +448,13 @@ void Program::executeCommand(void)
             }
         }
         // Real target variable
-        else if (varTarget->Type == DataType::Real)
+        else if (type == DataType::Real)
         {
             REAL inputValue = 0;
 
             if (strInput.parseDouble(&inputValue))
             {
-                varTarget->set(inputValue);
+                (*(REAL*)targetPtr) = inputValue;
             }
             // Real value parsing failed
             else
@@ -659,13 +537,30 @@ void Program::executeCommand(void)
     // Increments an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("++"))
     {
-        // Find the variable
-        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+        // Find the target variable
+        DataType type;
+        void* targetPtr = Program::findStorage(cmd.at(0), &type);
 
-        if (varPtr)
+        if (targetPtr)
         {
-            // Increment the value of the variable
-            (*varPtr)++;
+            // Target variable is integer
+            if (type == DataType::Integer)
+            {
+                // Increment the value of the variable
+                (*(INTEGER*)targetPtr)++;
+            }
+            // Target variable is a real value
+            else if (type == DataType::Real)
+            {
+                // Increase the value of the variable by 1.0
+                (*(REAL*)targetPtr) += 1.0;
+            }
+            // Unexpected data type of the target variable
+            else
+            {
+                Program::errorTypeUnexpected();
+                return;
+            }
         }
         else
         {
@@ -675,158 +570,139 @@ void Program::executeCommand(void)
     // Decrements an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("--"))
     {
-        // Find the variable
-        INTEGER* varPtr = Program::varGetIntegerPtr(cmd[0]);
+        // Find the target variable
+        DataType type;
+        void* targetPtr = Program::findStorage(cmd.at(0), &type);
 
-        if (varPtr)
+        if (targetPtr)
         {
-            // Decrement the value of the variable
-            (*varPtr)--;
+            // Target variable is integer
+            if (type == DataType::Integer)
+            {
+                // Decrement the value of the variable
+                (*(INTEGER*)targetPtr)--;
+            }
+            // Target variable is a real value
+            else if (type == DataType::Real)
+            {
+                // Decrease the value of the variable by 1.0
+                (*(REAL*)targetPtr) -= 1.0;
+            }
+            // Unexpected data type of the target variable
+            else
+            {
+                Program::errorTypeUnexpected();
+                return;
+            }
         }
         else
         {
             return;
         }
     }
-    // Stores the square root of a real value into a real variable
-    else if (cmd.size() == 4 && cmd[1].compare("=") && cmd[2].compare("sqrt"))
-    {
-        // Find target variable
-        Variable* varTarget = Program::varFind(cmd[0]);
-        
-        // Target variable doesn't exist
-        if (!varTarget)
-        {
-            Program::errorVarUndeclared(cmd[0]);
-            return;
-        }
-
-        // Square root can only be performend on real data type
-        if (varTarget->Type != DataType::Real)
-        {
-            Program::errorTypesIncompatible();
-            return;
-        }
-
-        // Perform the square root
-        if (!Program::realSqrt(cmd.at(3), varTarget))
-        {
-            // Square root failed
-            return;
-        }
-    }
     // Variable value assignment
-    else if ((cmd.size() >= 3 && cmd.size() <= 5) && cmd[1].contains('='))
+    else if (cmd.size() >= 3 && cmd[1].contains('='))
     {
-        // Find target variable
-        Variable* varTarget = Program::varFind(cmd[0]);
-        
-        // Target variable doesn't exist
-        if (!varTarget)
+        // Find the variable in which the value is supposed to be stored
+        DataType type;
+        void* targetPtr = Program::findStorage(cmd.at(0), &type);
+
+        // Check if the target variable exists
+        if (!targetPtr)
         {
-            Program::errorVarUndeclared(cmd[0]);
             return;
         }
 
-        switch (varTarget->Type)
+        switch (type)
         {
             // Target variable is integer
             case DataType::Integer:
             {
-                // Assignment with data type conversion
-                if (cmd.size() == 4 && cmd.at(2).compare("convert"))
+                INTEGER oldValue = *(INTEGER*)targetPtr;
+
+                // Resolve the operand
+                INTEGER* operandPtr = Program::symbolMultiResolveInteger(cmd, 2);
+
+                // Failed to resolve the operand
+                if (!operandPtr)
                 {
-                    if (!Program::convertToInteger(cmd.at(3), varTarget))
+                    return;
+                }
+
+                INTEGER operandValue = *operandPtr;
+                delete operandPtr;
+
+                // Value assignment
+                if (cmd[1].compare("="))
+                {
+                    (*(INTEGER*)targetPtr) = operandValue;
+                }
+                // Add operand value to itself
+                else if (cmd[1].compare("+="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue + operandValue;
+                }
+                // Subtract operand value from itself
+                else if (cmd[1].compare("-="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue - operandValue;
+                }
+                // Multiply itself by operand value
+                else if (cmd[1].compare("*="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue * operandValue;
+                }
+                // Perform integer division by operand value on itself
+                else if (cmd[1].compare("/="))
+                {
+                    if (operandValue == 0)
                     {
+                        Program::errorDivisionByZero();
                         return;
                     }
 
-                    break;
+                    (*(INTEGER*)targetPtr) = oldValue / operandValue;
                 }
-
-                INTEGER oldValue = varTarget->getInteger();
-                INTEGER operandValue = 0;
-
-                if ((cmd.size() == 3 && Program::symbolToInteger(cmd[2], &operandValue)) ||
-                    (cmd.size() == 5 && Program::evaluateInteger(cmd[2], cmd[3], cmd[4], &operandValue)))
+                // Set itself to the remained after integer division by the operand value
+                else if (cmd[1].compare("%="))
                 {
-                    // Value assignment
-                    if (cmd[1].compare("="))
+                    if (operandValue == 0)
                     {
-                        varTarget->set(operandValue);
-                    }
-                    // Add operand value to itself
-                    else if (cmd[1].compare("+="))
-                    {
-                        varTarget->set(oldValue + operandValue);
-                    }
-                    // Subtract operand value from itself
-                    else if (cmd[1].compare("-="))
-                    {
-                        varTarget->set(oldValue - operandValue);
-                    }
-                    // Multiply itself by operand value
-                    else if (cmd[1].compare("*="))
-                    {
-                        varTarget->set(oldValue * operandValue);
-                    }
-                    // Perform integer division by operand value on itself
-                    else if (cmd[1].compare("/="))
-                    {
-                        if (operandValue == 0)
-                        {
-                            Program::errorDivisionByZero();
-                            return;
-                        }
-
-                        varTarget->set(oldValue / operandValue);
-                    }
-                    // Set itself to the remained after integer division by the operand value
-                    else if (cmd[1].compare("%="))
-                    {
-                        if (operandValue == 0)
-                        {
-                            Program::errorDivisionByZero();
-                            return;
-                        }
-
-                        varTarget->set(oldValue % operandValue);
-                    }
-                    // Bit shift itself left
-                    else if (cmd[1].compare("<<="))
-                    {
-                        varTarget->set(oldValue << operandValue);
-                    }
-                    // Bit shift itself right
-                    else if (cmd[1].compare(">>="))
-                    {
-                        varTarget->set(oldValue >> operandValue);
-                    }
-                    // Self-cast bitwise AND
-                    else if (cmd[1].compare("&="))
-                    {
-                        varTarget->set(oldValue & operandValue);
-                    }
-                    // Self-cast bitwise OR
-                    else if (cmd[1].compare("|="))
-                    {
-                        varTarget->set(oldValue | operandValue);
-                    }
-                    // Self-cast bitwise XOR
-                    else if (cmd[1].compare("^="))
-                    {
-                        varTarget->set(oldValue ^ operandValue);
-                    }
-                    // Not a valid integer operator
-                    else
-                    {
-                        Program::errorOperatorInvalid(cmd[1]);
+                        Program::errorDivisionByZero();
                         return;
                     }
+
+                    (*(INTEGER*)targetPtr) = oldValue % operandValue;
                 }
-                // Invalid right side operand symbol
+                // Bit shift itself left
+                else if (cmd[1].compare("<<="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue << operandValue;
+                }
+                // Bit shift itself right
+                else if (cmd[1].compare(">>="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue >> operandValue;
+                }
+                // Self-cast bitwise AND
+                else if (cmd[1].compare("&="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue & operandValue;
+                }
+                // Self-cast bitwise OR
+                else if (cmd[1].compare("|="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue | operandValue;
+                }
+                // Self-cast bitwise XOR
+                else if (cmd[1].compare("^="))
+                {
+                    (*(INTEGER*)targetPtr) = oldValue ^ operandValue;
+                }
+                // Not a valid integer operator
                 else
                 {
+                    Program::errorOperatorInvalid(cmd[1]);
                     return;
                 }
 
@@ -836,48 +712,39 @@ void Program::executeCommand(void)
             // Target variable is logical
             case DataType::Logical:
             {
-                // Assignment with data type conversion
-                if (cmd.size() == 4 && cmd.at(2).compare("convert"))
+                LOGICAL oldValue = *(LOGICAL*)targetPtr;
+
+                // Resolve the operand
+                LOGICAL* operandPtr = Program::symbolMultiResolveLogical(cmd, 2);
+
+                // Failed to resolve the operand
+                if (!operandPtr)
                 {
-                    if (!Program::convertToLogical(cmd.at(3), varTarget))
-                    {
-                        return;
-                    }
-                    
-                    break;
+                    return;
                 }
 
-                LOGICAL oldValue = varTarget->getLogical();
-                LOGICAL operandValue = 0;
+                LOGICAL operandValue = *operandPtr;
+                delete operandPtr;
 
-                if ((cmd.size() == 3 && Program::symbolToLogical(cmd[2], &operandValue)) ||
-                    (cmd.size() == 5 && Program::evaluateLogical(cmd[2], cmd[3], cmd[4], &operandValue)))
+                // Value assignment
+                if (cmd[1].compare("="))
                 {
-                    // Value assignment
-                    if (cmd[1].compare("="))
-                    {
-                        varTarget->set(operandValue);
-                    }
-                    // Self-cast AND
-                    else if (cmd[1].compare("&&="))
-                    {
-                        varTarget->set(oldValue && operandValue);
-                    }
-                    // Self-cast OR
-                    else if (cmd[1].compare("||="))
-                    {
-                        varTarget->set(oldValue || operandValue);
-                    }
-                    // Not a valid logical operator
-                    else
-                    {
-                        Program::errorOperatorInvalid(cmd[1]);
-                        return;
-                    }
+                    (*(LOGICAL*)targetPtr) = operandValue;
                 }
-                // Invalid right side operand symbol
+                // Self-cast AND
+                else if (cmd[1].compare("&&="))
+                {
+                    (*(LOGICAL*)targetPtr) = oldValue && operandValue;
+                }
+                // Self-cast OR
+                else if (cmd[1].compare("||="))
+                {
+                    (*(LOGICAL*)targetPtr) = oldValue || operandValue;
+                }
+                // Not a valid logical operator
                 else
                 {
+                    Program::errorOperatorInvalid(cmd[1]);
                     return;
                 }
 
@@ -887,64 +754,55 @@ void Program::executeCommand(void)
             // Target variable is real
             case DataType::Real:
             {
-                // Assignment with data type conversion
-                if (cmd.size() == 4 && cmd.at(2).compare("convert"))
+                REAL oldValue = *(REAL*)targetPtr;
+
+                // Resolve the operand
+                REAL* operandPtr = Program::symbolMultiResolveReal(cmd, 2);
+
+                // Failed to resolve the operand
+                if (!operandPtr)
                 {
-                    if (!Program::convertToReal(cmd.at(3), varTarget))
-                    {
-                        return;
-                    }
-                    
-                    break;
+                    return;
                 }
 
-                REAL oldValue = varTarget->getReal();
-                REAL operandValue = 0;
+                REAL operandValue = *operandPtr;
+                delete operandPtr;
 
-                if ((cmd.size() == 3 && Program::symbolToReal(cmd[2], &operandValue)) ||
-                    (cmd.size() == 5 && Program::evaluateReal(cmd[2], cmd[3], cmd[4], &operandValue)))
+                // Value assignment
+                if (cmd[1].compare("="))
                 {
-                    // Value assignment
-                    if (cmd[1].compare("="))
+                    (*(REAL*)targetPtr) = operandValue;
+                }
+                // Add operand value to itself
+                else if (cmd[1].compare("+="))
+                {
+                    (*(REAL*)targetPtr) = oldValue + operandValue;
+                }
+                // Subtract operand value from itself
+                else if (cmd[1].compare("-="))
+                {
+                    (*(REAL*)targetPtr) = oldValue - operandValue;
+                }
+                // Multiply itself by operand value
+                else if (cmd[1].compare("*="))
+                {
+                    (*(REAL*)targetPtr) = oldValue * operandValue;
+                }
+                // Perform real number division by operand value on itself
+                else if (cmd[1].compare("/="))
+                {
+                    if (operandValue == 0)
                     {
-                        varTarget->set(operandValue);
-                    }
-                    // Add operand value to itself
-                    else if (cmd[1].compare("+="))
-                    {
-                        varTarget->set(oldValue + operandValue);
-                    }
-                    // Subtract operand value from itself
-                    else if (cmd[1].compare("-="))
-                    {
-                        varTarget->set(oldValue - operandValue);
-                    }
-                    // Multiply itself by operand value
-                    else if (cmd[1].compare("*="))
-                    {
-                        varTarget->set(oldValue * operandValue);
-                    }
-                    // Perform real number division by operand value on itself
-                    else if (cmd[1].compare("/="))
-                    {
-                        if (operandValue == 0)
-                        {
-                            Program::errorDivisionByZero();
-                            return;
-                        }
-
-                        varTarget->set(oldValue / operandValue);
-                    }
-                    // Not a valid real operator
-                    else
-                    {
-                        Program::errorOperatorInvalid(cmd[1]);
+                        Program::errorDivisionByZero();
                         return;
                     }
+
+                    (*(REAL*)targetPtr) = oldValue / operandValue;
                 }
-                // Invalid right side operand symbol
+                // Not a valid real operator
                 else
                 {
+                    Program::errorOperatorInvalid(cmd[1]);
                     return;
                 }
 

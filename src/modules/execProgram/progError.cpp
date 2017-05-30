@@ -43,9 +43,9 @@ void Program::errorSymbolUnresolved(const string& strSymbol)
     strError.dispose();
 }
 
-void Program::errorTypesIncompatible(void)
+void Program::errorTypeUnexpected(void)
 {
-    Program::error("Variables do not have matching data types!");
+    Program::error("Unexpected data type!");
 }
 
 void Program::errorOperatorInvalid(const string& strOperator)
