@@ -534,6 +534,12 @@ void Program::executeCommand(void)
         Program::error("Unexpected \"return\" statement!");
         return;
     }
+    // "Press ENTER key to continue..." from the program code
+    else if (cmd[0].compare("pause") && cmd.size() == 1)
+    {
+        // Required the user to press the Enter key in order to continue the program execution
+        pause();
+    }
     // Increments an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("++"))
     {

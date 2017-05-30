@@ -52,6 +52,7 @@ bool Program::scanThrough(void)
             cmd[0].compare("read") ||
             cmd[0].compare("call") ||
             cmd[0].compare("return") ||
+            cmd[0].compare("pause") ||
             (cmd.size() == 2 && cmd[1].compare("++")) || // variable incrementation
             (cmd.size() == 2 && cmd[1].compare("--")) || // variable decrementation
             (cmd.size() >= 3 && cmd.size() <= 5 && cmd[1].contains("="))) // variable assignment

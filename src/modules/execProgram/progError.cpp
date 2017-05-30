@@ -72,14 +72,20 @@ void Program::errorScan(const size_t index)
     // Print the line index
     printint(index);
     newline();
+    
+    // Only print the content of the line if it's within the program
+    // If an error happens after the program is done executing, the line index is outside of the program
+    if (index < m_program.size())
+    {
+        // Print the line's content
+        string strLine = string::join(m_program.at(index), ' ');
+        print("\"");
+        sprint(strLine);
+        print("\"");
 
-    // Print the line content
-    string strLine = string::join(m_program.at(index), ' ');
-    print("\"");
-    sprint(strLine);
-    print("\"");
-    strLine.dispose();
-    newline();
+        strLine.dispose();
+        newline();
+    }
 }
 
 void Program::errorScan(const size_t index, const char* const message)
