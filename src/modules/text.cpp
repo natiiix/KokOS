@@ -1017,6 +1017,9 @@ void editor(void)
     // Otherwise the terminal would still display the content of the file
     // even though the editor has already been closed
     clear();
+
+    // Update the settings file to store the text editor color scheme
+    Settings::save();
 }
 
 void textEditorStart(const char* const filePath)

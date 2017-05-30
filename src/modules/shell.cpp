@@ -131,6 +131,10 @@ namespace Shell
 		{
 			cmd_exec(strArgs);
 		}
+		else if (strCmd.compare("color"))
+		{
+			cmd_color(strArgs);
+		}
 		else
 		{
 			print("Invalid command: \"");
