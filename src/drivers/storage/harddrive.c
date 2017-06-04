@@ -11,7 +11,7 @@ uint8_t hddCount = 0;
 
 char* getHddInfoStr(const uint8_t hddIdx)
 {
-    char* strInfo = mem_alloc(128);
+    char* strInfo = mem_dynalloc(128);
     size_t strIdx = 0;
 
     if (hddArray[hddIdx].type == HDD_TYPE_IDE)
@@ -83,7 +83,7 @@ uint8_t* hddRead(const uint8_t hddIdx, const uint64_t lba)
     }
     else if (hdd->type == HDD_TYPE_AHCI)
     {
-        uint8_t* buff = (uint8_t*)mem_alloc(0x200);
+        uint8_t* buff = (uint8_t*)mem_dynalloc(0x200);
         ahci_read((HBA_PORT*)hdd->addr, lba, 1, (uint16_t*)buff);
         return buff;
     }

@@ -56,7 +56,7 @@ bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
 char* getPartInfoStr(const uint8_t partIdx)
 {
     // Generate the partition info string
-    char* strInfo = mem_alloc(128);
+    char* strInfo = mem_dynalloc(128);
     size_t strIdx = 0;
 
     // OEM Name

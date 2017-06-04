@@ -47,7 +47,7 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
                     // Names match, return the directory entry
                     if (namesMatch)
                     {
-                        struct DIR_ENTRY* direntry = mem_alloc(sizeof(struct DIR_ENTRY));
+                        struct DIR_ENTRY* direntry = mem_dynalloc(sizeof(struct DIR_ENTRY));
                         mem_copy(&dirsec->entries[iEntry], direntry, sizeof(struct DIR_ENTRY));
 
                         mem_free(dirsec);
@@ -72,7 +72,7 @@ struct DIR_ENTRY* findEntry(const uint8_t partIdx, const uint32_t baseDirCluster
 struct FILE* generateFileStruct(const uint8_t partIdx, const struct DIR_ENTRY* const direntry)
 {
     // Allocate memory space to store the file structure
-    struct FILE* file = mem_alloc(sizeof(struct FILE));
+    struct FILE* file = mem_dynalloc(sizeof(struct FILE));
 
     // Convert the file name to a cstring
     char* strName = fileNameToString(&direntry->fileName[0]);
@@ -151,7 +151,7 @@ uint8_t* readFile(const struct FILE* const file)
     }
 
     // Allocate memory space for the file content
-    uint8_t* fileContent = mem_alloc(file->size + 1); // used to store the contents of the file
+    uint8_t* fileContent = mem_dynalloc(file->size + 1); // used to store the contents of the file
     size_t contentIdx = 0;
     bool fileEnd = false;
 
@@ -251,7 +251,7 @@ struct FILE* newEntry(const uint8_t partIdx, const uint32_t baseDir, const char*
     mem_free(dirsec);
 
     // Generate the FILE structure
-    struct FILE* file = mem_alloc(sizeof(struct FILE));
+    struct FILE* file = mem_dynalloc(sizeof(struct FILE));
 
     strcopy(name, &file->name[0]);
     file->partIdx = partIdx;
@@ -328,7 +328,7 @@ struct FILE* newDir(const uint8_t partIdx, const uint32_t baseDir, const char* c
 	uint64_t firstDirSector = clusterToSector(partIdx, dir->cluster);		
 	
 	// Allocate memory space to store the generated directory sector
-	struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)mem_alloc(0x200);
+	struct DIR_SECTOR* dirsec = (struct DIR_SECTOR*)mem_dynalloc(0x200);
 	
 	// First entry points to the directory itself
     // Standard stringToFileName() wouldn't allow us to write dots in the file name

@@ -69,7 +69,7 @@ char* tostr(const size_t input, const size_t base)
         }
     }
 
-    char* strptr = (char*)mem_alloc(length + 1);
+    char* strptr = (char*)mem_dynalloc(length + 1);
 
     for (size_t i = 0; i < length; i++)
     {
@@ -152,7 +152,7 @@ char* strcenter(const char* const str)
         linesCount++;
     }
 
-    char* strbuff = (char*)mem_alloc(VGA_HEIGHT * VGA_WIDTH);
+    char* strbuff = (char*)mem_dynalloc(VGA_HEIGHT * VGA_WIDTH);
     size_t buffIdx = 0;
 
     size_t marginTop = (VGA_HEIGHT / 2) - (linesCount / 2);
@@ -190,7 +190,7 @@ char* strjoin(const char* const str1, const char* const str2)
     size_t len1 = strlen(str1);
     size_t len2 = strlen(str2);
 
-    char* strout = (char*)mem_alloc(len1 + len2 + 1);
+    char* strout = (char*)mem_dynalloc(len1 + len2 + 1);
     size_t strIdx = 0;
 
     for (size_t i = 0; i < len1; i++)
@@ -290,7 +290,7 @@ size_t strlast(const char* const str, const char c)
 
 char* strfill(const char c, const size_t count)
 {
-    char* strFillChars = (char*)mem_alloc(count + 1);
+    char* strFillChars = (char*)mem_dynalloc(count + 1);
     strFillChars[count] = '\0';
     
     for (size_t i = 0; i < count; i++)
