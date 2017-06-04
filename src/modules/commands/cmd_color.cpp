@@ -1,4 +1,5 @@
 #include <c/stdio.h>
+#include <c/string.h>
 
 #include <cpp/string.hpp>
 #include <cpp/vector.hpp>
@@ -14,6 +15,22 @@ void cmd_color(const string& strArgs)
     {
         print("Invalid arguments!\n");
         print("Syntax: color <Background Color> <Foreground Color>\n");
+        
+        print("Colors:\n");
+        for (uint8_t i = 0; i < 16; i++)
+        {
+            char* strNum = tostr(i, 10);
+            print(strNum);
+            delete strNum;
+
+            print(" - ");
+
+            char* strName = colorToStr(i);
+            print(strName);
+            delete strName;
+
+            print("\n");
+        }
         
         vecArgs.dispose();
         return;

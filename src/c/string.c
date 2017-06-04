@@ -300,3 +300,81 @@ char* strfill(const char c, const size_t count)
 
     return strFillChars;
 }
+
+char* colorToStr(const uint8_t color)
+{
+    char* strColor = (char*)mem_dynalloc(32);
+
+    switch (color)
+    {
+        case 0x0:
+            strcopy("Black", strColor);
+            break;
+
+        case 0x1:
+            strcopy("Blue", strColor);
+            break;
+            
+        case 0x2:
+            strcopy("Green", strColor);
+            break;
+            
+        case 0x3:
+            strcopy("Cyan", strColor);
+            break;
+            
+        case 0x4:
+            strcopy("Red", strColor);
+            break;
+            
+        case 0x5:
+            strcopy("Magenta", strColor);
+            break;
+            
+        case 0x6:
+            strcopy("Brown", strColor);
+            break;
+            
+        case 0x7:
+            strcopy("Light Grey", strColor);
+            break;
+            
+        case 0x8:
+            strcopy("Dark Grey", strColor);
+            break;
+            
+        case 0x9:
+            strcopy("Light Blue", strColor);
+            break;
+            
+        case 0xA:
+            strcopy("Light Green", strColor);
+            break;
+            
+        case 0xB:
+            strcopy("Light Cyan", strColor);
+            break;
+            
+        case 0xC:
+            strcopy("Light Red", strColor);
+            break;
+            
+        case 0xD:
+            strcopy("Light Magenta", strColor);
+            break;
+            
+        case 0xE:
+            strcopy("Light Brown", strColor);
+            break;
+            
+        case 0xF:
+            strcopy("White", strColor);
+            break;
+
+        default:
+            strcopy("Unknown", strColor);
+            break;
+    }
+
+    return strColor;
+}

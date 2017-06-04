@@ -23,6 +23,7 @@ void strtolower(char* const str);
 size_t strfirst(const char* const str, const char c);
 size_t strlast(const char* const str, const char c);
 char* strfill(const char c, const size_t count);
+char* colorToStr(const uint8_t color);
 
 #if defined(__cplusplus)
 }
