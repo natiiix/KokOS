@@ -398,12 +398,13 @@ void setMenuLineColor(const size_t renderLine)
 // Renders the content of the menu screen
 void renderMenu()
 {
+    // Set the color scheme to the one used by the menu
+    setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
     clear(); // clear the screen
     setcursor(0, 25); // put the cursor out of the screen
 
     // Header line
     size_t lineIdx = 2;
-    setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
     printat("  -- MENU --", MENU_PADDING_LEFT, lineIdx);
 
     // Background Color setting line
