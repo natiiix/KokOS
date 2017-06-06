@@ -32,5 +32,6 @@ void kernel_main(void)
 	shell_init();
 
 	// This should be unreachable code
-	kernel_panic("End of kernel reached!");
+    static const char PANIC_MESSAGE[] = "End of kernel reached!";
+    kernel_panic(PANIC_MESSAGE);
 }

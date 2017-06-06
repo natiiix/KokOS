@@ -241,7 +241,8 @@ void* _alloc(const size_t length)
     debug_print("memory.c | _alloc() | Not enough space in the memory to perform the allocation!");
     debug_pause();
     // Further code execution might not be safe
-    kernel_panic("Failed to allocate the requested amount of memory space!");
+    static const char PANIC_MESSAGE[] = "Failed to allocate the requested amount of memory space!";
+    kernel_panic(PANIC_MESSAGE);
     return (void*)0;
 }
 
@@ -266,7 +267,8 @@ void mem_free(const void* const ptr)
         debug_print("memory.c | mem_free() | Can't free a nullptr!");
         debug_pause();
 
-        kernel_panic("Cannot unallocate memory space at nullptr!");
+        static const char PANIC_MESSAGE[] = "Cannot unallocate memory space at nullptr!";
+        kernel_panic(PANIC_MESSAGE);
         return;
     }
 
@@ -280,7 +282,8 @@ void mem_free(const void* const ptr)
         debug_print("memory.c | mem_free() | Can't free a pointer outside of memory boundaries!");
         debug_pause();
 
-        kernel_panic("Cannot unallocate memory space outside of memory boundaries!");
+        static const char PANIC_MESSAGE[] = "Cannot unallocate memory space outside of memory boundaries!";
+        kernel_panic(PANIC_MESSAGE);
         return;
     }
 
@@ -308,7 +311,8 @@ void mem_free(const void* const ptr)
     debug_print("memory.c | mem_free() | Pointer couldn't be freed because it wasn't found as allocated!");
     debug_pause();
 
-    kernel_panic("Cannot unallocate memory space that is not allocated!");
+    static const char PANIC_MESSAGE[] = "Cannot unallocate memory space that is not allocated!";
+    kernel_panic(PANIC_MESSAGE);
 }
 
 // Unsafe local extension of copy() that allows copying bytes from outside of the memory boundaries
@@ -389,7 +393,8 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
         debug_print("memory.c | mem_dynresize() | Pointer is outside of memory boundaries!");
         debug_pause();
 
-        kernel_panic("Cannot resize memory space outside the memory boundaries!");
+        static const char PANIC_MESSAGE[] = "Cannot resize memory space outside the memory boundaries!";
+        kernel_panic(PANIC_MESSAGE);
         return (void*)0;
     }
 
@@ -465,7 +470,8 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
     debug_print("memory.c | mem_dynresize() | Failed to resize a dynamic memory segment!");
     debug_pause();
 
-    kernel_panic("Failed to resize the memory space!");
+    static const char PANIC_MESSAGE[] = "Failed to resize the memory space!";
+    kernel_panic(PANIC_MESSAGE);
     return (void*)0;
 }
 

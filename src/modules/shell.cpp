@@ -377,7 +377,8 @@ void shell_init(void)
 
 	if (!partCount)
 	{
-		kernel_panic("Failed to initialize Shell!\nNo disk with a FAT partition detected!");
+		static const char PANIC_MESSAGE[] = "Failed to initialize Shell!\nNo disk with a FAT partition detected!";
+		kernel_panic(PANIC_MESSAGE);
 	}
 
 	Shell::activePart = 0;
