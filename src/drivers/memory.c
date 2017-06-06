@@ -4,21 +4,22 @@
 #include <kernel.h>
 
 // Memory size constants
-#define MEMORY_SIZE_BYTES (4 << 20)
-#define MEMORY_SIZE_IN_TYPE (4 << 18) // SIZE / 4 (memory uses 4 Byte integer type)
+#define MEMORY_SIZE_MEGABYTES 0x1
+#define MEMORY_SIZE_BYTES (MEMORY_SIZE_MEGABYTES << 20)
+#define MEMORY_SIZE_IN_TYPE (MEMORY_SIZE_MEGABYTES << 18) // SIZE / 4 (memory uses 4 Byte integer type)
 #define MEMORY_USED_BYTES_PER_ELEMENT 0x20 // 32 bit integer type used for memory usage
-#define MEMORY_USED_SIZE (4 << 15) // SIZE / 32 (memory uses 32 bit integer type)
+#define MEMORY_USED_SIZE (MEMORY_SIZE_MEGABYTES << 15) // SIZE / 32 (memused uses 32 bit integer type)
 
 // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
-#define DYNAMIC_SEGMENT_SIZE 0x10
-#define DYNAMIC_SEGMENT_LIMIT (4 << 16) // memory size in Bytes / segment size
+#define DYNAMIC_SEGMENT_SIZE 0x20
+#define DYNAMIC_SEGMENT_LIMIT (MEMORY_SIZE_MEGABYTES << 15) // memory size in Bytes / segment size
 
-uint32_t memory[MEMORY_SIZE_IN_TYPE];
-uint32_t memused[MEMORY_USED_SIZE];
-size_t memstartbyte = (size_t)&memory[0];
+static uint32_t memory[MEMORY_SIZE_IN_TYPE];
+static uint32_t memused[MEMORY_USED_SIZE];
+static size_t memstartbyte = (size_t)memory;
 
-size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
-size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
+static size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
+static size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
 
 void mem_init(void)
 {
@@ -154,7 +155,7 @@ size_t _toreladdressptr(const void* const ptr)
 }
 
 // Same as _statsegstore() except for dynamic memory segment
-bool _dynsegstore(const size_t beginrel, const size_t length)
+void _dynsegstore(const size_t beginrel, const size_t length)
 {
     for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
     {
@@ -164,14 +165,17 @@ bool _dynsegstore(const size_t beginrel, const size_t length)
             dynsegbegin[i] = beginrel;
             dynseglen[i] = length;
             // New dynamic segment has been stored successfully
-            return true;
+            return;
         }
     }
 
     // The dynamic segment storage is already full
     // Couldn't store another segment
     debug_print("memory.c | _dynsegstore() | Couldn't store another dynamic memory segment!");
-    return false;
+    debug_pause();
+
+    static const char PANIC_MESSAGE[] = "Unable to store new dynamic memory segment!";
+    kernel_panic(PANIC_MESSAGE);
 }
 
 // Finds a segments by its relative beginning address and returns its length
@@ -190,6 +194,10 @@ size_t _seglen(const size_t beginrel)
 
     // Segment not found
     debug_print("memory.c | _seglen() | Memory segment couldn't be found!");
+    debug_pause();
+
+    static const char PANIC_MESSAGE[] = "Unable to find specified memory segment!";
+    kernel_panic(PANIC_MESSAGE);
     return 0;
 }
 
@@ -201,6 +209,10 @@ void* _alloc(const size_t length)
     if (length == 0)
     {
         debug_print("memory.c | _alloc() | Can't allocate an empty space!");
+        debug_pause();
+
+        static const char PANIC_MESSAGE[] = "Cannot allocate zero bytes of memory space!";
+        kernel_panic(PANIC_MESSAGE);
         return (void*)0;
     }
 
@@ -357,7 +369,7 @@ size_t _dynfindsize(const size_t segsize)
 void* mem_dynalloc(const size_t initsize)
 {
     size_t allocsize = _dynfindsize(initsize);
-    void* allocptr = _alloc(allocsize);
+    void* allocptr = _alloc(allocsize);    
     _dynsegstore(_toreladdressptr(allocptr), allocsize);
     return allocptr;
 }
