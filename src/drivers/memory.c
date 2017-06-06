@@ -5,20 +5,16 @@
 
 // Memory size constants
 #define MEMORY_SIZE_BYTES (4 << 20)
-#define MEMORY_SIZE_IN_SIZE_T (MEMORY_SIZE_BYTES / sizeof(size_t))
-#define MEMORY_USED_BYTES_PER_ELEMENT (sizeof(size_t) * 8)
-#define MEMORY_USED_SIZE (MEMORY_SIZE_BYTES / MEMORY_USED_BYTES_PER_ELEMENT)
+#define MEMORY_SIZE_IN_TYPE (4 << 18) // SIZE / 4 (memory uses 4 Byte integer type)
+#define MEMORY_USED_BYTES_PER_ELEMENT 32 // 32 bit integer used
+#define MEMORY_USED_SIZE (4 << 15) // SIZE / 32 (memory uses 32 bit integer type)
 
 // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
 #define DYNAMIC_SEGMENT_SIZE 0x10
 #define DYNAMIC_SEGMENT_LIMIT (MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE)
 
-size_t mapPage = 0;
-size_t* pageTable = (size_t*)0;
-size_t pageCount = 0;
-
-size_t memory[MEMORY_SIZE_IN_SIZE_T]    __attribute__((aligned(0x1000)));
-size_t memused[MEMORY_USED_SIZE]        __attribute__((aligned(0x1000)));
+uint32_t memory[MEMORY_SIZE_IN_TYPE];
+uint32_t memused[MEMORY_USED_SIZE];
 size_t memstartbyte = (size_t)&memory[0];
 
 size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
@@ -27,7 +23,7 @@ size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
 void mem_init(void)
 {
     // Clear the memory
-    for (size_t i = 0; i < MEMORY_SIZE_IN_SIZE_T; i++)
+    for (size_t i = 0; i < MEMORY_SIZE_IN_TYPE; i++)
     {
         memory[i] = 0;
     }
@@ -243,6 +239,9 @@ void* _alloc(const size_t length)
 
     // There isn't enough space in the memory to allocate the desired amout of bytes
     debug_print("memory.c | _alloc() | Not enough space in the memory to perform the allocation!");
+    debug_pause();
+    // Further code execution might not be safe
+    kernel_panic("Failed to allocate the requested amount of memory space!");
     return (void*)0;
 }
 
@@ -262,7 +261,12 @@ void mem_free(const void* const ptr)
 {
     if (!ptr)
     {
+        // This should never occurr under standard circumstances
+        // There must be something wrong and further damage must be prevented
         debug_print("memory.c | mem_free() | Can't free a nullptr!");
+        debug_pause();
+
+        kernel_panic("Cannot unallocate memory space at nullptr!");
         return;
     }
 
@@ -272,7 +276,11 @@ void mem_free(const void* const ptr)
     // If the pointer points outside the memory boundaries it should be ignored
     if (!_inmemory(ptrbyte))
     {
+        // Same as the free(nullptr) case, it should never happen in correct code
         debug_print("memory.c | mem_free() | Can't free a pointer outside of memory boundaries!");
+        debug_pause();
+
+        kernel_panic("Cannot unallocate memory space outside of memory boundaries!");
         return;
     }
 
@@ -295,7 +303,12 @@ void mem_free(const void* const ptr)
         }
     }
 
+    // Attempt to free memory space that was not allocated
+    // There must be something wrong with the code if this happens
     debug_print("memory.c | mem_free() | Pointer couldn't be freed because it wasn't found as allocated!");
+    debug_pause();
+
+    kernel_panic("Cannot unallocate memory space that is not allocated!");
 }
 
 // Unsafe local extension of copy() that allows copying bytes from outside of the memory boundaries
@@ -374,6 +387,9 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
     if (!_inmemoryptr(ptr))
     {
         debug_print("memory.c | mem_dynresize() | Pointer is outside of memory boundaries!");
+        debug_pause();
+
+        kernel_panic("Cannot resize memory space outside the memory boundaries!");
         return (void*)0;
     }
 
@@ -447,6 +463,9 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
     }
 
     debug_print("memory.c | mem_dynresize() | Failed to resize a dynamic memory segment!");
+    debug_pause();
+
+    kernel_panic("Failed to resize the memory space!");
     return (void*)0;
 }
 
