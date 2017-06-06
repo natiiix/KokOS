@@ -16,6 +16,10 @@ void debug_memusage(void)
     #endif
 }
 
+#ifndef DEBUG
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 // Proper debug string format: "<file> | <function> | <message>"
 void debug_print(const char* const str)
 {
@@ -26,6 +30,9 @@ void debug_print(const char* const str)
 
     #endif
 }
+#ifndef DEBUG
+    #pragma GCC diagnostic pop
+#endif
 
 void debug_pause(void)
 {
