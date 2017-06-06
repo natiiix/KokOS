@@ -986,7 +986,6 @@ void textEditorStart(const char* const filePath)
     }
 
     // Lets us see all the debug messages that are displayed before the editors clears the screen
-    debug_memusage();
     debug_pause();
 
     // Start the editor itself

@@ -9,9 +9,9 @@ void debug_memusage(void)
     #ifdef DEBUG
 
     term_write("Memory used: 0x", false);
-    term_write(tostr(mem_used(), 16), true);
+    term_write(tostr(mem_used(), 0x10), true);
     term_write(" | empty: 0x", false);
-    term_writeline(tostr(mem_empty(), 16), true);
+    term_writeline(tostr(mem_empty(), 0x10), true);
 
     #endif
 }
@@ -31,6 +31,7 @@ void debug_pause(void)
 {
     #ifdef DEBUG
 
+    debug_memusage();
     term_pause();
 
     #endif

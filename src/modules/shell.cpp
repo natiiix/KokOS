@@ -363,7 +363,7 @@ extern "C"
 void shell_init(void)
 {
 	// Used to make sure there is no memory leaking during kernel initialization
-	debug_memusage();
+	//debug_memusage(); // debug_memusage() is now part of debug_pause()
 	// Give the user a chance to see kernel initialization messages
 	debug_pause();
 

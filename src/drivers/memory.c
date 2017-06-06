@@ -6,12 +6,12 @@
 // Memory size constants
 #define MEMORY_SIZE_BYTES (4 << 20)
 #define MEMORY_SIZE_IN_TYPE (4 << 18) // SIZE / 4 (memory uses 4 Byte integer type)
-#define MEMORY_USED_BYTES_PER_ELEMENT 32 // 32 bit integer used
+#define MEMORY_USED_BYTES_PER_ELEMENT 0x20 // 32 bit integer type used for memory usage
 #define MEMORY_USED_SIZE (4 << 15) // SIZE / 32 (memory uses 32 bit integer type)
 
 // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
 #define DYNAMIC_SEGMENT_SIZE 0x10
-#define DYNAMIC_SEGMENT_LIMIT (MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE)
+#define DYNAMIC_SEGMENT_LIMIT (4 << 16) // memory size in Bytes / segment size
 
 uint32_t memory[MEMORY_SIZE_IN_TYPE];
 uint32_t memused[MEMORY_USED_SIZE];
