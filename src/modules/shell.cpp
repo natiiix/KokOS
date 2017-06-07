@@ -11,6 +11,7 @@
 
 #include <drivers/storage/fat.h>
 #include <modules/commands.hpp>
+#include <modules/settings.hpp>
 
 namespace Shell
 {
@@ -18,11 +19,15 @@ namespace Shell
 	uint32_t activeDir; // first cluster of the active directory
 
 	string shellPrefix;
-	bool diskToolsEnabled; // false if there are no FAT partitions available
 	vector<string> pathStructure;
 
 	vector<string> cmdHistory;
 	uint8_t historyIdx;
+
+	void updateColorScheme(void)
+	{
+		setcolor((VGA_COLOR)Settings::Shell_Foreground, (VGA_COLOR)Settings::Shell_Background);
+	}
 
 	void process(const string& strInput)
 	{
@@ -123,6 +128,10 @@ namespace Shell
 		else if (strCmd.compare("exec"))
 		{
 			cmd_exec(strArgs);
+		}
+		else if (strCmd.compare("color"))
+		{
+			cmd_color(strArgs);
 		}
 		else
 		{
@@ -330,24 +339,21 @@ namespace Shell
 	void _update_prefix(void)
 	{
 		shellPrefix.clear();
+		
+		string activePath = string::join(pathStructure, '/', true);
 
-		if (diskToolsEnabled)
+		shellPrefix.push_back('A' + activePart);
+		shellPrefix.push_back(':');
+		
+		if (activePath.size())
 		{
-			string activePath = string::join(pathStructure, '/', true);
-
-			shellPrefix.push_back('A' + activePart);
-			shellPrefix.push_back(':');
-			
-			if (activePath.size())
-			{
-				shellPrefix.push_back('/');
-			}
-			
-			shellPrefix.push_back(activePath);
 			shellPrefix.push_back('/');
-
-			activePath.dispose();
 		}
+		
+		shellPrefix.push_back(activePath);
+		shellPrefix.push_back('/');
+
+		activePath.dispose();
 
 		shellPrefix.push_back('>');
 	}
@@ -357,7 +363,7 @@ extern "C"
 void shell_init(void)
 {
 	// Used to make sure there is no memory leaking during kernel initialization
-	debug_memusage();
+	//debug_memusage(); // debug_memusage() is now part of debug_pause()
 	// Give the user a chance to see kernel initialization messages
 	debug_pause();
 
@@ -369,21 +375,20 @@ void shell_init(void)
 	Shell::cmdHistory = vector<string>();
 	Shell::historyIdx = Shell::HISTORY_INDEX_DEFAULT;
 
-	Shell::diskToolsEnabled = (partCount > 0);
+	if (!partCount)
+	{
+		static const char PANIC_MESSAGE[] = "Failed to initialize Shell!\nNo disk with a FAT partition detected!";
+		kernel_panic(PANIC_MESSAGE);
+	}
 
-	if (Shell::diskToolsEnabled)
-	{
-		Shell::activePart = 0;
-		Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
-		Shell::pathStructure.clear();
-		Shell::_update_prefix();
-	}
-	else
-	{
-		debug_print("shell.cpp | shell_init() | Disk tools disabled!");
-		Shell::shellPrefix.clear();
-		Shell::shellPrefix.push_back('>');
-	}
+	Shell::activePart = 0;
+	Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
+	Shell::pathStructure.clear();
+	Shell::_update_prefix();
+
+	// Load settings
+	Settings::load();
+	Shell::updateColorScheme();
 
     while (true)
     {

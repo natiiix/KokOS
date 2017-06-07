@@ -152,7 +152,7 @@ void setupLBA48(const enum BUS bus, const enum DRIVE drive, const uint64_t addr)
 
 uint8_t* readLBA(const enum BUS bus)
 {
-    uint8_t* ptrBuff = (uint8_t*)mem_alloc(512);
+    uint8_t* ptrBuff = (uint8_t*)mem_dynalloc(512);
     uint16_t tmpword = 0;
 
     awaitStatus(bus, STATUS_REQUEST_READY);

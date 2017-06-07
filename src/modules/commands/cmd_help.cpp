@@ -20,6 +20,7 @@ void cmd_help(const string& strArgs)
     print("<Partition Letter>: - Changes active partition\n");
     print("cd <Directory Path> - Changes active directory\n");
     print("clear - Clears the terminal screen\n");
+    print("color <Background Color> <Foreground Color> - Changes color scheme of shell\n");
     print("copy <Source File Path> <Target File Path> - Copies source file to target path\n");
     print("delete <File/Directory Path> - Deletes file or directory\n");
     print("dir [Directory Path] - Displays content of directory\n");

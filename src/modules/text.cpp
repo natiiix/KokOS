@@ -10,7 +10,8 @@
 #include <drivers/io/keyboard_global.h>
 
 #include <drivers/storage/fat.h>
-#include <modules/shell_global.hpp>
+#include <modules/shell.hpp>
+#include <modules/settings.hpp>
 
 #include <kernel.h>
 
@@ -42,8 +43,6 @@ bool m_renderRequired;
 
 // Used for VGA buffer filling
 uint16_t m_colorScheme;
-uint8_t m_colBG;
-uint8_t m_colFG;
 
 enum EDITOR_SCREEN
 {
@@ -294,91 +293,11 @@ uint8_t colorDown(const uint8_t oldColor)
     }
 }
 
-// Used in menu mode
-// Generates a cstring containing the name of a color from its value
-char* colorToStr(const uint8_t color)
-{
-    char* strColor = (char*)malloc(32);
-
-    switch (color)
-    {
-        case 0x0:
-            strcopy("Black", strColor);
-            break;
-
-        case 0x1:
-            strcopy("Blue", strColor);
-            break;
-            
-        case 0x2:
-            strcopy("Green", strColor);
-            break;
-            
-        case 0x3:
-            strcopy("Cyan", strColor);
-            break;
-            
-        case 0x4:
-            strcopy("Red", strColor);
-            break;
-            
-        case 0x5:
-            strcopy("Magenta", strColor);
-            break;
-            
-        case 0x6:
-            strcopy("Brown", strColor);
-            break;
-            
-        case 0x7:
-            strcopy("Light Grey", strColor);
-            break;
-            
-        case 0x8:
-            strcopy("Dark Grey", strColor);
-            break;
-            
-        case 0x9:
-            strcopy("Light Blue", strColor);
-            break;
-            
-        case 0xA:
-            strcopy("Light Green", strColor);
-            break;
-            
-        case 0xB:
-            strcopy("Light Cyan", strColor);
-            break;
-            
-        case 0xC:
-            strcopy("Light Red", strColor);
-            break;
-            
-        case 0xD:
-            strcopy("Light Magenta", strColor);
-            break;
-            
-        case 0xE:
-            strcopy("Light Brown", strColor);
-            break;
-            
-        case 0xF:
-            strcopy("White", strColor);
-            break;
-
-        default:
-            strcopy("Unknown", strColor);
-            break;
-    }
-
-    return strColor;
-}
-
 // Used when exitting menu mode
 // Updates the color scheme used in editor mode
 void updateColorScheme(void)
 {
-    m_colorScheme = (((uint16_t)m_colBG) << 12) | (((uint16_t)m_colFG) << 8);
+    m_colorScheme = (((uint16_t)Settings::TextEditor_Background) << 12) | (((uint16_t)Settings::TextEditor_Foreground) << 8);
 }
 
 // Used in menu mode
@@ -399,6 +318,8 @@ void setMenuLineColor(const size_t renderLine)
 // Renders the content of the menu screen
 void renderMenu()
 {
+    // Set the color scheme to the one used by the menu
+    setcolor((VGA_COLOR)MENU_COLOR_DEFAULT_FG, (VGA_COLOR)MENU_COLOR_DEFAULT_BG);
     clear(); // clear the screen
     setcursor(0, 25); // put the cursor out of the screen
 
@@ -410,7 +331,7 @@ void renderMenu()
     lineIdx += 4;
     setMenuLineColor(0);
     printat("Background Color: ", MENU_PADDING_LEFT, lineIdx);
-    char* strBG = colorToStr(m_colBG);
+    char* strBG = colorToStr(Settings::TextEditor_Background);
     printat(strBG, MENU_PADDING_LEFT + 18, lineIdx);
     delete strBG;
 
@@ -418,7 +339,7 @@ void renderMenu()
     lineIdx += 2;
     setMenuLineColor(1);
     printat("Foreground Color: ", MENU_PADDING_LEFT, lineIdx);
-    char* strFG = colorToStr(m_colFG);
+    char* strFG = colorToStr(Settings::TextEditor_Foreground);
     printat(strFG, MENU_PADDING_LEFT + 18, lineIdx);
     delete strFG;
 
@@ -892,11 +813,11 @@ void screenMenu(void)
                 switch (m_menuLine)
                 {
                     case 0:
-                        m_colBG = colorDown(m_colBG);
+                        Settings::TextEditor_Background = colorDown(Settings::TextEditor_Background);
                         break;
 
                     case 1:
-                        m_colFG = colorDown(m_colFG);
+                        Settings::TextEditor_Foreground = colorDown(Settings::TextEditor_Foreground);
                         break;
 
                     default:
@@ -909,11 +830,11 @@ void screenMenu(void)
                 switch (m_menuLine)
                 {
                     case 0:
-                        m_colBG = colorUp(m_colBG);
+                        Settings::TextEditor_Background = colorUp(Settings::TextEditor_Background);
                         break;
 
                     case 1:
-                        m_colFG = colorUp(m_colFG);
+                        Settings::TextEditor_Foreground = colorUp(Settings::TextEditor_Foreground);
                         break;
 
                     default:
@@ -978,9 +899,7 @@ void presetVariables(void)
 
     m_modified = false;
 
-    // Same as terminal (black background, grey foreground)
-    m_colBG = 0x0;
-    m_colFG = 0x7;
+    // Background and foreground color are stored in Settings module
     updateColorScheme();
 
     m_screen = SCREEN_TEXT;
@@ -1020,6 +939,11 @@ void editor(void)
     // Otherwise the terminal would still display the content of the file
     // even though the editor has already been closed
     clear();
+
+    // Update the settings file to store the text editor color scheme
+    Settings::save();
+    // Revert the color scheme back to the one used by shell
+    Shell::updateColorScheme();
 }
 
 void textEditorStart(const char* const filePath)
@@ -1062,7 +986,6 @@ void textEditorStart(const char* const filePath)
     }
 
     // Lets us see all the debug messages that are displayed before the editors clears the screen
-    debug_memusage();
     debug_pause();
 
     // Start the editor itself

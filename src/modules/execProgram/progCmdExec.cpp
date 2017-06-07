@@ -1,4 +1,5 @@
 #include <modules/exec.hpp>
+#include <modules/shell.hpp>
 #include <c/stdio.h>
 
 void Program::executeCommand(void)
@@ -533,6 +534,39 @@ void Program::executeCommand(void)
         // Ran out of scope levels before finding the subroutine call
         Program::error("Unexpected \"return\" statement!");
         return;
+    }
+    // "Press ENTER key to continue..." from the program code
+    else if (cmd[0].compare("pause") && cmd.size() == 1)
+    {
+        // Display memory usage (used during Exec development to make it easier to find memory leaks)
+        debug_memusage();
+        // Required the user to press the Enter key in order to continue the program execution
+        pause();
+    }
+    // Execution of shell command programatically
+    else if (cmd[0].compare("shell") && cmd.size() > 1)
+    {
+        string strShellCommand;
+        strShellCommand.clear();
+
+        // Copy the shell command to the string to be passed to the process function
+        size_t cmdsize = cmd.size() - 1;
+        for (size_t i = 0; i < cmdsize; i++)
+        {
+            // Put spaces in between of the words
+            if (i)
+            {
+                strShellCommand.push_back(' ');
+            }
+
+            // Copy the command words one by one
+            strShellCommand.push_back(cmd.at(1 + i));
+        }
+
+        // Let the Shell module process the command
+        Shell::process(strShellCommand);
+
+        strShellCommand.dispose();
     }
     // Increments an integer variable
     else if (cmd.size() == 2 && cmd[1].compare("++"))

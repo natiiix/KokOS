@@ -228,7 +228,7 @@ char* fileNameToString(const char* const fileName)
     // If there is an extension we need to separate it from file name using '.'
     // otherwise we just need space for the terminator character '\0'
     size_t totallen = namelen + extlen + (extlen ? 2 : 1);
-    char* strName = mem_alloc(totallen);
+    char* strName = mem_dynalloc(totallen);
 
     // Copy the file name to the output string
     for (size_t i = 0; i < namelen; i++)
@@ -570,7 +570,7 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	else
 	{
 		// Allocate space for the directory path
-		char* pathDir = mem_alloc(lastSlashIdx + 2);
+		char* pathDir = mem_dynalloc(lastSlashIdx + 2);
 		
 		// Copy the directory path
         mem_copy(pathFull, pathDir, lastSlashIdx + 1);
@@ -591,7 +591,7 @@ bool extractPath(const uint8_t partIdx, const uint32_t baseDir, const char* cons
 	if (namelen)
 	{
 		// Allocate space for the name string
-		char* pathName = mem_alloc(namelen + 1);
+		char* pathName = mem_dynalloc(namelen + 1);
 		// Copy the name from the original path to the name string
         for (size_t i = 0; i < namelen; i++)
         {

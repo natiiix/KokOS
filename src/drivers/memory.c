@@ -3,52 +3,28 @@
 #include <drivers/io/terminal.h>
 #include <kernel.h>
 
-/*// Memory size constants
-const size_t MEMORY_SIZE_BYTES = 4 << 20;
-const size_t MEMORY_SIZE_IN_SIZE_T = MEMORY_SIZE_BYTES / sizeof(size_t);
-const size_t MEMORY_USED_BYTES_PER_ELEMENT = sizeof(size_t) * 8;
-const size_t MEMORY_USED_SIZE = MEMORY_SIZE_BYTES / MEMORY_USED_BYTES_PER_ELEMENT;
-
-// Used for non-string memory allocations
-// Makes it possible to perform operations without specifying length of the segment
-const size_t STATIC_SEGMENT_LIMIT = 1024;
-
-// Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
-const size_t DYNAMIC_SEGMENT_SIZE = 256;
-const size_t DYNAMIC_SEGMENT_LIMIT = MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE;*/
-
 // Memory size constants
-#define MEMORY_SIZE_BYTES (4 << 20)
-#define MEMORY_SIZE_IN_SIZE_T (MEMORY_SIZE_BYTES / sizeof(size_t))
-#define MEMORY_USED_BYTES_PER_ELEMENT (sizeof(size_t) * 8)
-#define MEMORY_USED_SIZE (MEMORY_SIZE_BYTES / MEMORY_USED_BYTES_PER_ELEMENT)
-
-// Used for non-string memory allocations
-// Makes it possible to perform operations without specifying length of the segment
-#define STATIC_SEGMENT_LIMIT 1024
+#define MEMORY_SIZE_MEGABYTES 0x1
+#define MEMORY_SIZE_BYTES (MEMORY_SIZE_MEGABYTES << 20)
+#define MEMORY_SIZE_IN_TYPE (MEMORY_SIZE_MEGABYTES << 18) // SIZE / 4 (memory uses 4 Byte integer type)
+#define MEMORY_USED_BYTES_PER_ELEMENT 0x20 // 32 bit integer type used for memory usage
+#define MEMORY_USED_SIZE (MEMORY_SIZE_MEGABYTES << 15) // SIZE / 32 (memused uses 32 bit integer type)
 
 // Dynamic memory is being allocated / deallocated DYNAMIC_SEGMENT_SIZE bytes at a time
-#define DYNAMIC_SEGMENT_SIZE 0x10
-#define DYNAMIC_SEGMENT_LIMIT (MEMORY_SIZE_BYTES / DYNAMIC_SEGMENT_SIZE)
+#define DYNAMIC_SEGMENT_SIZE 0x20
+#define DYNAMIC_SEGMENT_LIMIT (MEMORY_SIZE_MEGABYTES << 15) // memory size in Bytes / segment size
 
-size_t mapPage = 0;
-size_t* pageTable = (size_t*)0;
-size_t pageCount = 0;
+static uint32_t memory[MEMORY_SIZE_IN_TYPE];
+static uint32_t memused[MEMORY_USED_SIZE];
+static size_t memstartbyte = (size_t)memory;
 
-size_t memory[MEMORY_SIZE_IN_SIZE_T]    __attribute__((aligned(0x1000)));
-size_t memused[MEMORY_USED_SIZE]        __attribute__((aligned(0x1000)));
-size_t memstartbyte = (size_t)&memory[0];
-
-size_t statsegbegin[STATIC_SEGMENT_LIMIT];
-size_t statseglen[STATIC_SEGMENT_LIMIT];
-
-size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
-size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
+static size_t dynsegbegin[DYNAMIC_SEGMENT_LIMIT];
+static size_t dynseglen[DYNAMIC_SEGMENT_LIMIT];
 
 void mem_init(void)
 {
     // Clear the memory
-    for (size_t i = 0; i < MEMORY_SIZE_IN_SIZE_T; i++)
+    for (size_t i = 0; i < MEMORY_SIZE_IN_TYPE; i++)
     {
         memory[i] = 0;
     }
@@ -57,13 +33,6 @@ void mem_init(void)
     for (size_t i = 0; i < MEMORY_USED_SIZE; i++)
     {
         memused[i] = 0;
-    }
-
-    // Clear the static segment storage
-    for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
-    {
-        statsegbegin[i] = 0;
-        statseglen[i] = 0;
     }
 
     // Clear the dynamic segment storage
@@ -185,31 +154,8 @@ size_t _toreladdressptr(const void* const ptr)
     return (size_t)ptr - memstartbyte;
 }
 
-// Stores information about a new static memory segment
-// beginrel - relative address of the first byte of the segment
-// length - length of the segment
-bool _statsegstore(const size_t beginrel, const size_t length)
-{
-    for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
-    {
-        // Find empty spot in the static segment storage
-        if (!statseglen[i])
-        {
-            statsegbegin[i] = beginrel;
-            statseglen[i] = length;
-            // New static segment has been stored successfully
-            return true;
-        }
-    }
-
-    // The static segment storage is already full
-    // Couldn't store another segment
-    debug_print("memory.c | _statsegstore() | Couldn't store another static memory segment!");
-    return false;
-}
-
 // Same as _statsegstore() except for dynamic memory segment
-bool _dynsegstore(const size_t beginrel, const size_t length)
+void _dynsegstore(const size_t beginrel, const size_t length)
 {
     for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
     {
@@ -219,30 +165,22 @@ bool _dynsegstore(const size_t beginrel, const size_t length)
             dynsegbegin[i] = beginrel;
             dynseglen[i] = length;
             // New dynamic segment has been stored successfully
-            return true;
+            return;
         }
     }
 
     // The dynamic segment storage is already full
     // Couldn't store another segment
     debug_print("memory.c | _dynsegstore() | Couldn't store another dynamic memory segment!");
-    return false;
+    debug_pause();
+
+    static const char PANIC_MESSAGE[] = "Unable to store new dynamic memory segment!";
+    kernel_panic(PANIC_MESSAGE);
 }
 
 // Finds a segments by its relative beginning address and returns its length
 size_t _seglen(const size_t beginrel)
 {
-    // Scan through static memory segments
-    for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
-    {
-        // Find the segment with specified beginning address in segment storage
-        if (statsegbegin[i] == beginrel && statseglen[i] > 0)
-        {
-            // Segment found, return its length
-            return statseglen[i];
-        }
-    }
-
     // Scan through dynamic memory segments
     for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
     {
@@ -256,12 +194,14 @@ size_t _seglen(const size_t beginrel)
 
     // Segment not found
     debug_print("memory.c | _seglen() | Memory segment couldn't be found!");
+    debug_pause();
+
+    static const char PANIC_MESSAGE[] = "Unable to find specified memory segment!";
+    kernel_panic(PANIC_MESSAGE);
     return 0;
 }
 
-// Extension for the alloc() function that allows not to store the newly create static segment
-// because it's unnecessary for strings as they should always end with the '\0' character
-// Also used by dynalloc() to avoid redundant code
+// Used by dynalloc() to avoid redundant code
 // _alloc() shall NOT be accessed externally, it should be only used locally for the sake of safety
 void* _alloc(const size_t length)
 {
@@ -269,6 +209,10 @@ void* _alloc(const size_t length)
     if (length == 0)
     {
         debug_print("memory.c | _alloc() | Can't allocate an empty space!");
+        debug_pause();
+
+        static const char PANIC_MESSAGE[] = "Cannot allocate zero bytes of memory space!";
+        kernel_panic(PANIC_MESSAGE);
         return (void*)0;
     }
 
@@ -307,17 +251,11 @@ void* _alloc(const size_t length)
 
     // There isn't enough space in the memory to allocate the desired amout of bytes
     debug_print("memory.c | _alloc() | Not enough space in the memory to perform the allocation!");
+    debug_pause();
+    // Further code execution might not be safe
+    static const char PANIC_MESSAGE[] = "Failed to allocate the requested amount of memory space!";
+    kernel_panic(PANIC_MESSAGE);
     return (void*)0;
-}
-
-// Allocates space in memory and returns a pointer to the beginning of recently allocated space
-// length - amount of bytes to allocate
-void* mem_alloc(const size_t length)
-{
-    void* allocptr = _alloc(length);
-    size_t allocbyte = _toreladdressptr(allocptr);
-    _statsegstore(allocbyte, length);
-    return allocptr;
 }
 
 // Internal function used for unallocating space in memory
@@ -336,7 +274,13 @@ void mem_free(const void* const ptr)
 {
     if (!ptr)
     {
+        // This should never occurr under standard circumstances
+        // There must be something wrong and further damage must be prevented
         debug_print("memory.c | mem_free() | Can't free a nullptr!");
+        debug_pause();
+
+        static const char PANIC_MESSAGE[] = "Cannot unallocate memory space at nullptr!";
+        kernel_panic(PANIC_MESSAGE);
         return;
     }
 
@@ -346,28 +290,17 @@ void mem_free(const void* const ptr)
     // If the pointer points outside the memory boundaries it should be ignored
     if (!_inmemory(ptrbyte))
     {
+        // Same as the free(nullptr) case, it should never happen in correct code
         debug_print("memory.c | mem_free() | Can't free a pointer outside of memory boundaries!");
+        debug_pause();
+
+        static const char PANIC_MESSAGE[] = "Cannot unallocate memory space outside of memory boundaries!";
+        kernel_panic(PANIC_MESSAGE);
         return;
     }
 
     // Calculate the relative address of the beginning of the segment
     size_t beginrel = _toreladdress(ptrbyte);
-
-    // First the program assumes the memory to be freed is a static non-string segment
-    for (size_t i = 0; i < STATIC_SEGMENT_LIMIT; i++)
-    {
-        // Find the segment with specified beginning address in segment storage
-        if (statsegbegin[i] == beginrel && statseglen[i] > 0)
-        {
-            _free(beginrel, statseglen[i]);
-
-            statsegbegin[i] = 0;
-            statseglen[i] = 0;
-
-            // Static segment has successfully been found and deleted
-            return;
-        }
-    }
 
     // If there is no such static segment it will now assume it may be a dynamic segment
     for (size_t i = 0; i < DYNAMIC_SEGMENT_LIMIT; i++)
@@ -385,7 +318,13 @@ void mem_free(const void* const ptr)
         }
     }
 
+    // Attempt to free memory space that was not allocated
+    // There must be something wrong with the code if this happens
     debug_print("memory.c | mem_free() | Pointer couldn't be freed because it wasn't found as allocated!");
+    debug_pause();
+
+    static const char PANIC_MESSAGE[] = "Cannot unallocate memory space that is not allocated!";
+    kernel_panic(PANIC_MESSAGE);
 }
 
 // Unsafe local extension of copy() that allows copying bytes from outside of the memory boundaries
@@ -430,7 +369,7 @@ size_t _dynfindsize(const size_t segsize)
 void* mem_dynalloc(const size_t initsize)
 {
     size_t allocsize = _dynfindsize(initsize);
-    void* allocptr = _alloc(allocsize);
+    void* allocptr = _alloc(allocsize);    
     _dynsegstore(_toreladdressptr(allocptr), allocsize);
     return allocptr;
 }
@@ -464,6 +403,10 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
     if (!_inmemoryptr(ptr))
     {
         debug_print("memory.c | mem_dynresize() | Pointer is outside of memory boundaries!");
+        debug_pause();
+
+        static const char PANIC_MESSAGE[] = "Cannot resize memory space outside the memory boundaries!";
+        kernel_panic(PANIC_MESSAGE);
         return (void*)0;
     }
 
@@ -537,6 +480,10 @@ void* mem_dynresize(void* const ptr, const size_t newsize)
     }
 
     debug_print("memory.c | mem_dynresize() | Failed to resize a dynamic memory segment!");
+    debug_pause();
+
+    static const char PANIC_MESSAGE[] = "Failed to resize the memory space!";
+    kernel_panic(PANIC_MESSAGE);
     return (void*)0;
 }
 
