@@ -4,7 +4,7 @@
 #include <kernel.h>
 
 // Memory size constants
-#define MEMORY_SIZE_MEGABYTES 0x1
+#define MEMORY_SIZE_MEGABYTES 0x10
 #define MEMORY_SIZE_BYTES (MEMORY_SIZE_MEGABYTES << 20)
 #define MEMORY_SIZE_IN_TYPE (MEMORY_SIZE_MEGABYTES << 18) // SIZE / 4 (memory uses 4 Byte integer type)
 #define MEMORY_USED_BYTES_PER_ELEMENT 0x20 // 32 bit integer type used for memory usage

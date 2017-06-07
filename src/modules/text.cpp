@@ -935,15 +935,16 @@ void editor(void)
         }
     }
 
-    // Clear the screen before leaving the editor
-    // Otherwise the terminal would still display the content of the file
-    // even though the editor has already been closed
-    clear();
-
     // Update the settings file to store the text editor color scheme
     Settings::save();
     // Revert the color scheme back to the one used by shell
     Shell::updateColorScheme();
+    // Clear the screen before leaving the editor
+    // Otherwise the terminal would still display the content of the file
+    // even though the editor has already been closed
+    // Screen must be cleared after the color scheme update so that the whole screen
+    // gets re-painted according to the current shell color scheme
+    clear();
 }
 
 void textEditorStart(const char* const filePath)

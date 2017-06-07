@@ -261,7 +261,7 @@ namespace Shell
 			struct keyevent ke = readKeyEvent();
 				
 			if (ke.state)
-			{			
+			{
 				if (ke.keychar > 0)
 				{
 					historyIdx = HISTORY_INDEX_DEFAULT;
