@@ -5,7 +5,6 @@
 
 size_t mem_used(void);
 size_t mem_empty(void);
-void* mem_alloc(const size_t length);
 void mem_free(const void* const ptr);
 void mem_copy(const void* const ptrsrc, const void* const ptrdst, const size_t length);
 void* mem_dynalloc(const size_t initsize);

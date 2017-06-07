@@ -22,15 +22,16 @@ void load_gdt(void);
 void kernel_main(void)
 {
 	// Initialize basic components
-    load_gdt();
-	term_init();
-	mem_init();
-	dev_init();
-	interrupts_init();
+    load_gdt(); 		// Global Descriptor Table
+	term_init(); 		// Terminal
+	mem_init(); 		// Memory Management
+	dev_init(); 		// Devices
+	interrupts_init(); 	// Interrupts
 
 	// Start the Shell module
 	shell_init();
 
 	// This should be unreachable code
-	kernel_panic("End of kernel reached!");
+    static const char PANIC_MESSAGE[] = "End of kernel reached!";
+    kernel_panic(PANIC_MESSAGE);
 }

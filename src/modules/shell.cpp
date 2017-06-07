@@ -9,86 +9,28 @@
 
 #include <kernel.h>
 
-#include <modules/disk.hpp>
 #include <drivers/storage/fat.h>
-
-uint8_t activePart; // index of the active partition
-uint32_t activeDir; // first cluster of the active directory
-
-string shellPrefix;
-bool diskToolsEnabled; // false if there are no FAT partitions available
-vector<string> pathStructure;
-
-// Modules
-Disk modDisk;
-
-extern "C"
-void shell_init(void)
-{
-	#ifdef DEBUG
-		// Used to make sure there is no memory leaking during kernel initialization
-		debug_memusage();
-		// Give the user a chance to see kernel initialization messages
-		//pause();
-	#endif
-
-    clear();
-
-	shellPrefix = string();
-	pathStructure = vector<string>();
-
-	diskToolsEnabled = (partCount > 0);
-
-	if (diskToolsEnabled)
-	{
-		activePart = 0;
-		activeDir = partArray[activePart].rootDirCluster;
-		pathStructure.clear();
-		Shell::_update_prefix();
-	}
-	else
-	{
-		shellPrefix.clear();
-		shellPrefix.push_back('>');
-	}
-
-	Shell::initModules();
-
-    while (true)
-    {
-		#ifdef DEBUG
-			// Keep in mind that some memory is always allocated by the shell instance itself
-			debug_memusage();
-			//pause();
-		#endif
-
-        string strInput = Shell::readline();
-
-		sprint(shellPrefix);
-        sprint(strInput);
-		newline();
-
-		Shell::process(strInput);
-		
-		strInput.dispose();
-    }
-}
+#include <modules/commands.hpp>
+#include <modules/settings.hpp>
 
 namespace Shell
 {
-	void initModules(void)
+	uint8_t activePart; // index of the active partition
+	uint32_t activeDir; // first cluster of the active directory
+
+	string shellPrefix;
+	vector<string> pathStructure;
+
+	vector<string> cmdHistory;
+	uint8_t historyIdx;
+
+	void updateColorScheme(void)
 	{
-		modDisk = Disk();
-		modDisk.init("disk");
+		setcolor((VGA_COLOR)Settings::Shell_Foreground, (VGA_COLOR)Settings::Shell_Background);
 	}
 
 	void process(const string& strInput)
 	{
-		// Command syntax explanation:
-		// Literal String
-		// <Required Argument>
-		// [Optional Argument]
-
 		// Extract command string from the input string
 		string strCmd;
 
@@ -100,23 +42,25 @@ namespace Shell
 			strCmd.push_back(ctolower(strInput.at(i)));
 		}
 
-		// Separate arguments from command string
-		string strArgs = strInput.substr(strCmd.size() + 1);
-		vector<string> vecArgs = strArgs.split(' ', true);
+		string strArgs;
+
+		// If the command itself isn't the entire content of the input string
+		if (strCmd.size() + 1 < strsize)
+		{
+			// The old string must be properly disposed
+			strArgs.dispose();
+
+			// Separate arguments from command string
+			strArgs = strInput.substr(strCmd.size() + 1);
+		}
 
 		// -- Check internal shell commands --
-		// Displays all available commands and their proper syntax
-		if (strCmd == "help" && vecArgs.size() == 0)
+		// Displays available commands and their proper syntax
+		if (strCmd == "help")
 		{
-			print("COMMAND <REQUIRED ARGUMENT> [OPTIONAL ARGUMENT]\n");
-			print("help - Displays available commands and their syntax\n");
-			print("<Partition Letter>: - Changes active partition\n");
-			print("cd <Directory Path> - Changed active directory\n");
-			print("dir [Directory Path] - Displays content of a directory\n");
-			print("disk <Action> <Arguments> - Performs a disk-related operation\n");
+			cmd_help(strArgs);
 		}
 		// Partition switch
-		// Syntax: <Partition Letter>:
 		else if (strCmd.size() == 2 && strCmd[1] == ':')
 		{
 			if (strCmd[0] >= 'a' && strCmd[0] <= 'z' && // letters represent partitions index
@@ -131,93 +75,63 @@ namespace Shell
 				print("Invalid partition letter!\n");
 			}
 		}
-		// Directory switch
-		// Syntax: cd <Directory Path>
-		else if (strCmd.compare("cd") && vecArgs.size() == 1)
+		// Clears the terminal
+		else if (strCmd == "clear" && strArgs.size() == 0)
 		{
-			uint32_t newDir = resolvePath(activePart, activeDir, vecArgs[0].c_str());
-
-			if (newDir)
-			{
-				// If the directory path is absolute delete the old path
-				if (vecArgs[0][0] == '/')
-				{
-					pathStructure.clear();
-				}
-
-				activeDir = newDir;
-
-				vector<string> pathElements = vecArgs[0].split('/', true);
-				
-				for (size_t i = 0; i < pathElements.size(); i++)
-				{
-					// Ignore self-pointing path elements
-					if (pathElements[i] == ".")
-					{
-						continue;
-					}
-					// When going one directory up remove the last directory from the vector
-					else if (pathElements[i] == "..")
-					{
-						pathStructure.pop_back();
-					}
-					// When going one directory down append the directory to the vector
-					else
-					{
-						// The directory name string must not be disposed
-						// Therefore we need to copy it into a separate string outside the vector
-						// This is done automatically when converting the name to uppercase
-						pathStructure.push_back(pathElements[i].toupper());
-					}
-				}
-
-				pathElements.dispose();
-
-				_update_prefix();
-			}
-			else
-			{
-				print("Invalid directory path!\n");
-			}
+			clear();
+		}
+		// Directory switch
+		else if (strCmd.compare("cd"))
+		{
+			cmd_cd(strArgs);
 		}
 		// List directory content
-		// Syntax: dir [Directory Path]
-		else if (strCmd.compare("dir") && vecArgs.size() < 2)
+		else if (strCmd.compare("dir"))
 		{
-			if (vecArgs.size() == 0)
-			{
-				listDirectory(activePart, activeDir);
-			}
-			else
-			{			
-				uint32_t pathCluster = resolvePath(activePart, activeDir, vecArgs[0].c_str());
-
-				if (pathCluster)
-				{
-					listDirectory(activePart, pathCluster);
-				}
-				else
-				{
-					print("Invalid directory path!\n");
-				}
-			}
+			cmd_dir(strArgs);
 		}
-		else if (strCmd.compare("new") && vecArgs.size() == 1)
+		// Create a new file
+		else if (strCmd.compare("mkfile"))
 		{
-			struct FILE* file = newFile(activePart, activeDir, vecArgs[0].c_str());
-
-			if (file)
-			{
-				print("File creation was successful.\n");
-				delete file;
-			}
+			cmd_mkfile(strArgs);
 		}
-		// -- Compare the input string against each module command string --
-		// Disk operation module
-		// Syntax: disk <Action> <Arguments>
-		else if (modDisk.compare(strCmd))
+		// Create a new directory
+		else if (strCmd.compare("mkdir"))
 		{
-			modDisk.process(vecArgs);
+			cmd_mkdir(strArgs);
+		}
+		// Delete a file/directory
+		else if (strCmd.compare("delete"))
+		{
+			cmd_delete(strArgs);
+		}
+		else if (strCmd.compare("copy"))
+		{
+			cmd_copy(strArgs);
+		}
+		else if (strCmd.compare("move"))
+		{
+			cmd_move(strArgs);
+		}
+		else if (strCmd.compare("rename"))
+		{
+			cmd_rename(strArgs);
+		}
+		else if (strCmd.compare("disk"))
+		{
+			cmd_disk(strArgs);
+		}
+		else if (strCmd.compare("text"))
+		{
+			cmd_text(strArgs);
+		}
+		else if (strCmd.compare("exec"))
+		{
+			cmd_exec(strArgs);
+		}
+		else if (strCmd.compare("color"))
+		{
+			cmd_color(strArgs);
 		}
 		else
 		{
@@ -228,20 +142,104 @@ namespace Shell
 
 		strCmd.dispose();
 		strArgs.dispose();
-		vecArgs.dispose();
 	}
 
-	char* _generate_spaces(const size_t count)
+	void historyAppend(const string& strInput)
 	{
-		char* strspaces = (char*)malloc(count + 1);
-		strspaces[count] = '\0';
-		
-		for (size_t i = 0; i < count; i++)
+		// Don't append empty string to the history vector
+		if (!strInput.size())
 		{
-			strspaces[i] = ' ';
+			return;
 		}
 
-		return strspaces;
+		// Don't append the command to the history vector if it's equal to the last entry
+		if (cmdHistory.size() && cmdHistory.back().compare(strInput))
+		{
+			return;
+		}
+
+		// Prepare the command string
+		string strHistoryEntry;
+
+		strHistoryEntry.clear();
+		strHistoryEntry.push_back(strInput);
+
+		// If the history vector size limit has been reached delete the oldest entry
+		if (cmdHistory.size() >= HISTORY_LIMIT)
+		{
+			cmdHistory.remove(0);
+		}
+
+		// Push the command string to the history vector
+		cmdHistory.push_back(strHistoryEntry);
+	}
+
+	void historyUp(string& strInput)
+	{
+		size_t cmdsize = cmdHistory.size();
+
+		// There are no commands in the history vector
+		if (!cmdsize)
+		{
+			return;
+		}
+
+		// Shell is in writing mode
+		if (historyIdx == HISTORY_INDEX_DEFAULT)
+		{
+			// Move to the first history entry
+			historyIdx = cmdsize - 1;
+		}
+		// If it's possible to go further in the history vector
+		else if (historyIdx > 0)
+		{
+			// Move to an older history entry
+			historyIdx--;
+		}
+		// The history index is already pointing at the oldest entry in the history vector
+		else
+		{
+			return;
+		}
+
+		// Replace the current input string with the one from the history vector
+		strInput.clear();
+		strInput.push_back(cmdHistory.at(historyIdx));
+	}
+
+	void historyDown(string& strInput)
+	{
+		size_t cmdsize = cmdHistory.size();
+
+		// There are no commands in the history vector
+		if (!cmdsize)
+		{
+			return;
+		}
+
+		if (historyIdx == HISTORY_INDEX_DEFAULT)
+		{
+			return;
+		}
+
+		strInput.clear();
+
+		// There's a more recent command entry in the history vector than the current one,
+		// move the history index forward
+		if (historyIdx < cmdsize - 1)
+		{
+			// Move to an more recent history entry
+			historyIdx++;
+		}
+		// The currently selected history entry is the latest, switch to writing mode
+		else
+		{
+			historyIdx = HISTORY_INDEX_DEFAULT;
+			return;
+		}
+
+		// Display the currently selected command from the history vector
+		strInput.push_back(cmdHistory.at(historyIdx));
 	}
 
 	string readline(void)
@@ -263,29 +261,51 @@ namespace Shell
 			struct keyevent ke = readKeyEvent();
 				
 			if (ke.state)
-			{			
+			{
 				if (ke.keychar > 0)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Append a character to the input string
 					strInput += ke.keychar;
 				}
-				else if (ke.scancode == KEY_ENTER)
+				else if (ke.scancode == KEY_ENTER && !ke.modifiers)
 				{
-					char* strspaces = _generate_spaces(VGA_WIDTH);
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Generate spaces to clear the input line on the screen
+					char* strspaces = strfill(' ', VGA_WIDTH);
 					printat(strspaces, 0, row);
 					delete strspaces;
 
+					// Append the command string to the command history vector
+					historyAppend(strInput);
 					return strInput;
 				}
-				else if (ke.scancode == KEY_BACKSPACE)
+				else if (ke.scancode == KEY_BACKSPACE && !ke.modifiers)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Delete the last character in the input string
 					if (strInput.size() > 0)
 					{
 						strInput.pop_back();
 					}
 				}
-				else if (ke.scancode == KEY_ESCAPE)
+				else if (ke.scancode == KEY_ESCAPE && !ke.modifiers)
 				{
+					historyIdx = HISTORY_INDEX_DEFAULT;
+
+					// Clear the input string
 					strInput.clear();
+				}
+				else if (ke.scancode == KEY_ARROW_UP && !ke.modifiers)
+				{
+					historyUp(strInput);
+				}
+				else if (ke.scancode == KEY_ARROW_DOWN && !ke.modifiers)
+				{
+					historyDown(strInput);
 				}
 			}
 
@@ -293,16 +313,21 @@ namespace Shell
 			size_t inStartIdx = strInput.size() - inRenderLen;
 
 			sprintat(shellPrefix, 0, row);
-			string strInputRender = strInput.substr(inStartIdx, inRenderLen);
-			sprintat(strInputRender, preLen, row);
-			strInputRender.dispose();
+
+			// Don't attempt to print input if there is none
+			if (strInput.size())
+			{
+				string strInputRender = strInput.substr(inStartIdx, inRenderLen);
+				sprintat(strInputRender, preLen, row);
+				strInputRender.dispose();
+			}
 
 			size_t emptySpace = inSpace - inRenderLen;
 			size_t rowend = preLen + inRenderLen;
 
 			if (emptySpace > 0)
 			{
-				char* strspaces = _generate_spaces(emptySpace);
+				char* strspaces = strfill(' ', emptySpace);
 				printat(strspaces, rowend, row);
 				delete strspaces;
 			}
@@ -314,19 +339,70 @@ namespace Shell
 	void _update_prefix(void)
 	{
 		shellPrefix.clear();
+		
+		string activePath = string::join(pathStructure, '/', true);
 
-		if (diskToolsEnabled)
+		shellPrefix.push_back('A' + activePart);
+		shellPrefix.push_back(':');
+		
+		if (activePath.size())
 		{
-			string activePath = string::join(pathStructure, '/', true);
-
-			shellPrefix.push_back('A' + activePart);
-			shellPrefix.push_back(':');
-			shellPrefix.push_back(activePath);
 			shellPrefix.push_back('/');
-
-			activePath.dispose();
 		}
+		
+		shellPrefix.push_back(activePath);
+		shellPrefix.push_back('/');
+
+		activePath.dispose();
 
 		shellPrefix.push_back('>');
 	}
+}
+
+extern "C"
+void shell_init(void)
+{
+	// Used to make sure there is no memory leaking during kernel initialization
+	//debug_memusage(); // debug_memusage() is now part of debug_pause()
+	// Give the user a chance to see kernel initialization messages
+	debug_pause();
+
+    clear();
+
+	Shell::shellPrefix = string();
+	Shell::pathStructure = vector<string>();
+
+	Shell::cmdHistory = vector<string>();
+	Shell::historyIdx = Shell::HISTORY_INDEX_DEFAULT;
+
+	if (!partCount)
+	{
+		static const char PANIC_MESSAGE[] = "Failed to initialize Shell!\nNo disk with a FAT partition detected!";
+		kernel_panic(PANIC_MESSAGE);
+	}
+
+	Shell::activePart = 0;
+	Shell::activeDir = partArray[Shell::activePart].rootDirCluster;
+	Shell::pathStructure.clear();
+	Shell::_update_prefix();
+
+	// Load settings
+	Settings::load();
+	Shell::updateColorScheme();
+
+    while (true)
+    {
+		// Keep in mind that some memory is always allocated by the shell instance itself
+		debug_memusage();
+		
+        string strInput = Shell::readline();
+
+		sprint(Shell::shellPrefix);
+        sprint(strInput);
+		newline();
+
+		Shell::process(strInput);
+		
+		strInput.dispose();
+    }
 }

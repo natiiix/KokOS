@@ -28,5 +28,7 @@ void pause(void);
 struct keyevent readKeyEvent(void);
 
 #if defined(__cplusplus)
+class string;
+string readline(void);
 }
 #endif

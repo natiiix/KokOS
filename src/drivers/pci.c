@@ -4,7 +4,7 @@
 
 struct pcidevice* getPciDevice(const uint8_t bus, const uint8_t slot, const uint8_t func)
 {
-    uint32_t* devptr = (uint32_t*)mem_alloc(sizeof(struct pcidevice));
+    uint32_t* devptr = (uint32_t*)mem_dynalloc(sizeof(struct pcidevice));
 
     for (size_t i = 0; i < sizeof(struct pcidevice); i++)
     {

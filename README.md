@@ -12,40 +12,40 @@
 - **master** - should always be relatively stable and safe to run (at your own risk!)
 - **unstable** - the latest version that is known to run somewhat properly, but may contain potentially dangerous code (you should avoid running this version and remain particularly cautious when doing so)
 - **dev** - meant for development only, often contains unstable code which may seriously harm your device upon execution (please NEVER run this code on a physical machine regardless of the circumstances)
+- **dev_xxx** - sub-branch of dev with a specified development topic waiting to be pulled to unstable, used to separate bigger chunks of changes done on the dev branch without having to modify the unstable branch
 
 ## Features
-- text mode screen output
+- simple text-mode shell interface
 - ~~standard keyboard input (using port polling)~~ (removed due to redundancy / obsolescence)
 - keyboard input using interrupts
 - simple memory management (malloc, free,..)
 - basic cstring operations
-- partial C &lt;stdlib.h&gt; implementation
-- partial C &lt;stdio.h&gt; implementation
-- C++ &lt;string&gt; implementation
-- C++ &lt;vector&gt; implementation
-- basic shell commands (help, cd, dir,..)
-- automatically converts paths to uppercase (because FAT doesn't seem to store lowercase names in basic directory entries)
-- automatically converts commands to lowercase
+- partial C <a href="http://www.cplusplus.com/reference/cstdlib/">&lt;stdlib.h&gt;</a> implementation
+- partial C <a href="http://www.cplusplus.com/reference/cstdio/">&lt;stdio.h&gt;</a> implementation
+- C++ <a href="http://www.cplusplus.com/reference/string/string/">&lt;string&gt;</a> implementation
+- C++ <a href="http://www.cplusplus.com/reference/vector/vector/">&lt;vector&gt;</a> implementation
+- basic internal shell commands (help, clear)
+- basic file/directory operation commands (mkfile, mkdir, delete, copy, move, rename)
+- prevents you from deleting a non-empty directory
 - shell supports both absolute and relative path addressing
+- shell command history (using up/down arrows, up to 16 commands)
+- currently up-to-date help command
+- repetitive validity checks should prevent unexpected behavior
+- <a href="https://en.wikipedia.org/wiki/File_Allocation_Table">FAT file system</a> support
+- basic text file editor (selections and copy-pasting may be implemented later)
+- OS-specific programming language called Kok (based on <a href="https://en.wikipedia.org/wiki/Fortran">Fortran</a>, <a href="https://en.wikipedia.org/wiki/BASIC">BASIC</a> and <a href="https://en.wikipedia.org/wiki/C_(programming_language)">C</a>)
 
 ## In progress
-- FAT file system support
-- shell
-- shell commands
-- file operations (create, delete, read, write)
-- directory operations (create, delete - a content check before deletion hasn't been implemented yet)
+- Kok programming language (adding new features, fixing whatever bugs I can find)
 
 ## TODO
-- improve the shell help command (some information may not be up-to-date at the moment)
-- OS-specific programming language (something along the lines of bash script)
-- implement more C/C++ libraries
-- shell command history (using up arrow)
+- documentation for Kok programming language
+- documentation for the text editor
 - moving shell cursor using arrow keys (to allow command edits without having to delete portions of the entered command)
-- fix hazardous user inputs
-- basic text editor
 
 ## On Hold
-- AHCI driver (I wasn't able to make it work and it's not of high importance to me)
+- <a href="https://en.wikipedia.org/wiki/Advanced_Host_Controller_Interface">AHCI</a> driver (I wasn't able to make it work and it's not of high importance to me)
+- implement more C/C++ libraries (it doesn't seem necessary at the moment)
 
 ## Links
-<div>Inspiration / based upon: <a href="http://wiki.osdev.org/Main_Page">OSDev Wiki</a></div>
+Inspiration / based upon: <a href="http://wiki.osdev.org/Main_Page">OSDev Wiki</a>

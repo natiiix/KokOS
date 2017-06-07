@@ -4,6 +4,7 @@
 #include <drivers/io/terminal.h>
 #include <c/string.h>
 #include <drivers/storage/harddrive.h>
+#include <kernel.h>
 
 // Detect attached SATA devices
 // 1) Which port is device attached
@@ -190,7 +191,7 @@ int find_cmdslot(HBA_PORT *port)
 		slots >>= 1;
 	}
 
-	term_writeline("Cannot find free command list entry", false);
+	debug_print("ahci.c | find_cmdslot() | Cannot find free command list entry");
 	return -1;
 }
  
@@ -256,7 +257,7 @@ BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 	}
 	if (spin == 1000000)
 	{
-		term_writeline("Port is hung", false);
+		debug_print("ahci.c | ahci_read() | Port is hung");
 		return FALSE;
 	}
  
@@ -271,7 +272,7 @@ BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 			break;
 		if (port->is & HBA_PxIS_TFES)	// Task file error
 		{
-			term_writeline("Read disk error", false);
+			debug_print("ahci.c | ahci_read() | Read disk error");
 			return FALSE;
 		}
 	}
@@ -279,7 +280,7 @@ BOOL ahci_read(HBA_PORT *port, QWORD start, DWORD count, WORD *buf)
 	// Check again
 	if (port->is & HBA_PxIS_TFES)
 	{
-		term_writeline("Read disk error", false);
+		debug_print("ahci.c | ahci_read() | Read disk error");
 		return FALSE;
 	}
  

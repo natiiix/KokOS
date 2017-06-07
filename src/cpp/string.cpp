@@ -4,6 +4,9 @@
 #include <c/stdlib.h>
 #include <c/stdio.h>
 #include <c/string.h>
+#include <c/math.h>
+
+#include <kernel.h>
 
 string::string(void) :
     m_ptr(malloc(1)),
@@ -40,6 +43,18 @@ string string::copy(void)
     return strout;
 }
 
+void string::set(const string& str)
+{
+    string::clear();
+    string::push_back(str);
+}
+//
+void string::set(const char* const str)
+{
+    string::clear();
+    string::push_back(str);
+}
+
 // Capacity
 size_t string::size(void) const
 {
@@ -65,17 +80,41 @@ bool string::empty(void) const
 // Element access
 char string::at(const size_t idx) const
 {
-    return m_ptrC[idx];
+    if (idx <= m_size) // m_ptrC[m_size] is a string terminator
+    {
+        return m_ptrC[idx];
+    }
+    else
+    {
+        debug_print("string.cpp | string::at() | Index out of string boundaries!");
+        return '\0';
+    }
 }
 //
 char& string::front(void)
 {
-    return m_ptrC[0];
+    if (m_size > 0)
+    {
+        return m_ptrC[0];
+    }
+    else
+    {
+        debug_print("string.cpp | string::front() | String is empty!");
+        return m_ptrC[m_size]; // return reference to the string terminator
+    }
 }
 //
 char& string::back(void)
 {
-    return m_ptrC[m_size - 1];
+    if (m_size > 0)
+    {
+        return m_ptrC[m_size - 1];
+    }
+    else
+    {
+        debug_print("string.cpp | string::back() | String is empty!");
+        return m_ptrC[m_size]; // return reference to the string terminator
+    }
 }
 
 // Modifiers
@@ -124,6 +163,10 @@ void string::pop_back(void)
     {
         string::resize(m_size - 1);
     }
+    else
+    {
+        debug_print("string.cpp | string::pop_back() | String is empty!");
+    }
 }
 //
 void string::pop_back(const size_t popcount)
@@ -136,9 +179,14 @@ void string::pop_back(const size_t popcount)
         }
         else
         {
+            debug_print("string.cpp | string::pop_back() | Pop count is higher than the string length!");
             string::resize(0);
         }
 	}
+    else
+    {
+        debug_print("string.cpp | string::pop_back() | String is empty!");
+    }
 }
 
 // String operations
@@ -158,6 +206,7 @@ string string::substr(const size_t pos, const size_t len) const
 
     if (pos >= m_size)
     {
+        debug_print("string.cpp | string::substr() | Position index is out of string boundaries!");
         return strout;
     }
 
@@ -168,6 +217,7 @@ string string::substr(const size_t pos, const size_t len) const
 
     if (len > remainchar)
     {
+        debug_print("string.cpp | string::substr() | Length is higher than the remaining size of the string!");
         copylen = remainchar;
     }
 
@@ -263,6 +313,7 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 	
 	if (delimlen == 0)
 	{
+        debug_print("string.cpp | string::split() | Delimiter string is empty!");
 		vectout.push_back(string(m_ptrC));
 		return vectout;
 	}
@@ -302,6 +353,19 @@ vector<string> string::split(const char* const strDelimiter, const bool removeEm
 	splitVectorAdd(vectout, partstart, m_size, removeEmpty);
 	
 	return vectout;
+}
+//
+bool string::contains(const char c) const
+{
+    for (size_t i = 0; i < m_size; i++)
+    {
+        if (m_ptrC[i] == c)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 //
 bool string::contains(const char* const str) const
@@ -354,6 +418,179 @@ void string::insert(const string& str, const size_t pos)
         m_ptrC[pos + i] = str.at(i);
     }
 }
+//
+bool string::parseInt32(int32_t* const output) const
+{
+    // Can't parse a value from an empty string
+    if (!m_size)
+    {
+        // Parsing failed
+        return false;
+    }
+
+    // Check for value negativity based on the first character being a minus sign
+    bool negative = (string::at(0) == '-');
+    
+    int32_t value = 0;
+
+    // Ignore the initial minus sign if the value is negative
+    for (size_t i = negative; i < m_size; i++)
+    {
+        char cDigit = string::at(i);
+        
+        // Check if the character is a valid digit
+        if (cDigit >= '0' && cDigit <= '9')
+        {
+            int32_t digitWeight = powInt32(10, m_size - 1 - i);
+            value += (cDigit - '0') * digitWeight;
+        }
+        // Invalid character occurred
+        else
+        {
+            // Parsing failed
+            return false;
+        }
+    }
+
+    // Value parsed, now just solve negativity
+    if (negative)
+    {
+        (*output) = -value;
+    }
+    else
+    {
+        (*output) = value;
+    }
+
+    // Value has been parse successfully
+    return true;
+}
+//
+bool string::parseBool(bool* const output) const
+{
+    if (string::compare("false"))
+    {
+        (*output) = false;
+        return true;
+    }
+    else if (string::compare("true"))
+    {
+        (*output) = true;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+//
+bool string::parseDouble(double* const output) const
+{
+    // String is empty, therefore it cannot contain a valid double value
+    if (!m_size)
+    {
+        return false;
+    }
+
+    bool negative = false;
+    bool dotFound = false;
+    size_t dotIdx = 0;
+
+    char digits[256];
+    size_t digitCount = 0;
+
+    // Check if string contains a valid double value
+    for (size_t i = 0; i < m_size; i++)
+    {
+        // Check the first character in the string for minus sign
+        if (!i && m_ptrC[0] == '-')
+        {
+            negative = true;
+        }
+        // Decimal dot reached
+        else if (!dotFound && m_ptrC[i] == '.')
+        {
+            // There is no digit before the decimal dot
+            // Add an artificial 0 to the beginning as if it were there
+            if (!digitCount)
+            {
+                digits[digitCount++] = '0';
+                dotIdx = 1 - negative;
+            }
+            else
+            {
+                dotIdx = i - negative;
+            }
+
+            dotFound = true;
+        }
+        // Valid digit character
+        else if (m_ptrC[i] >= '0' && m_ptrC[i] <= '9')
+        {
+            digits[digitCount++] = m_ptrC[i];
+        }
+        // Unexpected character found
+        else
+        {
+            return false;
+        }
+    }
+
+    // If there is no decimal dot assume the number is integer
+    if (!dotFound)
+    {
+        dotIdx = digitCount;
+    }
+
+    double value = 0.0;
+    int32_t exponent = dotIdx - 1;
+
+    // Translate digits into the actual double value
+    for (size_t i = 0; i < digitCount; i++)
+    {
+        if (digits[i] != '0')
+        {
+            // Convert the digit character to its value
+            double digitValue = ((double)(digits[i] - '0')) * powDouble(10.0, exponent);
+            double tmpValue = value + digitValue;
+
+            // The precision limit has been hit
+            // Further digits wouldn't change the output value due to their insignificance
+            if (tmpValue == value)
+            {
+                break;
+            }
+            // Digit is significant enough
+            else
+            {
+                // Update the value
+                value = tmpValue;
+            }
+        }
+        
+        // Decrement the exponent
+        exponent--;
+    }
+
+    // Set the output variable to the parsed value
+    (*output) = (negative ? -value : value);
+    return true;
+}
+//
+size_t string::count(const char c) const
+{
+    size_t charCount = 0;
+
+    for (size_t i = 0; i < m_size; i++)
+    {
+        if (m_ptrC[i] == c)
+        {
+            charCount++;
+        }
+    }
+
+    return charCount;
+}
 
 // Operator overloads
 bool string::operator==(const string& str) const
@@ -368,7 +605,15 @@ bool string::operator==(const char* const str) const
 //
 char& string::operator[](const size_t idx)
 {
-	return m_ptrC[idx];
+	if (idx <= m_size) // m_ptrC[m_size] is a string terminator
+    {
+        return m_ptrC[idx];
+    }
+    else
+    {
+        debug_print("string.cpp | string::operator[]() | Index out of string boundaries!");
+        return m_ptrC[m_size]; // return reference to the string terminator
+    }
 }
 //
 string& string::operator+=(const string& str)
@@ -396,18 +641,6 @@ string string::operator+(const string& str)
     return strout;
 }
 
-/*void string::disposeVector(vector<string>& vec)
-{
-    size_t vecsize = vec.size();
-
-    for (size_t i = 0; i < vecsize; i++)
-    {
-        vec[i].dispose();
-    }
-
-    vec.dispose();
-}*/
-
 string string::join(const vector<string>& vect, const char cDelimiter, const bool removeEmpty)
 {
     string strout;
@@ -431,6 +664,250 @@ string string::join(const vector<string>& vect, const char cDelimiter, const boo
     return strout;
 }
 
+string string::toString(const int32_t value)
+{
+    string strout;
+    strout.clear();
+
+    int32_t tmp = value;
+
+    char digits[32];
+    size_t digitCount = 0;
+
+    if (tmp < 0)
+    {
+        strout.push_back('-');
+        tmp = -tmp;
+    }
+
+    do
+    {
+        digits[digitCount++] = '0' + (tmp % 10);
+        tmp /= 10;
+    }
+    while (tmp);
+
+    for (size_t i = 0; i < digitCount; i++)
+    {
+        strout.push_back(digits[digitCount - 1 - i]);
+    }
+
+    return strout;
+}
+//
+string string::toString(const bool value)
+{
+    string strout;
+    strout.clear();
+
+    if (value)
+    {
+        strout.push_back("true");
+    }
+    else
+    {
+        strout.push_back("false");
+    }
+
+    return strout;
+}
+//
+string string::toString(const double value)
+{
+    string strout;
+    strout.clear();
+
+    // The value is exactly zero
+    if (value == 0.0)
+    {
+        strout.push_back("0.0");
+        return strout;
+    }
+
+    // Put minus sign at the beginning of the string if the value is negative
+    if (value < 0.0)
+    {
+        strout.push_back('-');
+    }
+
+    // Get the absolute value of the input value
+    double absValue = absDouble(value);
+
+    // Determine how many digits are there before the decimal dot
+    // If the value is lower than 1 get the number of zeros to add before the first non-zero digit
+    int32_t digitsBeforeDot = 0;
+
+    // There is at least 1 digit before the decimal dot
+    if (absValue >= 1.0)
+    {
+        // Keep dividing the value by 10 until it has no digits before the decimal dot
+        while (absValue >= 1.0)
+        {
+            digitsBeforeDot++;
+            absValue /= 10;
+        }
+    }
+    // All of the digits are after the decimal dot
+    else if (absValue > 0.0)
+    {
+        // Keep multiplying the value by 10 until it's high enough to have a digit right after the dot
+        while (absValue < 0.1)
+        {
+            digitsBeforeDot--;
+            absValue *= 10;
+        }
+    }
+
+    // Write leading zeros
+    if (digitsBeforeDot <= 0)
+    {
+        // Write the zero at the units position
+        strout.push_back("0.");
+
+        // Write all the decimal zeros
+        while (digitsBeforeDot < 0)
+        {
+            digitsBeforeDot++;
+            strout.push_back('0');
+        }
+    }
+
+    size_t zeroChain = 0;
+    size_t nineChain = 0;
+    static const size_t chainLimit = 8;
+
+    size_t decimalCount = 0;
+    static const size_t decimalLimit = 20;
+
+    // Write the rest of the digits
+    while ((absValue > 0.0 && decimalCount < decimalLimit) || digitsBeforeDot > 0)
+    {
+        // Compute the value of this digit
+        absValue *= 10;
+        uint8_t digitValue = 0;
+
+        while (absValue > 1.0)
+        {
+            absValue -= 1.0;
+            digitValue++;
+        }
+
+        // Look out for repeating decimal digits
+        if (digitsBeforeDot == 0)
+        {
+            // Chain of zeros
+            if (digitValue == 0)
+            {
+                zeroChain++;
+                nineChain = 0;
+
+                // Chain length limit reached
+                if (zeroChain == chainLimit)
+                {
+                    // Pop all the redundant zeros
+                    strout.pop_back(chainLimit - 1);
+                    break;
+                }
+            }
+            // Chain of nines
+            else if (digitValue == 9)
+            {
+                nineChain++;
+                zeroChain = 0;
+
+                // Chain length limit reached
+                if (nineChain == chainLimit)
+                {
+                    if (strout.at(strout.size() - chainLimit) == '.')
+                    {
+                        // Pop the decimal part containing the chain of redundant nines
+                        strout.pop_back(chainLimit - 1);
+
+                        // Index of the last digit of the whole part
+                        size_t carryIdx = strout.size() - 2;
+                        
+                        // Carry the value of the chain of nines until the last digit lower than 9 is reached
+                        while (true)
+                        {
+                            char carryDigit = strout.at(carryIdx);
+
+                            // Digit is lower than 9
+                            if (carryDigit >= '0' && carryDigit <= '8')
+                            {
+                                strout[carryIdx]++;
+                                break;
+                            }
+                            // Digit is 9, carry the value further
+                            else
+                            {
+                                strout[carryIdx] = '0';
+
+                                // There is another digit to which the value can be carried
+                                if (carryIdx > (strout.at(0) == '-'))
+                                {
+                                    carryIdx--;
+                                }
+                                // This is the first digit
+                                else
+                                {
+                                    // Put 1 at the beginning of the whole number
+                                    strout.insert('1', (strout.at(0) == '-'));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Pop all the redundant nines
+                        strout.pop_back(chainLimit - 1);
+                        // Increment the last digit before the sequence of nines
+                        strout.back()++;
+                    }
+
+                    break;
+                }
+            }
+            else
+            {
+                zeroChain = 0;
+                nineChain = 0;
+            }
+            
+            decimalCount++;
+        }
+        
+        // Ignore zero at the end of the the decimal part
+        if (decimalCount != decimalLimit || digitValue != 0)
+        {
+            // Push the digit character to the string
+            strout.push_back('0' + digitValue);
+        }
+
+        // If we're not in the decimal part yet
+        if (digitsBeforeDot > 0)
+        {
+            // Decrease the number of remaining whole part digits
+            digitsBeforeDot--;
+
+            // If this was the last whole part digit
+            if (digitsBeforeDot == 0)
+            {
+                // Push the decimal dot to the string
+                strout.push_back('.');
+            }
+        }
+    }
+
+    // If the value is an integer put a zero at the end of the string
+    if (strout.back() == '.')
+    {
+        strout.push_back('0');
+    }
+
+    return strout;
+}
+
 // Internal methods
 void string::updatePtr(void* ptr)
 {
@@ -447,6 +924,7 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 {
 	if (end < start)
 	{
+        debug_print("string.cpp | string::splitVectorAdd() | Start index is higher than end index!");
 		return;
 	}	
 	else if (end == start)
@@ -457,7 +935,9 @@ void string::splitVectorAdd(vector<string>& vectsplit, const size_t start, const
 		}
 		else
 		{
-			vectsplit.push_back(string());
+            // The string object must be constructed
+            string strEmpty;
+			vectsplit.push_back(strEmpty);
 		}
 	}
 	else
@@ -470,6 +950,7 @@ void string::shiftCharsRight(const size_t pos, const size_t offset)
 {
     if (pos >= m_size)
     {
+        debug_print("string.cpp | string::shiftCharsRight() | Position index is out of string boundaries!");
         return;
     }
 
@@ -488,6 +969,7 @@ void string::shiftCharsLeft(const size_t pos, const size_t offset)
 {
     if (pos >= m_size || m_size - pos < offset)
     {
+        debug_print("string.cpp | string::shiftCharsLeft() | Can't shift character out of the string!");
         return;
     }
     

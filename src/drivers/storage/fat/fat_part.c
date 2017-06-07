@@ -2,13 +2,16 @@
 #include <drivers/memory.h>
 #include <drivers/storage/harddrive.h>
 #include <c/string.h>
+#include <kernel.h>
+
+#include <drivers/io/terminal.h>
 
 struct PARTITION partArray[0x10];
 uint8_t partCount = 0;
 
 bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
 {
-    struct VOLUMEID* volid = (struct VOLUMEID*)hddRead(hddArray[hddIdx], lba);
+    struct VOLUMEID* volid = (struct VOLUMEID*)hddRead(hddIdx, lba);
 
     bool volumeidValid =
         (volid->bytesPerSector == BYTES_PER_SECTOR) &&
@@ -30,21 +33,18 @@ bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
         {
             partArray[partCount].oemname[i] = volid->oemname[i];
         }
-        partArray[partCount].oemname[0x8] = '\0';
 
         // Partition Label
         for (size_t i = 0; i < 0xB; i++)
         {
             partArray[partCount].label[i] = volid->label[i];
         }
-        partArray[partCount].label[0xB] = '\0';
 
         // Partition File System Type
         for (size_t i = 0; i < 0x8; i++)
         {
             partArray[partCount].fsType[i] = volid->fsType[i];
         }
-        partArray[partCount].fsType[0x8] = '\0';
 
         partCount++;        
     }
@@ -56,7 +56,7 @@ bool checkVolumeID(const uint8_t hddIdx, const uint64_t lba)
 char* getPartInfoStr(const uint8_t partIdx)
 {
     // Generate the partition info string
-    char* strInfo = mem_alloc(128);
+    char* strInfo = mem_dynalloc(128);
     size_t strIdx = 0;
 
     // OEM Name

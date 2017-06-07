@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <c/stdlib.h>
+#include <kernel.h>
 
 template<class T>
 class vector
@@ -62,6 +63,19 @@ public:
         if (m_size > 0)
         {
             resize(m_size - 1);
+        }
+    }
+    //
+    inline void pop_back(const size_t popcount)
+    {
+        if (m_size >= popcount)
+        {
+            resize(m_size - popcount);
+        }
+        else
+        {
+            debug_print("vector.hpp | vector<T>pop_back() | Cannot pop more elements than the size of the vector!");
+            clear();
         }
     }
     
@@ -156,6 +170,17 @@ inline void vector<string>::dispose(void)
 }
 
 template <>
+inline void vector<string>::clear(void)
+{
+    for (size_t i = 0; i < m_size; i++)
+    {
+        m_ptrT[i].dispose();
+    }
+
+    resize(0);
+}
+
+template <>
 inline void vector<string>::pop_back(void)
 {
     if (m_size > 0)
@@ -166,12 +191,32 @@ inline void vector<string>::pop_back(void)
 }
 
 template <>
-inline void vector<string>::clear(void)
+inline void vector<string>::pop_back(const size_t popcount)
 {
-    for (size_t i = 0; i < m_size; i++)
+    if (popcount >= m_size)
     {
-        m_ptrT[i].dispose();
+        for (size_t i = 0; i < popcount; i++)
+        {
+            m_ptrT[m_size - 1 - i].dispose();        
+        }
+
+        resize(m_size - popcount);
+    }
+    else
+    {
+        debug_print("vector.hpp | vector<string>::pop_back() | Cannot pop more elements than the size of the vector!");
+        clear();
+    }
+}
+
+template <>
+inline void vector<string>::remove(const size_t pos, const size_t len)
+{
+    // Dispose those vector elements that are going to be removed from the vector
+    for (size_t i = 0; i < len; i++)
+    {
+        m_ptrT[pos + i].dispose();
     }
 
-    resize(0);
+    shiftElementsLeft(pos, len);
 }

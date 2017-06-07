@@ -7,9 +7,9 @@ extern "C"
 
 void kernel_panic(const char* const str);
 
-#ifdef DEBUG
 void debug_memusage(void);
-#endif
+void debug_print(const char* const str);
+void debug_pause(void);
 
 #if defined(__cplusplus)
 }

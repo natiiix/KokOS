@@ -1,17 +1,15 @@
 #include <c/string.h>
 #include <drivers/memory.h>
 #include <drivers/io/terminal.h>
+#include <kernel.h>
 
 size_t strlen(const char* const strinput)
 {
     size_t length = 0;
-    
-    while (strinput[length])
-    {
-        length++;
-    }
 
-    return length;
+    while (strinput[length++]);
+
+    return --length;
 }
 
 bool strcmp(const char* str1, const char* str2)
@@ -71,7 +69,7 @@ char* tostr(const size_t input, const size_t base)
         }
     }
 
-    char* strptr = (char*)mem_alloc(length + 1);
+    char* strptr = (char*)mem_dynalloc(length + 1);
 
     for (size_t i = 0; i < length; i++)
     {
@@ -86,6 +84,7 @@ size_t strparse(const char* const str, const size_t base)
 {
     if (base < 2 || base > 16)
     {
+        debug_print("string.c | strparse() | Base out of range!");
         return 0;
     }
 
@@ -112,86 +111,12 @@ size_t strparse(const char* const str, const size_t base)
     return value;
 }
 
-char* strcenter(const char* const str)
-{
-    size_t len = strlen(str);
-
-    size_t linesOffset[VGA_HEIGHT];
-    size_t linesLen[VGA_HEIGHT];
-    size_t linesCount = 0;
-
-    size_t currLineLen = 0;
-    for (size_t i = 0; i < len && linesCount < VGA_HEIGHT - 1; i++)
-    {
-        if (currLineLen == 0)
-        {
-            linesOffset[linesCount] = i;
-        }
-
-        if (str[i] == '\n')
-        {
-            linesLen[linesCount] = currLineLen;
-            linesCount++;            
-            currLineLen = 0;
-        }
-        else
-        {
-            currLineLen++;
-
-            if (currLineLen == VGA_WIDTH)
-            {
-                linesLen[linesCount] = currLineLen;
-                linesCount++;
-                currLineLen = 0;
-            }
-        }
-    }
-
-    if (currLineLen > 0)
-    {
-        linesLen[linesCount] = currLineLen;
-        linesCount++;
-    }
-
-    char* strbuff = (char*)mem_alloc(VGA_HEIGHT * VGA_WIDTH);
-    size_t buffIdx = 0;
-
-    size_t marginTop = (VGA_HEIGHT / 2) - (linesCount / 2);
-    for (size_t i = 0; i < marginTop; i++)
-    {
-        strbuff[buffIdx++] = '\n';
-    }
-
-    for (size_t i = 0; i < linesCount; i++)
-    {
-        size_t marginLeft = (VGA_WIDTH / 2) - (linesLen[i] / 2) - (linesLen[i] % 2);
-        for (size_t j = 0; j < marginLeft; j++)
-        {
-            strbuff[buffIdx++] = ' ';
-        }
-
-        for (size_t j = 0; j < linesLen[i]; j++)
-        {
-            strbuff[buffIdx++] = str[linesOffset[i] + j];
-        }
-
-        if (i < linesCount - 1 && linesLen[i] < VGA_WIDTH)
-        {
-            strbuff[buffIdx++] = '\n';
-        }
-    }
-
-    strbuff[buffIdx] = '\0';
-
-    return strbuff;
-}
-
 char* strjoin(const char* const str1, const char* const str2)
 {
     size_t len1 = strlen(str1);
     size_t len2 = strlen(str2);
 
-    char* strout = (char*)mem_alloc(len1 + len2 + 1);
+    char* strout = (char*)mem_dynalloc(len1 + len2 + 1);
     size_t strIdx = 0;
 
     for (size_t i = 0; i < len1; i++)
@@ -269,6 +194,7 @@ size_t strfirst(const char* const str, const char c)
         }
     }
 
+    debug_print("string.c | strfirst() | String doesn't contain specified character!");
     return ~((size_t)0);
 }
 
@@ -284,5 +210,97 @@ size_t strlast(const char* const str, const char c)
         }
     }
 
+    debug_print("string.c | strlast() | String doesn't contain specified character!");
     return ~((size_t)0);
+}
+
+char* strfill(const char c, const size_t count)
+{
+    char* strFillChars = (char*)mem_dynalloc(count + 1);
+    strFillChars[count] = '\0';
+    
+    for (size_t i = 0; i < count; i++)
+    {
+        strFillChars[i] = c;
+    }
+
+    return strFillChars;
+}
+
+char* colorToStr(const uint8_t color)
+{
+    char* strColor = (char*)mem_dynalloc(32);
+
+    switch (color)
+    {
+        case 0x0:
+            strcopy("Black", strColor);
+            break;
+
+        case 0x1:
+            strcopy("Blue", strColor);
+            break;
+            
+        case 0x2:
+            strcopy("Green", strColor);
+            break;
+            
+        case 0x3:
+            strcopy("Cyan", strColor);
+            break;
+            
+        case 0x4:
+            strcopy("Red", strColor);
+            break;
+            
+        case 0x5:
+            strcopy("Magenta", strColor);
+            break;
+            
+        case 0x6:
+            strcopy("Brown", strColor);
+            break;
+            
+        case 0x7:
+            strcopy("Light Grey", strColor);
+            break;
+            
+        case 0x8:
+            strcopy("Dark Grey", strColor);
+            break;
+            
+        case 0x9:
+            strcopy("Light Blue", strColor);
+            break;
+            
+        case 0xA:
+            strcopy("Light Green", strColor);
+            break;
+            
+        case 0xB:
+            strcopy("Light Cyan", strColor);
+            break;
+            
+        case 0xC:
+            strcopy("Light Red", strColor);
+            break;
+            
+        case 0xD:
+            strcopy("Light Magenta", strColor);
+            break;
+            
+        case 0xE:
+            strcopy("Light Brown", strColor);
+            break;
+            
+        case 0xF:
+            strcopy("White", strColor);
+            break;
+
+        default:
+            strcopy("Unknown", strColor);
+            break;
+    }
+
+    return strColor;
 }
