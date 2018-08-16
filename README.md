@@ -1,5 +1,5 @@
 # KokOS
-*very basic text-mode operating system developed by Ivo Meixner*
+*very basic text-mode operating system*
 
 ## Disclaimer
 **KokOS is meant to be executed in virtual environment (such as VMWare Workstation or Oracle VirtualBox) only.**
